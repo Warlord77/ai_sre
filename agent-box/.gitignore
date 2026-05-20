@@ -1,0 +1,7 @@
+# Creds
+.env
+*.key
+*.pem
+
+# Local overrides
+.devcontainer/.env

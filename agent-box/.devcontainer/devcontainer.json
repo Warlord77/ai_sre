@@ -1,0 +1,46 @@
+{
+  "name": "agent-box",
+  "build": {
+    "dockerfile": "Dockerfile",
+    "context": ".",
+    "args": {
+      "USER_UID": "1000",
+      "USER_GID": "1000"
+    }
+  },
+
+  "remoteUser": "agent",
+  "updateRemoteUserUID": true,
+
+  // Only the project dir is mounted. Host credentials (~/.ssh, ~/.aws, ~/.claude) are not visible.
+  "workspaceMount": "source=${localWorkspaceFolder},target=/workspace,type=bind,consistency=cached",
+  "workspaceFolder": "/workspace",
+
+  // Option A - Hermes + DeepSeek: cp .env.example .env, fill in key, then run: make hermes
+  // Option B - Claude Code + OAuth: run: make claude  (no key needed)
+  "containerEnv": {
+    "DEEPSEEK_API_KEY": "${localEnv:DEEPSEEK_API_KEY}"
+  },
+
+  // --cap-drop=ALL: drop every Linux capability the container starts with (NET_RAW, SYS_ADMIN, etc.)
+  // no-new-privileges: prevent privilege escalation via setuid binaries inside the container
+  "runArgs": [
+    "--cap-drop=ALL",
+    "--security-opt=no-new-privileges"
+  ],
+
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "exiasr.hadolint",
+        "ms-python.python",
+        "ms-azuretools.vscode-docker"
+      ],
+      "settings": {
+        "terminal.integrated.defaultProfile.linux": "bash"
+      }
+    }
+  },
+
+  "postCreateCommand": "echo 'agent-box ready.' && echo '  Hermes: make hermes' && echo '  Claude: make claude'"
+}

@@ -1,0 +1,16 @@
+# Never let credentials leak into the build context
+.env
+.env.*
+*.key
+*.pem
+*.p12
+*.pfx
+id_rsa
+id_ed25519
+.ssh/
+.aws/
+.claude/
+.hermes/
+**/.git/
+**/node_modules/
+**/__pycache__/
