@@ -1,9 +1,0 @@
-ARG BASE_IMAGE=agent-box-base:latest
-FROM ${BASE_IMAGE}
-
-USER root
-# Hermes: pinned to v2026.4.30, no [all] extras - skips Playwright/web/TUI.
-# hadolint ignore=DL3016
-RUN pip install --no-cache-dir \
-    "hermes-agent @ git+https://github.com/NousResearch/hermes-agent.git@v2026.4.30"
-USER agent

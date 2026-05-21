@@ -1,43 +1,23 @@
-# ── base: shared tooling for all agent variants ─────────────────────────────
-# python:3.13-slim matches Hermes upstream runtime (Debian bookworm base).
+# ── base: minimal shared layer for all agent variants ─────────────────────────
+# python:3.13-slim is the Hermes upstream runtime (Debian bookworm base).
 # Pin to digest for reproducibility:
 #   docker pull python:3.13-slim && docker inspect --format='{{index .RepoDigests 0}}' python:3.13-slim
 FROM python:3.13-slim AS base
 
 ENV DEBIAN_FRONTEND=noninteractive
-# Hermes data dir lives inside the container, not on host
-ENV HERMES_HOME=/home/agent/.hermes
 
 # pipefail: fail if any command in a pipe fails, not just the last one
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
-# ── system deps + Node.js 20 + gh CLI + kubectl + helm ────────────────────────
-# Single RUN - one layer, apt-get update always paired with install.
-# kubectl/helm installed via official channels so download is platform-aware.
+# ca-certificates + curl: HTTPS downloads (pip git+https, nodesource setup)
+# git: required by pip to install hermes-agent from a git URL
+# jq + make: used by Makefile targets and launch scripts
 # hadolint ignore=DL3008
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    ca-certificates curl git gnupg jq make apt-transport-https \
-  && curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
-  && curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | \
-      dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg \
-  && chmod go+r /usr/share/keyrings/githubcli-archive-keyring.gpg \
-  && echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" \
-      > /etc/apt/sources.list.d/github-cli.list \
-  && apt-get update && apt-get install -y --no-install-recommends nodejs gh \
-  && KUBE_ARCH=$(dpkg --print-architecture) \
-  && KUBE_VER=$(curl --retry 3 --retry-delay 5 -fsSL https://dl.k8s.io/release/stable.txt) \
-  && curl --retry 3 --retry-delay 5 -fsSL "https://dl.k8s.io/release/${KUBE_VER}/bin/linux/${KUBE_ARCH}/kubectl" \
-      -o /usr/local/bin/kubectl \
-  && chmod 0755 /usr/local/bin/kubectl \
-  && HELM_ARCH=$(dpkg --print-architecture) \
-  && HELM_VER=$(curl --retry 3 --retry-delay 5 -fsSL https://api.github.com/repos/helm/helm/releases/latest | grep '"tag_name"' | cut -d'"' -f4) \
-  && curl --retry 3 --retry-delay 5 -fsSL "https://get.helm.sh/helm-${HELM_VER}-linux-${HELM_ARCH}.tar.gz" \
-      | tar -xz --strip-components=1 -C /usr/local/bin "linux-${HELM_ARCH}/helm" \
+    ca-certificates curl git jq make \
   && rm -rf /var/lib/apt/lists/*
 
-# ── non-root user ──────────────────────────────────────────────────────────────
-# ARG-based UID/GID - not hardcoded (one2n principle: don't bind to a specific UID).
-# devcontainer updateRemoteUserUID syncs this to the host user at runtime.
+# ARG-based UID/GID - devcontainer updateRemoteUserUID syncs this to the host user at runtime.
 ARG USERNAME=agent
 ARG USER_UID=1000
 ARG USER_GID=${USER_UID}
@@ -46,26 +26,55 @@ RUN groupadd --gid "${USER_GID}" "${USERNAME}" \
   && useradd --uid "${USER_UID}" --gid "${USER_GID}" --create-home --shell /bin/bash "${USERNAME}" \
   && mkdir -p /workspace \
   && chown "${USERNAME}":"${USERNAME}" /workspace \
-  && echo '[ "$TERM_PROGRAM" = "vscode" ] && [ -f /tmp/.autorun ] && { _cmd=$(cat /tmp/.autorun); rm -f /tmp/.autorun; eval "$_cmd"; }' \
-      >> /home/agent/.bashrc
+  && echo '{ [ "$TERM_PROGRAM" = "vscode" ] || [ -n "$VSCODE_IPC_HOOK_CLI" ]; } && [ -f /tmp/.autorun ] && { _cmd=$(cat /tmp/.autorun); rm -f /tmp/.autorun; eval "$_cmd"; }' \
+      >> /home/agent/.bashrc \
+  # VS Code attached containers ignore devcontainer.json settings; .vscode/settings.json in workspaceFolder is the only way to control the editor layout.
+  && mkdir -p /home/agent/.vscode \
+  && printf '{\n  "workbench.panel.opensMaximized": "never",\n  "terminal.integrated.defaultHeight": 12\n}\n' \
+      > /home/agent/.vscode/settings.json \
+  && chown -R "${USERNAME}":"${USERNAME}" /home/agent/.vscode
 
 USER ${USERNAME}
 WORKDIR /workspace
 CMD ["bash"]
 
-# ── agent-box: Hermes + Claude Code, used by devcontainer.json ───────────────
-FROM base AS agent-box
+# ── hermes: Hermes agent (Option A - DeepSeek API key) ──────────────────────
+FROM base AS hermes
 
-LABEL org.opencontainers.image.title="agent-box" \
-      org.opencontainers.image.description="Isolated devcontainer for AI coding agents - Hermes (DeepSeek) + Claude Code (OAuth)" \
+LABEL org.opencontainers.image.title="agent-box-hermes" \
+      org.opencontainers.image.description="Isolated devcontainer for Hermes AI agent (DeepSeek via API key)" \
       org.opencontainers.image.vendor="one2n" \
       org.opencontainers.image.licenses="MIT" \
       org.opencontainers.image.source="https://github.com/one2nc/ai-bites"
+
+ENV HERMES_HOME=/home/agent/.hermes
 
 USER root
 # Hermes: pinned to v2026.4.30, no [all] extras - skips Playwright/web/TUI.
 # hadolint ignore=DL3016
 RUN pip install --no-cache-dir \
-    "hermes-agent @ git+https://github.com/NousResearch/hermes-agent.git@v2026.4.30" \
-  && npm install -g @anthropic-ai/claude-code
+    "hermes-agent @ git+https://github.com/NousResearch/hermes-agent.git@v2026.4.30"
 USER agent
+
+# ── claude: Claude Code (Option B - Anthropic OAuth) ────────────────────────
+FROM base AS claude
+
+LABEL org.opencontainers.image.title="agent-box-claude" \
+      org.opencontainers.image.description="Isolated devcontainer for Claude Code AI agent (Anthropic OAuth)" \
+      org.opencontainers.image.vendor="one2n" \
+      org.opencontainers.image.licenses="MIT" \
+      org.opencontainers.image.source="https://github.com/one2nc/ai-bites"
+
+USER root
+# Node.js 20 is required by Claude Code and only needed in this stage.
+# gnupg is required by the NodeSource setup script for APT key verification.
+# hadolint ignore=DL3008
+RUN apt-get update && apt-get install -y --no-install-recommends gnupg \
+  && curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
+  && apt-get install -y --no-install-recommends nodejs \
+  && rm -rf /var/lib/apt/lists/*
+# hadolint ignore=DL3016
+RUN npm install -g @anthropic-ai/claude-code
+USER agent
+
+# ── add new agents below as additional FROM base AS <name> stages ────────────

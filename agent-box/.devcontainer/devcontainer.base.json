@@ -1,0 +1,18 @@
+{
+  "remoteUser": "agent",
+  "updateRemoteUserUID": true,
+  "workspaceFolder": "/home/agent",
+  "runArgs": [
+    "--cap-drop=ALL",
+    "--security-opt=no-new-privileges"
+  ],
+  "customizations": {
+    "vscode": {
+      "settings": {
+        "terminal.integrated.defaultProfile.linux": "bash",
+        "workbench.panel.opensMaximized": "never",
+        "terminal.integrated.defaultHeight": 12
+      }
+    }
+  }
+}

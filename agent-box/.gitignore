@@ -5,3 +5,6 @@
 
 # Local overrides
 .devcontainer/.env
+
+# Generated at runtime by scripts/start.sh - do not commit
+.devcontainer/devcontainer.json

@@ -1,7 +1,0 @@
-ARG BASE_IMAGE=agent-box-base:latest
-FROM ${BASE_IMAGE}
-
-USER root
-# hadolint ignore=DL3016
-RUN npm install -g @anthropic-ai/claude-code
-USER agent
