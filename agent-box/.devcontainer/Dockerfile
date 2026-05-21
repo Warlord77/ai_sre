@@ -1,15 +1,8 @@
-# syntax=docker/dockerfile:1
-
+# ── base: shared tooling for all agent variants ─────────────────────────────
 # python:3.13-slim matches Hermes upstream runtime (Debian bookworm base).
 # Pin to digest for reproducibility:
 #   docker pull python:3.13-slim && docker inspect --format='{{index .RepoDigests 0}}' python:3.13-slim
-FROM python:3.13-slim
-
-LABEL org.opencontainers.image.title="agent-box" \
-      org.opencontainers.image.description="Isolated devcontainer for AI coding agents - Hermes (DeepSeek) + Claude Code (OAuth)" \
-      org.opencontainers.image.vendor="one2n" \
-      org.opencontainers.image.licenses="MIT" \
-      org.opencontainers.image.source="https://github.com/one2nc/ai-bites"
+FROM python:3.13-slim AS base
 
 ENV DEBIAN_FRONTEND=noninteractive
 # Hermes data dir lives inside the container, not on host
@@ -42,13 +35,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
       | tar -xz --strip-components=1 -C /usr/local/bin "linux-${HELM_ARCH}/helm" \
   && rm -rf /var/lib/apt/lists/*
 
-# ── Hermes agent (NousResearch, MIT) + Claude Code ────────────────────────────
-# Hermes: pinned to v2026.4.30, no [all] extras - skips Playwright/web/TUI.
-# hadolint ignore=DL3016
-RUN pip install --no-cache-dir \
-    "hermes-agent @ git+https://github.com/NousResearch/hermes-agent.git@v2026.4.30" \
-  && npm install -g @anthropic-ai/claude-code
-
 # ── non-root user ──────────────────────────────────────────────────────────────
 # ARG-based UID/GID - not hardcoded (one2n principle: don't bind to a specific UID).
 # devcontainer updateRemoteUserUID syncs this to the host user at runtime.
@@ -65,5 +51,21 @@ RUN groupadd --gid "${USER_GID}" "${USERNAME}" \
 
 USER ${USERNAME}
 WORKDIR /workspace
-
 CMD ["bash"]
+
+# ── agent-box: Hermes + Claude Code, used by devcontainer.json ───────────────
+FROM base AS agent-box
+
+LABEL org.opencontainers.image.title="agent-box" \
+      org.opencontainers.image.description="Isolated devcontainer for AI coding agents - Hermes (DeepSeek) + Claude Code (OAuth)" \
+      org.opencontainers.image.vendor="one2n" \
+      org.opencontainers.image.licenses="MIT" \
+      org.opencontainers.image.source="https://github.com/one2nc/ai-bites"
+
+USER root
+# Hermes: pinned to v2026.4.30, no [all] extras - skips Playwright/web/TUI.
+# hadolint ignore=DL3016
+RUN pip install --no-cache-dir \
+    "hermes-agent @ git+https://github.com/NousResearch/hermes-agent.git@v2026.4.30" \
+  && npm install -g @anthropic-ai/claude-code
+USER agent

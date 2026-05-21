@@ -1,14 +1,26 @@
-.PHONY: help build test hermes claude down
+.PHONY: build build-base build-hermes build-claude test hermes claude down
 
-SHELL   := /bin/bash
-IMAGE   := agent-box:latest
-WORKDIR := $(shell pwd)
+SHELL        := /bin/bash
+IMAGE_BASE   := agent-box-base:latest
+IMAGE_HERMES := agent-box-hermes:latest
+IMAGE_CLAUDE := agent-box-claude:latest
+IMAGE        := agent-box:latest
+WORKDIR      := $(shell pwd)
 
 -include .env
 export
 
-build:
-	docker build -t $(IMAGE) -f .devcontainer/Dockerfile .devcontainer/
+build-base:
+	docker build --target base -t $(IMAGE_BASE) -f .devcontainer/Dockerfile .devcontainer/
+
+build-hermes: build-base
+	docker build -t $(IMAGE_HERMES) -f .devcontainer/Dockerfile.hermes .devcontainer/
+
+build-claude: build-base
+	docker build -t $(IMAGE_CLAUDE) -f .devcontainer/Dockerfile.claude .devcontainer/
+
+build: build-base
+	docker build --target agent-box -t $(IMAGE) -f .devcontainer/Dockerfile .devcontainer/
 
 test:
 	docker run --rm \
@@ -18,25 +30,10 @@ test:
 		$(IMAGE) bash /workspace/scripts/check.sh
 
 hermes:
-	@CONTAINER_ID=$$(devcontainer up --workspace-folder . 2>/dev/null | grep '^{' | jq -r '.containerId') && \
-	docker exec "$$CONTAINER_ID" bash -c 'mkdir -p ~/.hermes && printf "DEEPSEEK_API_KEY=$(DEEPSEEK_API_KEY)\n" > ~/.hermes/.env && hermes config set model.provider deepseek 2>/dev/null && hermes config set model.base_url https://api.deepseek.com/v1 2>/dev/null && hermes config set model.default deepseek-chat 2>/dev/null' && \
-	docker exec "$$CONTAINER_ID" bash -c 'echo "hermes -m deepseek-v4-pro chat" > /tmp/.autorun' && \
-	HEX=$$(printf '%s' "$$CONTAINER_ID" | xxd -p | tr -d '\n') && \
-	code --new-window --folder-uri "vscode-remote://attached-container+$$HEX/workspace" && \
-	osascript \
-	  -e 'delay 1' \
-	  -e 'tell application "Visual Studio Code" to activate' \
-	  -e 'tell application "System Events" to key code 50 using {control down}'
+	@bash scripts/start-hermes.sh
 
 claude:
-	@CONTAINER_ID=$$(devcontainer up --workspace-folder . 2>/dev/null | grep '^{' | jq -r '.containerId') && \
-	docker exec "$$CONTAINER_ID" bash -c 'echo "claude auth login" > /tmp/.autorun' && \
-	HEX=$$(printf '%s' "$$CONTAINER_ID" | xxd -p | tr -d '\n') && \
-	code --new-window --folder-uri "vscode-remote://attached-container+$$HEX/workspace" && \
-	osascript \
-	  -e 'delay 1' \
-	  -e 'tell application "Visual Studio Code" to activate' \
-	  -e 'tell application "System Events" to key code 50 using {control down}'
+	@bash scripts/start-claude.sh
 
 down:
-	docker rmi $(IMAGE)
+	docker rmi $(IMAGE) $(IMAGE_BASE) $(IMAGE_HERMES) $(IMAGE_CLAUDE) 2>/dev/null || true

@@ -3,6 +3,7 @@
   "build": {
     "dockerfile": "Dockerfile",
     "context": ".",
+    "target": "agent-box",
     "args": {
       "USER_UID": "1000",
       "USER_GID": "1000"
@@ -42,5 +43,5 @@
     }
   },
 
-  "postCreateCommand": "echo 'agent-box ready.' && echo '  Hermes: make hermes' && echo '  Claude: make claude'"
+  "postCreateCommand": "echo 'agent-box ready. Run: make hermes | make claude' > /tmp/agent-box.log 2>&1"
 }

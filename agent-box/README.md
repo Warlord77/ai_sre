@@ -46,7 +46,7 @@ flowchart LR
 
 **Auth paths:**
 
-- **Option A - Hermes + DeepSeek API key:** set `DEEPSEEK_API_KEY` in your shell before running `make hermes`. The Makefile configures Hermes inside the container, then VS Code opens with a terminal already running the chat session.
+- **Option A - Hermes + DeepSeek API key:** set `DEEPSEEK_API_KEY` and optionally `HERMES_MODEL` in `.env` before running `make hermes`. The default model is `deepseek-v4-pro`. The Makefile configures Hermes inside the container, then VS Code opens with a terminal already running the chat session.
 - **Option B - Claude Code + OAuth:** no key needed. `make claude` opens VS Code with a terminal that triggers `claude auth login`. The browser OAuth flow completes on the host; the session lives inside the container only.
 
 **What is in the image:**
@@ -87,7 +87,7 @@ make build
 
 # 3a. Hermes + DeepSeek
 cp .env.example .env
-# edit .env and paste your DeepSeek key
+# edit .env: paste your DeepSeek key; optionally change HERMES_MODEL (default: deepseek-v4-pro)
 make hermes
 # → starts container, configures Hermes, opens VS Code with chat auto-running
 
@@ -221,7 +221,7 @@ A recording will be added once this PoC receives a green signal for pilot. The c
 
 - **Hermes** is a thin OpenAI-SDK wrapper. It is OpenAI-API-compatible - works with DeepSeek, Gemini, or any local Ollama endpoint by changing the model flag. MIT licensed, actively maintained by NousResearch.
 - **Claude Code** needs OAuth (personal Pro/Max) or an Anthropic API key (expensive for team use). OAuth inside a devcontainer works cleanly - VS Code handles the browser forwarding via port forwarding.
-- **Image size (1 GB):** expected for a devcontainer bundling two runtimes (Python 3.13 + Node 20), two agents, and three CLI tools. A multi-stage build would not help - the size is dominated by runtime dependencies (node_modules, Python packages), not build tools.
+- **Image size (1 GB):** expected for a devcontainer bundling two runtimes (Python 3.13 + Node 20), two agents, and three CLI tools. The Dockerfile uses a multi-stage build (`base` + `agent-box`) so individual images (`Dockerfile.hermes`, `Dockerfile.claude`) can be built from the shared base - but size itself does not reduce since it is dominated by runtime dependencies, not build tools.
 - **`make hermes` / `make claude` are macOS-only** due to `osascript`. On Linux, the VS Code devcontainer flow (Reopen in Container) or `Ctrl+\`` is the equivalent.
 - **agent-box vs kiln:** agent-box is container-level isolation (shared kernel). Kiln targets Firecracker VM isolation. Complementary - agent-box is the good-enough answer for internal teams today.
 
