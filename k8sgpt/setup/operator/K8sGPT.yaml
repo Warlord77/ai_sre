@@ -35,8 +35,8 @@ spec:
   # trivy:
   #  enabled: true
   #  namespace: trivy-system
-  filters:
-    - Log
+  # filters:
+  #   - Log
   # sink:
   #   type: slack
   #   webhook: <webhook-url> # use the sink secret if you want to keep your webhook url private

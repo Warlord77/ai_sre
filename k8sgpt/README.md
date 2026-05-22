@@ -239,7 +239,7 @@ This scenario is taken from reference [iximiuz labs](https://labs.iximiuz.com/ch
 | Demo                  | Link                                                                                          | Duration |
 | --------------------- | --------------------------------------------------------------------------------------------- | -------- |
 | `CLI Scenario-1`      | [Link](https://drive.google.com/file/d/1kifqMr3e7w_wuMGjpPmC9cccWy0Hiu7j/view?usp=drive_link) | `03:25`  |
-
+| `Operator Scenario-1` | [Link](https://drive.google.com/file/d/1z10T_xNF7iS36wvd8aIHfITRb1E2ldnE/view?usp=drive_link) | `07:55`  |
 ---
 
 ## 6. Observations

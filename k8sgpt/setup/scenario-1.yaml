@@ -1,7 +1,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: broken-app
+  name: scenario-1
 spec:
   replicas: 1
   selector:
@@ -13,7 +13,7 @@ spec:
         app: broken-app
     spec:
       containers:
-      - name: app
+      - name: scenario-1
         image: busybox
         command:
           - /bin/sh
