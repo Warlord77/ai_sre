@@ -267,30 +267,14 @@ This scenario is taken from reference [iximiuz labs](https://labs.iximiuz.com/ch
 
 ---
 
-## 7. Comparison with alternatives
-
-| Dimension                              | This tool | Alternative A | Alternative B |
-| -------------------------------------- | --------- | ------------- | ------------- |
-| License                                |           |               |               |
-| Maturity (stars, age, release cadence) |           |               |               |
-| Solves our specific problem?           |           |               |               |
-| Ease of setup                          |           |               |               |
-| Integrations we need                   |           |               |               |
-| Write actions / remediation            |           |               |               |
-| Self-hosted option                     |           |               |               |
-| Cost (tokens, SaaS fee, infra)         |           |               |               |
-| Active maintenance                     |           |               |               |
-
----
-
-## 8. Pros
+## 7. Pros
 
 - Anonymization is the strongest production-minded feature. Before sending failure text to the LLM, K8sGPT can mask sensitive fields (object names, labels, etc.) with tokens and responses are de-masked afterward. It does not cover events (failure text from Pod events can still reach the model), so it is not full data governance.
 - LLM explanation cache reduces repeat API cost. When the same failure text is seen again, K8sGPT reuses the stored explanation instead of calling the LLM again. That helps most with the operator’s periodic scans (same issues every ~30s). Cache can be local file or remote (S3, GCS, Azure) and changing model or provider may still return an old cached answer until you clear the cache.
 
 ---
 
-## 9. Cons
+## 8. Cons
 
 - Positioned as an “AI SRE agent” but behaves like a linter with optional LLM commentary. It runs fixed analyzer rules on cluster state and the model only explains text the rules already found. It does not explore the cluster on its own or follow your instructions. For real troubleshooting, a general agent (e.g. Cursor with kubectl/logs context) was more useful in both scenarios.
 - CLI `analyze --explain` was weak in practice. For Scenario 1 (missing env → CrashLoop) and Scenario 2 (Service labels/ports) both produced generic debug advice, not root cause or fixes. Cheaper models (`gpt-5.4-nano`, `gemini-2.5-flash`) were especially poor and even `gpt-5.4-mini` in CLI did not match operator quality on Scenario 2.
@@ -303,13 +287,13 @@ This scenario is taken from reference [iximiuz labs](https://labs.iximiuz.com/ch
 
 ---
 
-## 10. Cost analysis
+## 9. Cost analysis
 
 - Did not go into details of Cost Analysis as tool was not able to pass baseline expectations.
 
 ---
 
-## 11. Verdict
+## 10. Verdict
 
 **Reject**
 
@@ -321,7 +305,7 @@ This scenario is taken from reference [iximiuz labs](https://labs.iximiuz.com/ch
 - The product is marketed as an AI SRE agent but acts as predefined rule checks plus optional LLM summaries.
 - The only clear wins were anonymization (CLI `--anonymize`; operator `spec.ai.anonymized`) and explanation caching, but they are not enough to justify operator install, ongoing LLM cost, and broad cluster read access for on-call or adoption.
 
-## 12. References
+## 11. References
 
 - [Reddit Discussion](https://www.reddit.com/r/kubernetes/comments/1go13i3/has_k8sgpt_helped_you_in_real_life/): This reddit thread is 2Y old but the tool still lacks the same features mentioned here.
 - https://medium.com/@achanandhi.m/is-k8sgpt-a-game-changer-or-just-another-ai-hype-e5629d9d402f
