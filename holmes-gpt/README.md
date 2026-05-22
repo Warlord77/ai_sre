@@ -4,7 +4,7 @@
 | --- | --- |
 | **Author** | `Biswa Prakash Mishra` |
 | **Date** | `2026-05-18` |
-| **Time invested** | `<X hours>` |
+| **Time invested** | `12 hours` |
 | **Tool version tested** | `0.30.0` |
 | **Source / Docs** | `https://holmesgpt.dev/` |
 | **License** | `Apache 2.0 License` |
@@ -19,8 +19,6 @@ HolmesGPT is an AI based SRE agent to solve production incident across a range o
 ---
 
 ## 2. How it works (architecture)
-
-Explain the tool's internals — not marketing copy. Draw from source code, docs, or reverse-engineering.
 
 - What's the core architecture? (agent loop, plugin system, API proxy, etc.)
     - Agent Loop
@@ -53,7 +51,7 @@ Explain the tool's internals — not marketing copy. Draw from source code, docs
 - An API key is required from the supported [providers](https://holmesgpt.dev/latest/ai-providers/)
 - Docker 
 
-### Step-by-step
+## Docker
 
 Run the HolmesGPT container. An TUI will open and ask the user to give input. 
 
@@ -78,8 +76,54 @@ docker run -it --net=host \
 ask 
 ```
 
+##  CLI  
+
+### Install Dependencies
+```bash
+sudo apt update
+sudo apt install -y build-essential gcc python3-dev
+```
+
+### Install Pipx
+
+```bash
+sudo apt update
+sudo apt install pipx
+pipx ensurepath
+```
+
+### Install HolmesGPT
+```bash
+pipx install holmesgpt==0.30.0
+```
+
+if using python-3.14+ use this to disable Prometheus toolset [docs](https://github.com/HolmesGPT/holmesgpt/blob/master/CONTRIBUTING.md#prerequisites)
+```bash
+export DISABLE_PROMETHEUS_TOOLSET=true
+```
+
+## Setup Credentials
+```bash
+export OPENROUTER_API_KEY="<your-open-router-key-here>" 
+export MODEL="openrouter/openai/gpt-5.4"
+```
+
+## To start
+```bash
+holmes ask "why is my service not starting"
+```
+
+restart your terminal to source your config file 
+
 ### Known setup gotchas
 
+if using python-3.14+ use this to disable Prometheus toolset [docs](https://github.com/HolmesGPT/holmesgpt/blob/master/CONTRIBUTING.md#prerequisites)
+```bash
+export DISABLE_PROMETHEUS_TOOLSET=true
+```
+
+**OTEL Instrumentation is not available in CLI installation.**
+ 
 
 ---
 
@@ -120,7 +164,12 @@ Pod remained in pending state
 
 The agent identified the root cause and suggested possible fixes. 
 
-*Prompt* : User: my nginx pod is pending. Please debug
+*Prompt* : 
+```
+User: my nginx pod is pending. Please debug
+```
+
+<details>
 
 ```
 AI Response ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
@@ -177,12 +226,13 @@ AI Response ──────────────────────�
 ╰───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
 ```
 
+</details>
+
 ---
 
 ### Scenario 2 (Hard): [K8s debugging](https://labs.iximiuz.com/challenges/troubleshoot-website-not-accessible-173199c4) from iximuiz labs 
 
-In the iximuix labs dev environment a prompt was given
-Model Used: openai/gpt-5.4-nano
+Model Used: openai/gpt-5.4-nano, openai/gpt-5.4-mini, openai/gpt-5.4
 
 Prompt Given to fix trhe problem:
 
@@ -192,134 +242,102 @@ A Solo Leveling themed web application has been deployed in the solo-leveling na
 Investigate why the website is not accessible and fix the issue so that the Solo Leveling website is reachable at:
 ```
 
-Outcome: It could successfully identify and fix the problem solving all the required tasks
+Outcome: There are 2 tasks to solve the challenge completely. The first was easy and could be solved by gpt-5.4-nano, gpt-5.4-mini and gpt-5.4, but the second challenge could be solved by gpt-5.4 after multiple trials (a trial is a fresh attempt from start)
 
 ---
 
-### Scenario 3: Linux Debugging Problem
+### Scenario 3 (Easy): [Linux Debugging](https://labs.iximiuz.com/challenges/linux-debug-vanishing-worker-service) Problem
 
-(same structure)
+Model Used: openai/gpt-5.4
+
+Prompt Given: 
+
+```
+A background worker.service has been deployed on this server. It's supposed to run continuously, picking up batches from a job queue.
+
+But there's a problem - the service starts cleanly, prints a few heartbeat lines, then picks up a batch of work for processing and shortly afterwards silently crashes. systemd brings it back up again, but the job handling never advances beyond the first batch.
+
+Your task: diagnose the root cause of the service's repeated death and find a way to make worker.service stay up and running for an extended period of time. Use sudo whenever possible to run commands. 
+```
+
+Outcome: The model was able to find the root cause and suggest possible fixes. The first suggested fix was applied and it solved the problem successfully. 
+
 
 ---
 
 ## 5. Demo
 
-Link to a short video (Loom, asciinema, or screen recording) showing the tool in action on a real-ish scenario. Not a hello-world.
-
 | Demo | Link | Duration |
 |------|------|----------|
-| `<scenario>` | `<link>` | `<mm:ss>` |
-
-If video isn't feasible, annotated screenshots with step-by-step narrative are acceptable.
+| `Scenario 3` | `https://drive.google.com/file/d/1jkU5qq7iJoTNGgcKhnqm4fs6deN0lAfi/view?usp=sharing` | `06:36` | 
 
 ---
 
 ## 6. Observations
-
-What you noticed that isn't in the docs. Behaviour, quirks, quality signals.
-
-- **Code quality:** Is the codebase well-structured? Tests? CI? Release cadence?
-- **Community:** GitHub stars, contributors, issue response time, Discord/Slack activity.
-- **Documentation:** Accurate? Complete? Or marketing-ahead-of-code?
-- **Security posture:** What access does it need? Does it phone home? Data handling?
-- **Performance:** Latency, resource usage, token consumption.
-- **Stability:** Did it crash? Hang? Produce hallucinated output?
+- Some of the runs got stuck for a long time and had to be killed. 
+- **Code quality:** Stable releases are often shipped weekly or biweekly. Rapid development/iteration. 
+- **Community:** Slack, monthly zoom and community meetings and active github issues also. 
+- **Documentation:** Mostly Complete. Some edge cases has to be addressed. 
+- **Security posture:**  project explicitly discusses RBAC and controlled-access design
+- **Performance:** TODO: Token consumption has to be analyzed for each run across tasks of different difficulty level. 
+- **Stability:** Sometime it hanged. But root cause has to be idenified. 
 
 ---
 
 ## 7. Comparison with alternatives
 
-| Dimension | This tool | Alternative A | Alternative B |
-|-----------|-----------|---------------|---------------|
-| License | | | |
-| Maturity (stars, age, release cadence) | | | |
-| Solves our specific problem? | | | |
-| Ease of setup | | | |
-| Integrations we need | | | |
-| Write actions / remediation | | | |
-| Self-hosted option | | | |
-| Cost (tokens, SaaS fee, infra) | | | |
-| Active maintenance | | | |
-
-Why did you pick these alternatives? What's the market landscape?
 
 ---
 
 ## 8. Pros
 
 - Huge number of data integrations are available. 
-- Advantage over general purpose agent like claude code is that, it integrates directly with a tool that don't have an native MCP like postgres. 
+- Advantage over general purpose agent like claude code is that, it integrates directly with a tool that don't have an native MCP. 
 - Operator Mode (in development) will allow continuous autonomous monitoring. 
-- Performs reasonably well using a weaker model like openai/gpt-5.4-nano for k8s tasks
+- Performs reasonably well using a weaker model like openai/gpt-5.4-nano for simple k8s tasks
+- Read-Only Access - Respects RBAC permissions. All tool integrations guides comes with setting it up with correct RBAC permissions.  
+- Can directly investigate alerts from alerting systems.  
+- Support for custom runbooks.  This allows you to encode your debugging procedures so that HolmesGPT will execute that to debug
 
 ---
 
 ## 9. Cons
 
-- General purpose agents like claude code and 
+- It is still in CNCF sandbox project. 
+- By design HolmesGPT never modifies your infrastructure. That is a safety feature, but it stops one step short of fixing your issues. 
+- Installation options are limited. Only via pipx, brew or cloning the repository to run. 
+- Setup Documentation lacks complete details to run. e.g. if you run the application using python 3.14 or above you get an error and the fix to the error is in contribution docs. 
 
 ---
 
 ## 10. Cost analysis
 
-- **Token/API costs:** What did this PoC cost to run? Extrapolate to production usage.
-- **Infra costs:** What compute/storage does it need?
-- **Human costs:** How much effort to set up, maintain, extend?
+TODO: Telemetry export to Signoz enabled. Telemetry has to be analyzed. 
 
 ---
 
 ## 11. Verdict
 
-Pick one: **Adopt** / **Pilot** (trial with a real team for X weeks) / **Defer** (revisit in X months) / **Reject**
+**Defer**: Currently the tool in in development and there are rough edges. Very limited installation methods and all the installation methods are not complete (as in OTEL support is not there for CLI installation)
 
 The most promising feature of holmes GPT is the operator mode. It allows it to run in background 24/7, notices if something is wrong, trigger an investigation and propose fixes. This feature is still in alpha and needs to be revisited. 
 
 ### Rationale
 
-2-3 sentences explaining the decision. Reference specific evidence from sections above.
+Currently HolmesGPT is in CNCF sandbox stage meaning its experimental in nature and has a lot of rough edges. The tool should be re-evaluated in 2-3 months. The primary thing in the re-evaluation should be 
 
-### If Adopt/Pilot — next steps
-
-- What would a pilot look like?
-- Who owns it?
-- What's the success criteria?
-- Timeline?
-
-### If Defer — revisit trigger
-
-- What needs to change for us to re-evaluate? (feature shipped, maturity milestone, etc.)
-
-### If Reject — what instead?
-
-- What's the recommended alternative and why?
+1. what are the installation methods available and are those methods feature complete. 
+2. At what stage the operator mode is in. This is currently is alpha. 
 
 ---
 
 ## 12. Issues / PRs filed
 
-- Walkthrough docs in links in README rendered broken/un-styled pages. Filed an issue and this was fixed. 
-
-
 | Type | Link | Status |
 |------|------|--------|
 | Docs | https://github.com/HolmesGPT/holmesgpt/issues/2047 | Closed |
+| Enhancement/Bug | https://github.com/HolmesGPT/holmesgpt/issues/2077 | Open |
 
 
 ---
 
-## 13. References
-
-- Links to source code you read
-- Blog posts / talks that informed your evaluation
-- Related internal docs or prior art
-
----
-
-## Appendix: Raw notes / logs
-
-<details>
-<summary>Click to expand</summary>
-
-Dump verbose logs, full command outputs, config files used, etc. here. Keeps the main doc clean but preserves evidence.
-
-</details>
