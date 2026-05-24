@@ -122,7 +122,7 @@ Unable to correlate findings due to broken integrations across Grafana, PostgreS
 <summary>Details</summary>
 
 ![Details](.assets/ss_postgresql_down_term.png)
-
+![Details](.assets/ss_postgresql_down_slack.png)
 </details>
 
 ### 4.2 Backend Down
