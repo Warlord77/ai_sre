@@ -21,8 +21,6 @@ It is available as both a CLI and a SaaS offering from Tracer Cloud. Rather than
 
 ## 2. How it works (architecture)
 
-### 2.1 High-Level Design (HLD)
-
 ![Stack architecture](.assets/opensre_architecture.png)
 
 Component overview:
@@ -177,7 +175,7 @@ Identified the deployment-down state from alerts and Prometheus, but validations
 | Scenario | Alerts Firing | Confidence | Correct RCA | Notes |
 |----------|---------------|------------|-------------|-------|
 | Database Down | `AppPostgresDown` Critical| No | No | Incorrect correlation. Broken integrations. |
-| Backend Down | `AppBackendDown` Critical | No | No | CrashLoopBackOff identified; Helm revision correlated. Replicas were set to zero via `kubectl`. Kubernetes API support missing. |
+| Backend Down | `AppBackendDown` Critical | No | No | CrashLoopBackOff identified not validated; Helm revision correlated. Replicas were set to zero via `kubectl`. Kubernetes API support missing. |
 | Redis Down | `AppRedisDown` Critical | No | No | Confused by an unrelated alert; included it as a possible cause in the evidence. |
 
 ---
@@ -193,19 +191,19 @@ Identified the deployment-down state from alerts and Prometheus, but validations
 ## 6. Observations
 
 - **Integrations** — Available integrations are limited and several are broken. As a result, the agent cites incorrect evidence as possible causes in its root cause analyses.
-- **Single-alert triage** — `investigate -i -` processes one alert per run. There is no fan-out when multiple alerts fire simultaneously; only the first alert in sort order is processed. As a workaround, alerts can be manually captured from the alerting source, a payload constructed, and OpenSRE invoked in a loop — which adds operational overhead rather than reducing it.
-- **EKS-first toolset** — All Kubernetes tools (`EKSListPodsTool`, `EKSPodLogsTool`) are EKS-specific. AKS and GKE integrations are pending. Full tool list: [Tools List](https://github.com/Tracer-Cloud/opensre/tree/main/app/tools).
-- **Code quality:** The project is in public alpha and intended for exploration only. Releases occur daily, averaging seven per week, with a large number of open issues.
+- **Single-alert triage** — `investigate -i -` processes one alert per run. There is no support for when multiple alerts fire simultaneously; only the first alert in sort order is processed. As a workaround, alerts can be manually captured from the alerting source, a payload constructed, and OpenSRE invoked in a loop — which adds operational overhead rather than reducing it.
+- **EKS-first toolset** — All Kubernetes tools for GKE, AKS are pending and still under development. Supports EKS integrations for now. Full tool list: [Tools List](https://github.com/Tracer-Cloud/opensre/tree/main/app/tools).
+- **Code quality:** The project is in public alpha and intended for exploration only. Releases occur daily, averaging seven per week, with a large number of open issues. Basic features cited in the documentation does not work like integrating of alert manager.
 - **Community:** GitHub issues and Discord.
 - **Documentation:** Incomplete and infrequently updated.
-- **Security posture:** Read-only by design; no cluster write permissions required. Security guardrails in development - [Reference](https://github.com/Tracer-Cloud/opensre/blob/236b4a37186cfc570bff4620fc56e44ee2893f12/app/guardrails/cli.py#L18)
+- **Security posture:** Read-only by design; no cluster write permissions required. Security guardrails in development, need further exploration - [Reference](https://github.com/Tracer-Cloud/opensre/blob/236b4a37186cfc570bff4620fc56e44ee2893f12/app/guardrails/cli.py#L18)
 - **Stability:** v0.1 reintroduced a previously resolved Helm 3 issue after the fix was applied. This shows, project lacks stability. Further details are in section 12.
 
 ---
 
 ## 7. Comparison with alternatives
 
-TODO
+At this stage, there is insufficient operational data available for OPENSRE to conduct a meaningful comparison against alternative solutions. This evaluation should be revisited after the project has matured and sufficient stability and usage data have been collected to enable an informed assessment.
 
 ---
 
@@ -214,7 +212,6 @@ TODO
 - No server, no cluster permissions, no persistent infrastructure required.
 - LLM-agnostic — compatible with any OpenAI-compatible provider.
 - Guardrails are being built from scratch with explicit rules. Requires further evaluation — [Guardrails](https://github.com/Tracer-Cloud/opensre/blob/599e9130a72bc2539a9314530f446dbedd743c69/app/guardrails/cli.py#L18).
-- Slack webhook delivery included out of the box.
 
 ---
 
@@ -222,7 +219,7 @@ TODO
 
 - Unable to correlate many failures due to insufficient integrations (e.g., Kubernetes API, Prometheus, Loki).
 - All remediation steps are manual. The tool functions more as a guidance document than an autonomous agent, largely due to limited context awareness resulting from broken data source integrations.
-- Single-alert triage per run — no fan-out when multiple services fail simultaneously. This limits effectiveness at scale with high alert volumes.
+- Single-alert triage per run — no support for when multiple services fail simultaneously. This limits effectiveness at scale with high alert volumes.
 - Documentation is not frequently updated and does not cover the integration steps in detail.
 - Switching to more capable models does not improve outcomes, as broken and missing integrations prevent adequate context from being built.
 
@@ -230,7 +227,7 @@ TODO
 
 ## 10. Cost analysis
 
-TODO
+Given the current integration inconsistencies and issues, conducting a comparative cost analysis for different LLM providers at this stage would not yield meaningful or reliable conclusions.
 
 ---
 
@@ -242,7 +239,7 @@ In its current state, OpenSRE is not a mature tool, and the Tracer Cloud SaaS pl
 - Alerting system integrations are resolved and stable.
 - Instead of relying on CLI, SAAS platform evolution over upcoming months.
 - Support for additional Kubernetes platforms (GKE, AKS, on-premises Kubernetes) is available.
-- Multi-alert fan-out is supported.
+- Multi-alert notification is supported.
 
 ---
 
@@ -251,5 +248,5 @@ In its current state, OpenSRE is not a mature tool, and the Tracer Cloud SaaS pl
 | Type | Link | Status |
 |------|------|--------|
 | Bug | [#1973 — Helm positional argument rejected; `setup helm` also broken; `verify` uses removed `--client` flag](https://github.com/Tracer-Cloud/opensre/issues/1973) | Re-opened |
-| Bug | [#2459 — psycopg2 not bundled; `verify postgresql` fails in binary install](https://github.com/Tracer-Cloud/opensre/issues/2459) | Closed as not planned; a separate issue has been opened ([Ref](https://github.com/Tracer-Cloud/opensre/pull/2490)) |
+| Bug | [#2459 — psycopg2 not bundled; `verify postgresql` fails in binary install](https://github.com/Tracer-Cloud/opensre/issues/2459) | Closed ([Ref](https://github.com/Tracer-Cloud/opensre/pull/2490)) |
 | Bug | [#2500 — Grafana integration: API key authentication fails with 401 Unauthorized](https://github.com/Tracer-Cloud/opensre/issues/2500) | Closed |

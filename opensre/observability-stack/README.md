@@ -144,23 +144,6 @@ metrics-generator and stored in Prometheus.
 - Service graph (from Tempo): `traces_service_graph_request_total`,
   `traces_service_graph_request_server_seconds_bucket`
 
-### Useful PromQL
-
-```promql
-# Gateway error rate
-sum(rate(http_requests_total{job="gateway",status=~"5.."}[1m]))
-  /
-sum(rate(http_requests_total{job="gateway"}[1m]))
-
-# p95 latency on the create path
-histogram_quantile(0.95,
-  sum by (le, route) (rate(http_request_duration_seconds_bucket{route="POST /items"}[5m])))
-
-# Cache hit ratio
-sum(rate(cache_lookups_total{result="hit"}[5m]))
-  /
-sum(rate(cache_lookups_total[5m]))
-```
 
 ## Iterating on code
 
@@ -178,24 +161,6 @@ make down          # uninstalls all Helm releases and deletes the app + monitori
 ```
 
 The cluster itself stays — `make down` only removes what `make up` installed.
-
-## Production hardening checklist
-
-This stack is intentionally simple for local learning. For production, you'd
-want at minimum:
-
-- **Loki**: switch to scalable mode (read/write/backend), object storage (S3/GCS), proper retention and compactor config.
-- **Tempo**: distributed mode, object storage, longer retention.
-- **Prometheus**: PVC for retention, Thanos or Mimir for long-term + HA.
-- **Postgres**: an operator (CloudNativePG, Zalando) with backups, PITR, replicas — not a hand-rolled StatefulSet.
-- **Redis**: Sentinel or cluster, persistence policy reviewed (this demo disables AOF/RDB on purpose).
-- **Secrets**: External Secrets Operator or sealed-secrets — never values.yaml.
-- **Network policy**: default-deny + explicit egress to Postgres/Redis/Tempo.
-- **Pod security**: restricted PSA labels, runAsNonRoot (already set), readOnlyRootFilesystem.
-- **PDBs and HPAs** on the services.
-- **Resource limits** sized from real load tests, not the placeholders here.
-- **Ingress + TLS** instead of `kubectl port-forward`.
-- **Sampling**: in production you don't keep 100% of traces — configure tail sampling in an OTel collector between apps and Tempo.
 
 ## Troubleshooting
 
