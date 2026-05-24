@@ -1,0 +1,77 @@
+gateway:
+  image:
+    repository: opensre/gateway
+    tag: dev
+    pullPolicy: IfNotPresent
+  replicas: 1
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      cpu: 200m
+      memory: 128Mi
+  service:
+    type: ClusterIP
+    port: 8080
+
+backend:
+  image:
+    repository: opensre/backend
+    tag: dev
+    pullPolicy: IfNotPresent
+  replicas: 2
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 256Mi
+  service:
+    type: ClusterIP
+    port: 8080
+
+postgres:
+  image: postgres:16-alpine
+  database: app
+  user: app
+  # Demo only — in real envs source this from an external secret manager
+  # (External Secrets Operator, Vault, sealed-secrets) instead of values.
+  password: app
+  storage: 1Gi
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+
+redis:
+  image: redis:7-alpine
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      cpu: 200m
+      memory: 128Mi
+
+tracing:
+  # Tempo OTLP HTTP endpoint (host:port, no scheme).
+  otlpEndpoint: tempo.monitoring.svc:4318
+
+# Prometheus Operator ServiceMonitor selector — must match the
+# `release` label of your kube-prometheus-stack install.
+serviceMonitor:
+  enabled: true
+  interval: 10s
+  releaseLabel: kps
+
+# Ship an app-overview Grafana dashboard as a ConfigMap. Picked up by the
+# Grafana sidecar (kps default: watches all namespaces for label
+# `grafana_dashboard: "1"`). UID `app-overview` matches the `dashboard_url`
+# baked into the PrometheusRule annotations.
+dashboard:
+  enabled: true

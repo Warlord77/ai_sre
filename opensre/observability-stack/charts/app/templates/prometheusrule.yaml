@@ -1,0 +1,338 @@
+{{- if .Values.serviceMonitor.enabled }}
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: app-rules
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "app.commonLabels" (dict "name" "app-rules" "root" $) | nindent 4 }}
+    release: {{ .Values.serviceMonitor.releaseLabel }}
+spec:
+  groups:
+    - name: app.sli.recording
+      interval: 30s
+      rules:
+        # Total request rate per service, 5m window.
+        - record: job:http_requests:rate5m
+          expr: sum by (job, namespace) (rate(http_requests_total[5m]))
+        # 5xx rate.
+        - record: job:http_requests_errors:rate5m
+          expr: sum by (job, namespace) (rate(http_requests_total{status=~"5.."}[5m]))
+        # Error ratio — zero when no 5xx errors exist (or when idle).
+        # `or (... * 0)` fills the numerator with 0 whenever there are no
+        # 5xx series, so the ratio shows 0% healthy rather than "No data".
+        - record: job:http_requests_error_ratio:5m
+          expr: |
+            (
+              (
+                sum by (job, namespace) (rate(http_requests_total{status=~"5.."}[5m]))
+                or
+                (sum by (job, namespace) (rate(http_requests_total[5m])) * 0)
+              )
+              /
+              sum by (job, namespace) (rate(http_requests_total[5m]))
+            )
+    # -------------------------------------------------------------------------
+    # SLI: availability alerts — 5m window only so alerts clear within
+    # 2-3 scrape intervals (~1-2m) after errors stop. No slow-burn rules:
+    # long lookback windows linger hours after chaos resets and are not
+    # useful for demo / chaos testing workflows.
+    # -------------------------------------------------------------------------
+    - name: app.sli.availability
+      rules:
+        - alert: AppGatewayHighErrorRate
+          expr: |
+            job:http_requests_error_ratio:5m{job="gateway"} > (14.4 * 0.005)
+            and
+            job:http_requests:rate5m{job="gateway"} > 0.05
+          for: 2m
+          labels:
+            severity: critical
+            team: app
+            service: gateway
+            source: alertmanager
+          annotations:
+            summary: 'Gateway 5xx error rate elevated'
+            description: |
+              Gateway 5xx rate is {{ "{{" }} $value | humanizePercentage {{ "}}" }} over 5m.
+              First checks: `kubectl -n app logs deploy/gateway --tail=200`,
+              check backend health, recent deploys, dependency status.
+            runbook_url: https://runbooks.example.local/AppGatewayHighErrorRate
+            dashboard_url: http://localhost:3000/d/app-overview
+
+        - alert: AppBackendHighErrorRate
+          expr: |
+            job:http_requests_error_ratio:5m{job="backend"} > (14.4 * 0.005)
+            and
+            job:http_requests:rate5m{job="backend"} > 0.05
+          for: 2m
+          labels:
+            severity: critical
+            team: app
+            service: backend
+            source: alertmanager
+          annotations:
+            summary: 'Backend 5xx error rate elevated'
+            description: |
+              Backend 5xx ratio over 5m is {{ "{{" }} $value | humanizePercentage {{ "}}" }}.
+              First checks: backend logs, Postgres connectivity, Redis,
+              recent migrations.
+            runbook_url: https://runbooks.example.local/AppBackendHighErrorRate
+            dashboard_url: http://localhost:3000/d/app-overview
+
+    # -------------------------------------------------------------------------
+    # Latency SLI: p99 of http_request_duration_seconds.
+    # Threshold: 1s p99 over 10m for the gateway. Aspirational on a small
+    # cluster but real for any user-facing service. Trade-off: a tighter
+    # threshold (e.g. 300ms) would catch regressions earlier but also
+    # flap on noisy neighbours during local development.
+    # -------------------------------------------------------------------------
+    - name: app.sli.latency
+      rules:
+        - alert: AppGatewayHighLatencyP99
+          expr: |
+            histogram_quantile(
+              0.99,
+              sum by (le, route) (
+                rate(http_request_duration_seconds_bucket{job="gateway"}[5m])
+              )
+            ) > 1
+          for: 10m
+          labels:
+            severity: warning
+            team: app
+            service: gateway
+            source: alertmanager
+          annotations:
+            summary: 'Gateway p99 latency > 1s'
+            description: |
+              Gateway p99 latency on route `{{ "{{" }} $labels.route {{ "}}" }}` is
+              {{ "{{" }} printf "%.2fs" $value {{ "}}" }} (threshold 1s, 10m window).
+              Check backend latency, DB connection saturation, recent deploys.
+            runbook_url: https://runbooks.example.local/AppGatewayHighLatencyP99
+            dashboard_url: http://localhost:3000/d/app-overview
+
+        - alert: AppBackendHighLatencyP99
+          expr: |
+            histogram_quantile(
+              0.99,
+              sum by (le, route) (
+                rate(http_request_duration_seconds_bucket{job="backend"}[5m])
+              )
+            ) > 0.5
+          for: 10m
+          labels:
+            severity: warning
+            team: app
+            service: backend
+            source: alertmanager
+          annotations:
+            summary: 'Backend p99 latency > 500ms'
+            description: |
+              Backend p99 latency on route `{{ "{{" }} $labels.route {{ "}}" }}` is
+              {{ "{{" }} printf "%.2fs" $value {{ "}}" }} (threshold 0.5s, 10m window).
+              Check Postgres slow queries, Redis hit ratio, pod CPU throttling.
+            runbook_url: https://runbooks.example.local/AppBackendHighLatencyP99
+            dashboard_url: http://localhost:3000/d/app-overview
+
+    # -------------------------------------------------------------------------
+    # Symptom-level: target is down for > 2m. This is the page that fires
+    # if the gateway or backend ServiceMonitor stops scraping (pod down,
+    # crashloop, OOM, network). Higher signal than a synthetic check.
+    # -------------------------------------------------------------------------
+    - name: app.availability
+      rules:
+        # `min by` so the alert fires only when ALL gateway instances are
+        # down — otherwise a rolling restart fires one alert per pod, each
+        # routed independently by Alertmanager.
+        # Fires for BOTH failure modes:
+        #   1. `up == 0` — pod up, /metrics scrape failing (network, crash, OOM).
+        #   2. `absent(up) == 1` — no scrape targets at all (Service has zero
+        #      endpoints: deployment scaled to 0, selector mismatch, namespace
+        #      deleted). Without this clause, scaling backend to 0 produces an
+        #      empty `up` vector and the alert stays silent — a known gap in
+        #      naive `up == 0` style availability alerts.
+        - alert: AppGatewayDown
+          expr: |
+            min by (namespace, job) (up{job="gateway"}) == 0
+            or
+            absent(up{job="gateway"}) == 1
+          for: 30s
+          labels:
+            severity: critical
+            team: app
+            service: gateway
+            source: alertmanager
+          annotations:
+            summary: 'Gateway target down — Prometheus cannot scrape /metrics'
+            description: |
+              Prometheus has been unable to scrape gateway for >2m
+              (scrape failing OR no endpoints exist). Likely pod down,
+              deployment scaled to 0, network, or container crash.
+              `kubectl -n app get pods,endpoints -l app.kubernetes.io/name=gateway`.
+            runbook_url: https://runbooks.example.local/AppGatewayDown
+            dashboard_url: http://localhost:3000/d/app-overview
+
+        - alert: AppBackendDown
+          expr: |
+            min by (namespace, job) (up{job="backend"}) == 0
+            or
+            absent(up{job="backend"}) == 1
+          for: 30s
+          labels:
+            severity: critical
+            team: app
+            service: backend
+            source: alertmanager
+          annotations:
+            summary: 'Backend target down — Prometheus cannot scrape /metrics'
+            description: |
+              Backend unscrapeable for >2m (scrape failing OR no endpoints).
+              Check pods, deployment replica count, recent deploy,
+              Postgres/Redis dependencies.
+              `kubectl -n app get pods,endpoints -l app.kubernetes.io/name=backend`.
+            runbook_url: https://runbooks.example.local/AppBackendDown
+            dashboard_url: http://localhost:3000/d/app-overview
+
+    # -------------------------------------------------------------------------
+    # Workload-level: replica mismatch, crashloops, OOMs, not-ready pods. These
+    # are app-namespace-scoped versions of generic kps rules but bumped to
+    # critical because they directly affect this user-facing service.
+    # -------------------------------------------------------------------------
+    - name: app.workload
+      rules:
+        # Deployment replica mismatch — pods not at desired count for >10m.
+        # 10m gives a slow image pull or rolling update room to converge
+        # without flapping.
+        - alert: AppDeploymentReplicasMismatch
+          expr: |
+            (
+              kube_deployment_spec_replicas{namespace="app", deployment=~"gateway|backend"}
+              != kube_deployment_status_replicas_available{namespace="app", deployment=~"gateway|backend"}
+            )
+          for: 10m
+          labels:
+            severity: warning
+            team: app
+            source: alertmanager
+          annotations:
+            summary: 'Deployment {{ "{{" }} $labels.deployment {{ "}}" }} has fewer ready replicas than desired'
+            description: |
+              Deployment `{{ "{{" }} $labels.deployment {{ "}}" }}` in `{{ "{{" }} $labels.namespace {{ "}}" }}`
+              has been short of replicas for >10m. Likely scheduling
+              issue, image pull error, or readiness probe failing.
+            runbook_url: https://runbooks.example.local/AppDeploymentReplicasMismatch
+            dashboard_url: http://localhost:3000/d/k8s-views-deployment
+
+        # CrashLooping in our namespace. The kps default rule fires across
+        # all namespaces with severity=warning; this app-specific one is
+        # critical because it directly hurts customers.
+        #
+        # Note: `kube_pod_container_status_restarts_total` is a monotonic
+        # counter, so a raw `> N` comparison is permanently true once a pod
+        # has restarted N times in its lifetime. Use `increase()` over a
+        # rolling window so the alert reflects *current* crashloop behaviour.
+        - alert: AppPodCrashLooping
+          expr: |
+            increase(kube_pod_container_status_restarts_total{namespace="app"}[5m]) > 2
+          for: 1m
+          labels:
+            severity: critical
+            team: app
+            source: alertmanager
+          annotations:
+            summary: 'Pod {{ "{{" }} $labels.pod {{ "}}" }} is restarting repeatedly'
+            description: |
+              Container `{{ "{{" }} $labels.container {{ "}}" }}` in pod `{{ "{{" }} $labels.pod {{ "}}" }}`
+              restarted {{ "{{" }} printf "%.0f" $value {{ "}}" }} times in the last 5m. Likely panic on
+              startup or OOM. `kubectl -n app describe pod {{ "{{" }} $labels.pod {{ "}}" }}`
+              and `kubectl -n app logs {{ "{{" }} $labels.pod {{ "}}" }} -p`.
+            runbook_url: https://runbooks.example.local/AppPodCrashLooping
+            dashboard_url: http://localhost:3000/d/k8s-views-pods
+
+        # OOMKilled detector — captures the most recent termination reason.
+        - alert: AppContainerOOMKilled
+          expr: |
+            increase(kube_pod_container_status_terminated_reason{namespace="app", reason="OOMKilled"}[10m]) > 0
+          for: 1m
+          labels:
+            severity: critical
+            team: app
+            source: alertmanager
+          annotations:
+            summary: 'Container {{ "{{" }} $labels.container {{ "}}" }} OOMKilled'
+            description: |
+              Container `{{ "{{" }} $labels.container {{ "}}" }}` in pod `{{ "{{" }} $labels.pod {{ "}}" }}`
+              was OOMKilled in the last 10m. Increase memory limit or
+              find the leak.
+            runbook_url: https://runbooks.example.local/AppContainerOOMKilled
+            dashboard_url: http://localhost:3000/d/k8s-views-pods
+
+        # Pod stuck not-ready beyond 15m — strong signal of a real problem.
+        - alert: AppPodNotReady
+          expr: |
+            sum by (namespace, pod) (
+              kube_pod_status_phase{namespace="app", phase=~"Pending|Unknown"}
+            ) > 0
+            or
+            sum by (namespace, pod) (
+              kube_pod_status_ready{namespace="app", condition="false"}
+            ) > 0
+          for: 15m
+          labels:
+            severity: warning
+            team: app
+            source: alertmanager
+          annotations:
+            summary: 'Pod {{ "{{" }} $labels.pod {{ "}}" }} not Ready for >15m'
+            description: |
+              Pod `{{ "{{" }} $labels.pod {{ "}}" }}` in `{{ "{{" }} $labels.namespace {{ "}}" }}` has been
+              non-Ready for >15m. Check `kubectl describe` and readiness
+              probe output.
+            runbook_url: https://runbooks.example.local/AppPodNotReady
+            dashboard_url: http://localhost:3000/d/k8s-views-pods
+
+    # -------------------------------------------------------------------------
+    # App dependencies — Postgres + Redis. No exporters installed (out of
+    # scope for now), so these are based purely on pod / container state via
+    # kube-state-metrics. Real production wants postgres_exporter +
+    # redis_exporter for query-level visibility.
+    # -------------------------------------------------------------------------
+    - name: app.dependencies
+      rules:
+        - alert: AppPostgresDown
+          expr: |
+            kube_statefulset_status_replicas_ready{namespace="app", statefulset="postgres"} == 0
+          for: 30s
+          labels:
+            severity: critical
+            team: app
+            dependency: postgres
+            source: alertmanager
+          annotations:
+            summary: 'Postgres pod not Ready'
+            description: |
+              Postgres StatefulSet has 0 ready replicas in `app` namespace.
+              Backend will be failing reads/writes. Check
+              `kubectl -n app describe pod postgres-0`.
+            runbook_url: https://runbooks.example.local/AppPostgresDown
+            dashboard_url: http://localhost:3000/d/app-overview
+
+        - alert: AppRedisDown
+          expr: |
+            kube_deployment_status_replicas_available{namespace="app", deployment="redis"} == 0
+          for: 30s
+          labels:
+            severity: warning   # Redis is a cache; backend degrades, doesn't die
+            team: app
+            dependency: redis
+            source: alertmanager
+          annotations:
+            summary: 'Redis pod not Ready'
+            description: |
+              Redis is unavailable. Backend will see elevated cache misses
+              and may show extra Postgres load. Service stays up but
+              slower; investigate within working hours.
+            runbook_url: https://runbooks.example.local/AppRedisDown
+            dashboard_url: http://localhost:3000/d/app-overview
+{{- end }}

@@ -1,0 +1,100 @@
+{
+  "version": "4",
+  "groupKey": "{}/{alertname=\"AppPostgresDown\",namespace=\"app\",severity=\"critical\"}:{alertname=\"AppPostgresDown\"}",
+  "truncatedAlerts": 0,
+  "status": "firing",
+  "receiver": "slack-critical",
+  "groupLabels": {
+    "alertname": "AppPostgresDown",
+    "namespace": "app",
+    "severity": "critical"
+  },
+  "commonLabels": {
+    "alertname": "AppPostgresDown",
+    "cluster": "docker-desktop",
+    "container": "kube-state-metrics",
+    "dependency": "postgres",
+    "endpoint": "http",
+    "environment": "dev",
+    "instance": "10.244.1.18:8080",
+    "job": "kube-state-metrics",
+    "namespace": "app",
+    "pod": "kps-kube-state-metrics-7cb944fd66-mm6cn",
+    "prometheus": "monitoring/kps-kube-prometheus-stack-prometheus",
+    "service": "kps-kube-state-metrics",
+    "severity": "critical",
+    "source": "alertmanager",
+    "statefulset": "postgres",
+    "team": "app"
+  },
+  "commonAnnotations": {
+    "summary": "Postgres pod not Ready",
+    "description": "Postgres StatefulSet has 0 ready replicas in `app` namespace.\nBackend will be failing reads/writes. Check\n`kubectl -n app describe pod postgres-0`.\n",
+    "runbook_url": "https://runbooks.example.local/AppPostgresDown",
+    "dashboard_url": "http://localhost:3000/d/app-overview"
+  },
+  "externalURL": "http://kps-kube-prometheus-stack-alertmanager.monitoring:9093",
+  "alerts": [
+    {
+      "status": "firing",
+      "labels": {
+        "alertname": "AppPostgresDown",
+        "cluster": "docker-desktop",
+        "container": "kube-state-metrics",
+        "dependency": "postgres",
+        "endpoint": "http",
+        "environment": "dev",
+        "instance": "10.244.1.18:8080",
+        "job": "kube-state-metrics",
+        "namespace": "app",
+        "pod": "kps-kube-state-metrics-7cb944fd66-mm6cn",
+        "prometheus": "monitoring/kps-kube-prometheus-stack-prometheus",
+        "service": "kps-kube-state-metrics",
+        "severity": "critical",
+        "source": "alertmanager",
+        "statefulset": "postgres",
+        "team": "app"
+      },
+      "annotations": {
+        "summary": "Postgres pod not Ready",
+        "description": "Postgres StatefulSet has 0 ready replicas in `app` namespace.\nBackend will be failing reads/writes. Check\n`kubectl -n app describe pod postgres-0`.\n",
+        "runbook_url": "https://runbooks.example.local/AppPostgresDown",
+        "dashboard_url": "http://localhost:3000/d/app-overview"
+      },
+      "startsAt": "2026-05-22T05:42:48.319Z",
+      "endsAt": "0001-01-01T00:00:00Z",
+      "generatorURL": "http://kps-kube-prometheus-stack-prometheus.monitoring:9090/graph?g0.expr=kube_statefulset_status_replicas_ready%7Bnamespace%3D%22app%22%2Cstatefulset%3D%22postgres%22%7D+%3D%3D+0&g0.tab=1",
+      "fingerprint": "8e85cec14806ed73"
+    },
+    {
+      "status": "firing",
+      "labels": {
+        "alertname": "AppDeploymentReplicasMismatch",
+        "cluster": "docker-desktop",
+        "container": "kube-state-metrics",
+        "deployment": "backend",
+        "endpoint": "http",
+        "environment": "dev",
+        "instance": "10.244.1.18:8080",
+        "job": "kube-state-metrics",
+        "namespace": "app",
+        "pod": "kps-kube-state-metrics-7cb944fd66-mm6cn",
+        "prometheus": "monitoring/kps-kube-prometheus-stack-prometheus",
+        "service": "kps-kube-state-metrics",
+        "severity": "warning",
+        "source": "alertmanager",
+        "team": "app"
+      },
+      "annotations": {
+        "summary": "Deployment backend has fewer ready replicas than desired",
+        "description": "Deployment `backend` in `app`\nhas been short of replicas for >10m. Likely scheduling\nissue, image pull error, or readiness probe failing.\n",
+        "runbook_url": "https://runbooks.example.local/AppDeploymentReplicasMismatch",
+        "dashboard_url": "http://localhost:3000/d/k8s-views-deployment"
+      },
+      "startsAt": "2026-05-22T05:51:11.865Z",
+      "endsAt": "0001-01-01T00:00:00Z",
+      "generatorURL": "http://kps-kube-prometheus-stack-prometheus.monitoring:9090/graph?g0.expr=%28kube_deployment_spec_replicas%7Bdeployment%3D~%22gateway%7Cbackend%22%2Cnamespace%3D%22app%22%7D+%21%3D+kube_deployment_status_replicas_available%7Bdeployment%3D~%22gateway%7Cbackend%22%2Cnamespace%3D%22app%22%7D%29&g0.tab=1",
+      "fingerprint": "72f3fb538be87c27"
+    }
+  ]
+}

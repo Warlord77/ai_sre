@@ -1,0 +1,424 @@
+{{- if and .Values.serviceMonitor.enabled .Values.dashboard.enabled }}
+# =============================================================================
+# App overview Grafana dashboard — shipped as a ConfigMap, auto-loaded by the
+# Grafana sidecar in kube-prometheus-stack (watches all namespaces for the
+# `grafana_dashboard: "1"` label).
+#
+# Designed to be the single pane for *induced-failure testing*: every alert in
+# prometheusrule.yaml has a corresponding panel here so when you inject 5xx,
+# latency, crashloops, or kill a dependency you can watch the metric cross
+# the same threshold the alert uses.
+#
+# Dashboard UID `app-overview` matches the `dashboard_url:` in alert
+# annotations — clicking a Slack alert link lands here.
+#
+# Annotation overlay queries `ALERTS{namespace="app", alertstate="firing"}`
+# so firing windows show as vertical bands across every chart.
+# =============================================================================
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app-overview-dashboard
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "app.commonLabels" (dict "name" "app-overview-dashboard" "root" $) | nindent 4 }}
+    grafana_dashboard: "1"
+data:
+  app-overview.json: |-
+    {
+      "uid": "app-overview",
+      "title": "App Overview",
+      "tags": ["opensre", "app", "slo"],
+      "schemaVersion": 39,
+      "version": 1,
+      "editable": true,
+      "graphTooltip": 1,
+      "refresh": "10s",
+      "time": {"from": "now-30m", "to": "now"},
+      "timepicker": {"refresh_intervals": ["5s","10s","30s","1m","5m","15m","30m","1h"]},
+      "templating": {
+        "list": [
+          {
+            "name": "datasource",
+            "type": "datasource",
+            "label": "Datasource",
+            "query": "prometheus",
+            "hide": 0,
+            "current": {"text": "Prometheus", "value": "Prometheus"}
+          }
+        ]
+      },
+      "annotations": {
+        "list": [
+          {
+            "name": "App alerts firing",
+            "datasource": {"type": "prometheus", "uid": "$datasource"},
+            "enable": true,
+            "iconColor": "red",
+            "expr": "ALERTS{namespace=\"app\", alertstate=\"firing\"}",
+            "titleFormat": "{{`{{`}}alertname{{`}}`}}",
+            "tagKeys": "severity,service,alertname"
+          }
+        ]
+      },
+      "panels": [
+        {
+          "id": 1,
+          "type": "stat",
+          "title": "Gateway RPS",
+          "gridPos": {"x": 0, "y": 0, "w": 4, "h": 4},
+          "datasource": {"type": "prometheus", "uid": "$datasource"},
+          "targets": [
+            {"expr": "job:http_requests:rate5m{job=\"gateway\"}", "legendFormat": "rps", "refId": "A"}
+          ],
+          "options": {"reduceOptions": {"calcs": ["lastNotNull"]}, "colorMode": "value", "graphMode": "area"},
+          "fieldConfig": {"defaults": {"unit": "reqps", "decimals": 2}}
+        },
+        {
+          "id": 2,
+          "type": "stat",
+          "title": "Backend RPS",
+          "gridPos": {"x": 4, "y": 0, "w": 4, "h": 4},
+          "datasource": {"type": "prometheus", "uid": "$datasource"},
+          "targets": [
+            {"expr": "job:http_requests:rate5m{job=\"backend\"}", "legendFormat": "rps", "refId": "A"}
+          ],
+          "options": {"reduceOptions": {"calcs": ["lastNotNull"]}, "colorMode": "value", "graphMode": "area"},
+          "fieldConfig": {"defaults": {"unit": "reqps", "decimals": 2}}
+        },
+        {
+          "id": 3,
+          "type": "stat",
+          "title": "Gateway 5xx % (5m)",
+          "gridPos": {"x": 8, "y": 0, "w": 4, "h": 4},
+          "datasource": {"type": "prometheus", "uid": "$datasource"},
+          "targets": [
+            {"expr": "job:http_requests_error_ratio:5m{job=\"gateway\"}", "refId": "A"}
+          ],
+          "options": {"reduceOptions": {"calcs": ["lastNotNull"]}, "colorMode": "background", "graphMode": "area"},
+          "fieldConfig": {
+            "defaults": {
+              "unit": "percentunit",
+              "decimals": 2,
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {"color": "green", "value": null},
+                  {"color": "yellow", "value": 0.03},
+                  {"color": "red", "value": 0.072}
+                ]
+              }
+            }
+          }
+        },
+        {
+          "id": 4,
+          "type": "stat",
+          "title": "Backend 5xx % (5m)",
+          "gridPos": {"x": 12, "y": 0, "w": 4, "h": 4},
+          "datasource": {"type": "prometheus", "uid": "$datasource"},
+          "targets": [
+            {"expr": "job:http_requests_error_ratio:5m{job=\"backend\"}", "refId": "A"}
+          ],
+          "options": {"reduceOptions": {"calcs": ["lastNotNull"]}, "colorMode": "background", "graphMode": "area"},
+          "fieldConfig": {
+            "defaults": {
+              "unit": "percentunit",
+              "decimals": 2,
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {"color": "green", "value": null},
+                  {"color": "yellow", "value": 0.03},
+                  {"color": "red", "value": 0.072}
+                ]
+              }
+            }
+          }
+        },
+        {
+          "id": 5,
+          "type": "stat",
+          "title": "Gateway p99 latency (5m)",
+          "gridPos": {"x": 16, "y": 0, "w": 4, "h": 4},
+          "datasource": {"type": "prometheus", "uid": "$datasource"},
+          "targets": [
+            {"expr": "histogram_quantile(0.99, sum by (le) (rate(http_request_duration_seconds_bucket{job=\"gateway\"}[5m])))", "refId": "A"}
+          ],
+          "options": {"reduceOptions": {"calcs": ["lastNotNull"]}, "colorMode": "background", "graphMode": "area"},
+          "fieldConfig": {
+            "defaults": {
+              "unit": "s",
+              "decimals": 3,
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {"color": "green", "value": null},
+                  {"color": "yellow", "value": 0.5},
+                  {"color": "red", "value": 1}
+                ]
+              }
+            }
+          }
+        },
+        {
+          "id": 6,
+          "type": "stat",
+          "title": "Backend p99 latency (5m)",
+          "gridPos": {"x": 20, "y": 0, "w": 4, "h": 4},
+          "datasource": {"type": "prometheus", "uid": "$datasource"},
+          "targets": [
+            {"expr": "histogram_quantile(0.99, sum by (le) (rate(http_request_duration_seconds_bucket{job=\"backend\"}[5m])))", "refId": "A"}
+          ],
+          "options": {"reduceOptions": {"calcs": ["lastNotNull"]}, "colorMode": "background", "graphMode": "area"},
+          "fieldConfig": {
+            "defaults": {
+              "unit": "s",
+              "decimals": 3,
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {"color": "green", "value": null},
+                  {"color": "yellow", "value": 0.25},
+                  {"color": "red", "value": 0.5}
+                ]
+              }
+            }
+          }
+        },
+        {
+          "id": 10,
+          "type": "timeseries",
+          "title": "Gateway 5xx ratio — fast-burn (5m) & slow-burn (1h)",
+          "description": "Threshold lines: 7.2% (fast-burn page) and 3% (slow-burn ticket). 99.5% SLO, 0.5% error budget.",
+          "gridPos": {"x": 0, "y": 4, "w": 12, "h": 8},
+          "datasource": {"type": "prometheus", "uid": "$datasource"},
+          "targets": [
+            {"expr": "job:http_requests_error_ratio:5m{job=\"gateway\"}", "legendFormat": "5m ratio", "refId": "A"},
+            {"expr": "job:http_requests_error_ratio:1h{job=\"gateway\"}", "legendFormat": "1h ratio", "refId": "B"}
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "percentunit",
+              "decimals": 2,
+              "custom": {"drawStyle": "line", "lineWidth": 2, "fillOpacity": 10},
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {"color": "green", "value": null},
+                  {"color": "yellow", "value": 0.03},
+                  {"color": "red", "value": 0.072}
+                ]
+              }
+            }
+          },
+          "options": {"legend": {"showLegend": true, "displayMode": "table", "placement": "bottom", "calcs": ["lastNotNull", "max"]}, "tooltip": {"mode": "multi"}}
+        },
+        {
+          "id": 11,
+          "type": "timeseries",
+          "title": "Backend 5xx ratio — fast-burn (5m) & slow-burn (1h)",
+          "description": "Threshold lines: 7.2% (fast-burn page) and 3% (slow-burn ticket). 99.5% SLO, 0.5% error budget.",
+          "gridPos": {"x": 12, "y": 4, "w": 12, "h": 8},
+          "datasource": {"type": "prometheus", "uid": "$datasource"},
+          "targets": [
+            {"expr": "job:http_requests_error_ratio:5m{job=\"backend\"}", "legendFormat": "5m ratio", "refId": "A"},
+            {"expr": "job:http_requests_error_ratio:1h{job=\"backend\"}", "legendFormat": "1h ratio", "refId": "B"}
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "percentunit",
+              "decimals": 2,
+              "custom": {"drawStyle": "line", "lineWidth": 2, "fillOpacity": 10},
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {"color": "green", "value": null},
+                  {"color": "yellow", "value": 0.03},
+                  {"color": "red", "value": 0.072}
+                ]
+              }
+            }
+          },
+          "options": {"legend": {"showLegend": true, "displayMode": "table", "placement": "bottom", "calcs": ["lastNotNull", "max"]}, "tooltip": {"mode": "multi"}}
+        },
+        {
+          "id": 20,
+          "type": "timeseries",
+          "title": "Gateway latency p50 / p95 / p99 (per route)",
+          "description": "Alert threshold: p99 > 1s for 10m.",
+          "gridPos": {"x": 0, "y": 12, "w": 12, "h": 8},
+          "datasource": {"type": "prometheus", "uid": "$datasource"},
+          "targets": [
+            {"expr": "histogram_quantile(0.50, sum by (le, route) (rate(http_request_duration_seconds_bucket{job=\"gateway\"}[5m])))", "legendFormat": "p50 {{`{{`}}route{{`}}`}}", "refId": "A"},
+            {"expr": "histogram_quantile(0.95, sum by (le, route) (rate(http_request_duration_seconds_bucket{job=\"gateway\"}[5m])))", "legendFormat": "p95 {{`{{`}}route{{`}}`}}", "refId": "B"},
+            {"expr": "histogram_quantile(0.99, sum by (le, route) (rate(http_request_duration_seconds_bucket{job=\"gateway\"}[5m])))", "legendFormat": "p99 {{`{{`}}route{{`}}`}}", "refId": "C"}
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "s",
+              "decimals": 3,
+              "custom": {"drawStyle": "line", "lineWidth": 1, "fillOpacity": 5},
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {"color": "green", "value": null},
+                  {"color": "red", "value": 1}
+                ]
+              }
+            }
+          },
+          "options": {"legend": {"showLegend": true, "displayMode": "table", "placement": "bottom", "calcs": ["lastNotNull", "max"]}, "tooltip": {"mode": "multi"}}
+        },
+        {
+          "id": 21,
+          "type": "timeseries",
+          "title": "Backend latency p50 / p95 / p99 (per route)",
+          "description": "Alert threshold: p99 > 0.5s for 10m.",
+          "gridPos": {"x": 12, "y": 12, "w": 12, "h": 8},
+          "datasource": {"type": "prometheus", "uid": "$datasource"},
+          "targets": [
+            {"expr": "histogram_quantile(0.50, sum by (le, route) (rate(http_request_duration_seconds_bucket{job=\"backend\"}[5m])))", "legendFormat": "p50 {{`{{`}}route{{`}}`}}", "refId": "A"},
+            {"expr": "histogram_quantile(0.95, sum by (le, route) (rate(http_request_duration_seconds_bucket{job=\"backend\"}[5m])))", "legendFormat": "p95 {{`{{`}}route{{`}}`}}", "refId": "B"},
+            {"expr": "histogram_quantile(0.99, sum by (le, route) (rate(http_request_duration_seconds_bucket{job=\"backend\"}[5m])))", "legendFormat": "p99 {{`{{`}}route{{`}}`}}", "refId": "C"}
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "s",
+              "decimals": 3,
+              "custom": {"drawStyle": "line", "lineWidth": 1, "fillOpacity": 5},
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {"color": "green", "value": null},
+                  {"color": "red", "value": 0.5}
+                ]
+              }
+            }
+          },
+          "options": {"legend": {"showLegend": true, "displayMode": "table", "placement": "bottom", "calcs": ["lastNotNull", "max"]}, "tooltip": {"mode": "multi"}}
+        },
+        {
+          "id": 30,
+          "type": "state-timeline",
+          "title": "Scrape health — up{job=gateway|backend}",
+          "description": "0 = scrape failing. AppGatewayDown / AppBackendDown fire when this stays 0 for 2m.",
+          "gridPos": {"x": 0, "y": 20, "w": 12, "h": 6},
+          "datasource": {"type": "prometheus", "uid": "$datasource"},
+          "targets": [
+            {"expr": "up{namespace=\"app\", job=~\"gateway|backend\"}", "legendFormat": "{{`{{`}}job{{`}}`}}/{{`{{`}}pod{{`}}`}}", "refId": "A"}
+          ],
+          "options": {"showValue": "never", "alignValue": "center", "legend": {"showLegend": true, "displayMode": "list", "placement": "bottom"}},
+          "fieldConfig": {
+            "defaults": {
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {"color": "red", "value": null},
+                  {"color": "green", "value": 1}
+                ]
+              }
+            }
+          }
+        },
+        {
+          "id": 31,
+          "type": "timeseries",
+          "title": "Container restarts (15m increase) — AppPodCrashLooping driver",
+          "description": "Alert fires when this > 2 over 15m. Watch this when you kill -9 a pod or break a probe.",
+          "gridPos": {"x": 12, "y": 20, "w": 12, "h": 6},
+          "datasource": {"type": "prometheus", "uid": "$datasource"},
+          "targets": [
+            {"expr": "increase(kube_pod_container_status_restarts_total{namespace=\"app\"}[15m])", "legendFormat": "{{`{{`}}pod{{`}}`}}/{{`{{`}}container{{`}}`}}", "refId": "A"}
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "decimals": 0,
+              "custom": {"drawStyle": "line", "lineWidth": 2, "fillOpacity": 10},
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {"color": "green", "value": null},
+                  {"color": "red", "value": 2}
+                ]
+              }
+            }
+          },
+          "options": {"legend": {"showLegend": true, "displayMode": "table", "placement": "bottom", "calcs": ["lastNotNull", "max"]}, "tooltip": {"mode": "multi"}}
+        },
+        {
+          "id": 40,
+          "type": "table",
+          "title": "Firing alerts (namespace=app)",
+          "description": "Live view of what Alertmanager is seeing right now.",
+          "gridPos": {"x": 0, "y": 26, "w": 12, "h": 6},
+          "datasource": {"type": "prometheus", "uid": "$datasource"},
+          "targets": [
+            {"expr": "ALERTS{namespace=\"app\", alertstate=\"firing\"}", "format": "table", "instant": true, "refId": "A"}
+          ],
+          "transformations": [
+            {"id": "organize", "options": {"excludeByName": {"Time": true, "Value": true, "__name__": true, "endpoint": true, "instance": true, "container": true, "prometheus": true}, "indexByName": {"alertname": 0, "severity": 1, "service": 2, "pod": 3, "alertstate": 4}}}
+          ],
+          "options": {"showHeader": true}
+        },
+        {
+          "id": 41,
+          "type": "timeseries",
+          "title": "Backend cache hit ratio",
+          "description": "Backend uses Redis as a read-through cache. Drop = Redis down or cache being thrashed.",
+          "gridPos": {"x": 12, "y": 26, "w": 8, "h": 6},
+          "datasource": {"type": "prometheus", "uid": "$datasource"},
+          "targets": [
+            {"expr": "( sum(rate(cache_lookups_total{result=\"hit\"}[5m])) or (sum(rate(cache_lookups_total[5m])) * 0) ) / clamp_min(sum(rate(cache_lookups_total[5m])), 0.0001)", "legendFormat": "hit ratio", "refId": "A"}
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "percentunit",
+              "decimals": 2,
+              "min": 0,
+              "max": 1,
+              "custom": {"drawStyle": "line", "lineWidth": 2, "fillOpacity": 10}
+            }
+          },
+          "options": {"legend": {"showLegend": false}, "tooltip": {"mode": "single"}}
+        },
+        {
+          "id": 42,
+          "type": "stat",
+          "title": "Postgres ready",
+          "gridPos": {"x": 20, "y": 26, "w": 4, "h": 3},
+          "datasource": {"type": "prometheus", "uid": "$datasource"},
+          "targets": [
+            {"expr": "kube_statefulset_status_replicas_ready{namespace=\"app\", statefulset=\"postgres\"}", "refId": "A"}
+          ],
+          "options": {"reduceOptions": {"calcs": ["lastNotNull"]}, "colorMode": "background", "textMode": "value"},
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "decimals": 0,
+              "thresholds": {"mode": "absolute", "steps": [{"color": "red", "value": null}, {"color": "green", "value": 1}]}
+            }
+          }
+        },
+        {
+          "id": 43,
+          "type": "stat",
+          "title": "Redis ready",
+          "gridPos": {"x": 20, "y": 29, "w": 4, "h": 3},
+          "datasource": {"type": "prometheus", "uid": "$datasource"},
+          "targets": [
+            {"expr": "kube_deployment_status_replicas_available{namespace=\"app\", deployment=\"redis\"}", "refId": "A"}
+          ],
+          "options": {"reduceOptions": {"calcs": ["lastNotNull"]}, "colorMode": "background", "textMode": "value"},
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "decimals": 0,
+              "thresholds": {"mode": "absolute", "steps": [{"color": "red", "value": null}, {"color": "green", "value": 1}]}
+            }
+          }
+        }
+      ]
+    }
+{{- end }}
