@@ -198,8 +198,8 @@ Identified the deployment-down state from alerts and Prometheus, but validations
 - **Code quality:** The project is in public alpha and intended for exploration only. Releases occur daily, averaging seven per week, with a large number of open issues.
 - **Community:** GitHub issues and Discord.
 - **Documentation:** Incomplete and infrequently updated.
-- **Security posture:** Read-only by design; no cluster write permissions required. Security guardrails in development -[Reference](https://github.com/Tracer-Cloud/opensre/blob/236b4a37186cfc570bff4620fc56e44ee2893f12/app/guardrails/cli.py#L18)
-- **Stability:** v0.1 reintroduced a previously resolved Helm 3 issue after the fix was applied. Further details are in section 12. [Issue Reference](https://github.com/Tracer-Cloud/opensre/issues/1973).
+- **Security posture:** Read-only by design; no cluster write permissions required. Security guardrails in development - [Reference](https://github.com/Tracer-Cloud/opensre/blob/236b4a37186cfc570bff4620fc56e44ee2893f12/app/guardrails/cli.py#L18)
+- **Stability:** v0.1 reintroduced a previously resolved Helm 3 issue after the fix was applied. This shows, project lacks stability. Further details are in section 12.
 
 ---
 
