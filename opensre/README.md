@@ -24,7 +24,7 @@ It comes as a CLI and SaaS offering from Tracer Cloud. Rather than remediating p
 
 ### 2.1 High-Level Design (HLD)
 
-![Stack architecture](.assets/architecture.png)
+![Stack architecture](.assets/architecture_opensre.png)
 
 Component overview:
 - **Agent** — OpenSRE agent wraps tools for different work (Grafana metrics, Alertmanager alerts, logs, Helm releases) allowing LLMs to invoke them directly.
@@ -74,6 +74,9 @@ make chaos-redis-down       Scale Redis to 0 — triggers AppRedisDown
 make chaos-gateway-down     Scale gateway to 0 — triggers AppGatewayDown
 make chaos-backend-down     Scale backend to 0 — triggers AppBackendDown
 make chaos-reset            Restore stack to baseline
+make load-start             Start sustained background load against gateway (feeds Grafana metrics)
+make load-stop              Stop the background load generator
+make chaos-full-run         Run all chaos scenarios sequentially with investigate + reset between each
 ```
 
 </details>
@@ -91,6 +94,8 @@ Alert payload from stdin must be a JSON object.
 **2. Alert firing delay** — after `make chaos-<target>`, wait a moment for the alert to fire before running `make investigate-stdin`.
 
 **3. helm integration fails** — `helm version --client failed (exit 1): Error: unknown flag: --client`
+
+**4. PostgreSQL integration fails** — Dependency on psycopg installed but doesn't come bnundled with OpenSRE binary. Please refer section 12 for the related issue filed.
 
 ---
 
