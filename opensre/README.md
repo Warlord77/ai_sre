@@ -15,8 +15,7 @@
 ## 1. What problem does this tool solve?
 
 OpenSRE is an AI SRE agent that integrates with alerting systems (Alertmanager, Azure Monitor, etc.) and produces root cause analysis with suggested remediation steps.
-It comes as a CLI and SaaS offering from Tracer Cloud. Rather than remediating problems directly, it primarily provides root cause analysis and guidance based on integrated data sources. For this POC we evaluated the CLI as SAAS platform utilises this agent itself and platform is currently under development.
-
+It is available as both a CLI and a SaaS offering from Tracer Cloud. Rather than remediating problems directly, it primarily provides root cause analysis and guidance based on integrated data sources. For this proof of concept, the CLI was evaluated, as the SaaS platform itself utilises this agent and platform remains under active development.
 
 ---
 
@@ -24,35 +23,36 @@ It comes as a CLI and SaaS offering from Tracer Cloud. Rather than remediating p
 
 ### 2.1 High-Level Design (HLD)
 
-![Stack architecture](.assets/architecture_opensre.png)
+![Stack architecture](.assets/opensre_architecture.png)
 
 Component overview:
-- **Agent** — OpenSRE agent wraps tools for different work (Grafana metrics, Alertmanager alerts, logs, Helm releases) allowing LLMs to invoke them directly.
-- **LLM providers** — OpenRouter, Anthropic, OpenAI-compatible. Tested with **Claude Code** integration (`claude-code` provider) — see [opensre Claude Code setup docs](https://www.opensre.com/docs/) for configuration steps
-- **Data sources** — Alertmanager API, Helm releases, local log files, embedded SRE Knowledge Base. Tested on Alertmanager, Grafana, Helm, PostgreSQL integration.
-- **No Kubernetes API** — `kubectl` unavailable; Helm is the only cluster data source.
+- **Agent** — The OpenSRE agent wraps tools for different workloads (Grafana metrics, Alertmanager alerts, logs, Helm releases), allowing LLMs to invoke them directly. This is also currently under development because currently it does not listen to alert systems actively but those need to be passed manually using curl etc. In this evaluation, Alertmanager was queried through curl and the alert was passed to OpenSRE.
+- **LLM providers** — OpenRouter, Anthropic, and OpenAI-compatible providers. Tested with **Claude Code** integration (`claude-code` provider) — see [opensre Claude Code setup docs](https://www.opensre.com/docs/llm-providers#claude-code) for configuration steps.
+- **Data sources** — Alertmanager API, Helm releases, local log files, and an embedded SRE Knowledge Base. Tested with Alertmanager, Grafana, Helm, and PostgreSQL integrations. Knowledge Base integration is yet to be validated. Still under development to listen alerts actively instead of user passing in those alerts.
+- **No Kubernetes API** — `kubectl` is unavailable; Helm is the only cluster data source. So, cannot understand anything about the resources deployed using manifests, kustomize etc.
 - **Deployment** — single Homebrew-installed binary, local CLI.
+
 ---
 
 ## 3. Setup and reproduction steps
 
 ### Prerequisites
 
-- Homebrew
-- Docker Desktop with Kubernetes enabled (`docker-desktop` context)
-- A supported LLM provider configured. This evaluation uses **Claude Code** (`LLM_PROVIDER=claude-code`). For other providers see the [opensre provider docs](https://www.opensre.com/docs/integrations-overview)
-- Helm, kubectl, make
-- Slack integration for alertmanager and OpenSre needs to be done separately [Slack Integration Guide](https://www.opensre.com/docs/messaging/slack). The current helm chart installation expect the secret named as `grafana-slack` to be created first with SLACK_TOKEN key [Reference](./observability-stack/platform/values-kube-prometheus-stack.yaml)
+- Homebrew, Helm, kubectl, make
+- Docker Desktop with Kubernetes enabled, or any other Kubernetes engine.
+- A supported LLM provider configured. This evaluation uses **Claude Code** (`LLM_PROVIDER=claude-code`). For other providers, see the [opensre provider docs](https://www.opensre.com/docs/llm-providers).
+- Slack integration for Alertmanager and OpenSRE must be configured separately — refer to the [Slack Integration Guide](https://www.opensre.com/docs/messaging/slack). The current Helm chart installation expects a secret named `grafana-slack` to be created in advance with a `SLACK_TOKEN` key. [Reference](./observability-stack/platform/values-kube-prometheus-stack.yaml).
+
 ### Install
 
 ```bash
 git clone https://github.com/one2nc/ai-bites.git && pushd ai-bites/opensre
 make env           # copy .env.example → .env; set LLM_PROVIDER=claude-code (or any other), SLACK_WEBHOOK_URL
 make install       # brew install tracer-cloud/tap/opensre
-opensre onboard    # Configure integrations with grafana using service tokens, LLM Provider(Claude/Openrouter)  
-pushd observability-stack && make secret && popd # Create secret for slack-alertmanager integration
-make stack-up      # deploy monitoring + app onto docker-desktop/Or any other local platform. Please change the cluster labels accordingly
-make port-forward  # Grafana :3000, Alertmanager :9093 — keep running in separate terminal
+opensre onboard    # Configure integrations with Grafana using service tokens, LLM Provider (Claude/OpenRouter)
+pushd observability-stack && make secret && popd # Create secret for Slack-Alertmanager integration
+make stack-up      # Deploy monitoring + app onto Docker Desktop or any other local platform. Update cluster labels accordingly.
+make port-forward  # Grafana :3000, Alertmanager :9093 — keep running in a separate terminal
 ```
 
 <details>
@@ -60,7 +60,7 @@ make port-forward  # Grafana :3000, Alertmanager :9093 — keep running in separ
 
 ```
 make env                    Create .env from .env.example
-make install                Install opensre CLI via homebrew
+make install                Install opensre CLI via Homebrew
 make doctor                 Run opensre diagnostics
 make integrations           Verify all opensre integrations
 make stack-up               Bring up observability stack
@@ -89,19 +89,19 @@ make chaos-full-run         Run all chaos scenarios sequentially with investigat
 Alert payload from stdin must be a JSON object.
 ```
 
-`make investigate-stdin` in the makefile target wraps it
+The `make investigate-stdin` Makefile target wraps the raw output into the expected format.
 
-**2. Alert firing delay** — after `make chaos-<target>`, wait a moment for the alert to fire before running `make investigate-stdin`.
+**2. Alert firing delay** — After `make chaos-<target>`, wait for the alert to fire before running `make investigate-stdin`.
 
-**3. helm integration fails** — `helm version --client failed (exit 1): Error: unknown flag: --client`
+**3. Helm integration fails** — The helm integration is broken. Refer to section 12 for the related issue filed.
 
-**4. PostgreSQL integration fails** — Dependency on psycopg installed but doesn't come bnundled with OpenSRE binary. Please refer section 12 for the related issue filed.
+**4. PostgreSQL integration fails** — The `psycopg` dependency is not bundled with the OpenSRE binary. Refer to section 12 for the related issue filed.
 
 ---
 
 ## 4. Scenarios tested
 
-All scenarios run against a three-tier app (Gateway → Backend → PostgreSQL / Redis) on Docker Desktop Kubernetes with `kube-prometheus-stack` firing real alerts after.
+All scenarios were run against a three-tier application (Gateway → Backend → PostgreSQL / Redis) on Docker Desktop Kubernetes with `kube-prometheus-stack` firing real alerts.
 
 ### 4.1 Database Down
 
@@ -110,12 +110,12 @@ All scenarios run against a three-tier app (Gateway → Backend → PostgreSQL /
 make chaos-postgres-down && sleep 60 && make investigate-stdin
 ```
 
-**Output:** 
-1. Identified replicas set to zero from Alertmanager. Incorrectly attributed cause to Helm release instead of `kubectl scale` operation.
+**Output:**
+1. Identified replicas set to zero from Alertmanager. Incorrectly attributed the cause to a Helm release rather than the `kubectl scale` operation.
 2. Grafana integration failed.
-3. PostgreSQL client dependency (`psycopg2`) missing from binary build.
+3. PostgreSQL client dependency (`psycopg2`) missing from the binary build.
 
-**Result:** 
+**Result:**
 Unable to correlate findings due to broken integrations across Grafana, PostgreSQL, and missing Kubernetes API access.
 
 <details>
@@ -127,60 +127,58 @@ Unable to correlate findings due to broken integrations across Grafana, PostgreS
 
 ### 4.2 Backend Down
 
-**Run:** Backend replicas scaled to zero
+**Run:** Backend replicas scaled to zero.
 ```bash
 make chaos-backend-down && sleep 60 && make investigate-stdin
 ```
 
-**Output:** 
-1. Identified replicas set to zero from Alertmanager; claim validated via Prometheus.
-2. Incorrectly inferred continuous app error logs while app was not running.
-3. Misidentified root cause as OOM/CrashLoopBackOff.
-4. Inconsistently cited Alertmanager as unavailable while using its data as evidence.
+**Output:**
+1. Identified replicas set to zero from Alertmanager; claim not validated via Prometheus.
+2. Misidentified root cause as OOM/CrashLoopBackOff.
+3. Inconsistently cited Alertmanager as unavailable while using its data as evidence.
 
-**Result:** 
-Identified deployment down state from alerts and Prometheus, but validations were weak due to broken integrations and missing context.
+**Result:**
+Identified the deployment-down state from alerts, but validations were weak due to broken integrations and missing context.
 
 <details>
 <summary>Details</summary>
 
-![Terminal Output](.assets/ss_back_down_term.png)                  
+![Terminal Output](.assets/ss_back_down_term.png)
 ![Slack Notification](.assets/ss_backend_down_slack.png)
 
 </details>
 
-
 ### 4.3 Redis Down
-**Run:** Redis deployment scaled to zero
+
+**Run:** Redis deployment scaled to zero.
 ```bash
 make chaos-redis-down && sleep 60 && make investigate-stdin
 ```
 
-**Output:** 
-1. Identified replicas set to zero from Alertmanager; claim validated via Prometheus.
-2. Incorrectly inferred continuous app error logs while app was not running.
+**Output:**
+1. Identified replicas set to zero from Alertmanager.
+2. Incorrectly inferred continuous application error logs while the application was not running.
 3. Misidentified root cause as OOM/CrashLoopBackOff.
 4. Inconsistently cited Alertmanager as unavailable while using its data as evidence.
 
-**Result:** 
-Identified deployment down state from alerts and Prometheus, but validations were weak due to broken integrations and missing context.
+**Result:**
+Identified the deployment-down state from alerts and Prometheus, but validations were weak due to broken integrations and missing context.
 
 <details>
 <summary>Details</summary>
 
-![Terminal Output](.assets/ss_redis_down_term.png)                  
+![Terminal Output](.assets/ss_redis_down_term.png)
 ![Slack Notification](.assets/redis_down_slack.png)
 
 </details>
-
 
 ### Summary
 
 | Scenario | Alerts Firing | Confidence | Correct RCA | Notes |
 |----------|---------------|------------|-------------|-------|
-| Database Down | Single | No | No |  Does not give correct correlation. Broken integrations |
-| Backend Down | `AppBackendDown` critical | No | No | CrashLoopBackOff identified; Helm revision correlated. Whereas, replicas was set to zero through kubectl. K8s support missing |
-| Redis Down | `AppRedisDown` warning | No | No| Got confused by another irrelevant alert and added that in the evidence as a possible cause |
+| Database Down | `AppPostgresDown` Critical| No | No | Incorrect correlation. Broken integrations. |
+| Backend Down | `AppBackendDown` Critical | No | No | CrashLoopBackOff identified; Helm revision correlated. Replicas were set to zero via `kubectl`. Kubernetes API support missing. |
+| Redis Down | `AppRedisDown` Critical | No | No | Confused by an unrelated alert; included it as a possible cause in the evidence. |
 
 ---
 
@@ -188,58 +186,63 @@ Identified deployment down state from alerts and Prometheus, but validations wer
 
 | Demo | Link | Duration |
 |------|------|----------|
-| Scenario(4.2) | https://drive.google.com/file/d/1jZL7F28ZAcdgDp42cEgIqsHax10OHAAJ/view?usp=sharing | `06:24` |
+| Scenario (4.2) | https://drive.google.com/file/d/1jZL7F28ZAcdgDp42cEgIqsHax10OHAAJ/view?usp=sharing | `06:24` |
 
 ---
 
 ## 6. Observations
 
-- **Integrations** - Not many at the moment and those available are broken. As a result it cites wrong evidences as possible solution in the RCAs.
-- **Single-alert triage** — `investigate -i -` processes one alert per run. No fan-out when multiple alerts fire simultaneously; first-in-sort-order wins. As an alternative, manually capture alerts from the alerting source, create the payload and run it in a loop with OpenSRE agent which is overdoing rather than solving a problem.
-- **EKS-first toolset** — all Kubernetes tools (`EKSListPodsTool`, `EKSPodLogsTool`) are EKS-specific. AKS, GKE integrations pending. Supported tool list - [Tools List](https://github.com/Tracer-Cloud/opensre/tree/main/app/tools)
-- **Code quality:** It is still at public alpha and for exploration only. A release every day and 7 releases over 1 week on average and lots of open issues.
-- **Community:** GitHub issues, Discord.
+- **Integrations** — Available integrations are limited and several are broken. As a result, the agent cites incorrect evidence as possible causes in its root cause analyses.
+- **Single-alert triage** — `investigate -i -` processes one alert per run. There is no fan-out when multiple alerts fire simultaneously; only the first alert in sort order is processed. As a workaround, alerts can be manually captured from the alerting source, a payload constructed, and OpenSRE invoked in a loop — which adds operational overhead rather than reducing it.
+- **EKS-first toolset** — All Kubernetes tools (`EKSListPodsTool`, `EKSPodLogsTool`) are EKS-specific. AKS and GKE integrations are pending. Full tool list: [Tools List](https://github.com/Tracer-Cloud/opensre/tree/main/app/tools).
+- **Code quality:** The project is in public alpha and intended for exploration only. Releases occur daily, averaging seven per week, with a large number of open issues.
+- **Community:** GitHub issues and Discord.
 - **Documentation:** Incomplete and infrequently updated.
-- **Security posture:** Read-only by design; no cluster write permissions required. 
-- **Stability:**  v0.1 restored the same issue again after the fix was applied for Helm 3. More details in section 12.
-[Issue Reference](https://github.com/Tracer-Cloud/opensre/issues/1973)
+- **Security posture:** Read-only by design; no cluster write permissions required. Security guardrails in development -[Reference](https://github.com/Tracer-Cloud/opensre/blob/236b4a37186cfc570bff4620fc56e44ee2893f12/app/guardrails/cli.py#L18)
+- **Stability:** v0.1 reintroduced a previously resolved Helm 3 issue after the fix was applied. Further details are in section 12. [Issue Reference](https://github.com/Tracer-Cloud/opensre/issues/1973).
 
 ---
 
 ## 7. Comparison with alternatives
-    TODO
+
+TODO
+
 ---
 
 ## 8. Pros
 
-- No server, no cluster permissions, no persistent infrastructure
-- LLM-agnostic — any OpenAI-compatible provider
-- Guardrails are being build from scratch with all the rules. Needs to be evaluated - [Guardrails]( https://github.com/Tracer-Cloud/opensre/blob/599e9130a72bc2539a9314530f446dbedd743c69/app/guardrails/cli.py#L18)
-- Slack webhook delivery out of the box
+- No server, no cluster permissions, no persistent infrastructure required.
+- LLM-agnostic — compatible with any OpenAI-compatible provider.
+- Guardrails are being built from scratch with explicit rules. Requires further evaluation — [Guardrails](https://github.com/Tracer-Cloud/opensre/blob/599e9130a72bc2539a9314530f446dbedd743c69/app/guardrails/cli.py#L18).
+- Slack webhook delivery included out of the box.
 
 ---
 
 ## 9. Cons
 
-- Could not correlate lots of failures due to not enough integrations like K8s, Prometheus, Loki etc.
-- Every remediation step is manual. It acts more as a guide than agent taking actions and take us towards a goal since context awareness is lacking due to broken datasource integrations.
-- Single-alert triage per run — no fan-out when multiple services fail simultaneously. That causes performance at scale when it has large number of alerts to go through.
-- `opensre integrations verify` broken for helm and postgresql. Documentation does not suggest anything.
-- Switching to smart models does not help because of broken/lack of integrations.Context building does not work because of it/
+- Unable to correlate many failures due to insufficient integrations (e.g., Kubernetes API, Prometheus, Loki).
+- All remediation steps are manual. The tool functions more as a guidance document than an autonomous agent, largely due to limited context awareness resulting from broken data source integrations.
+- Single-alert triage per run — no fan-out when multiple services fail simultaneously. This limits effectiveness at scale with high alert volumes.
+- Documentation is not frequently updated and does not cover the integration steps in detail.
+- Switching to more capable models does not improve outcomes, as broken and missing integrations prevent adequate context from being built.
+
 ---
 
 ## 10. Cost analysis
-    TODO
+
+TODO
+
 ---
 
 ## 11. Verdict
 
-**Defer** 
-In the current stage this is not a mature tool and TracerCloud SAAS platform is also under development and still evolving.
-Not ready for on-call rotation. Revisit when:
-- Alerting system's integrations are sroted
-- Support for other platforms running Kubernetes like GKE, AKS, or K8s on DC.
-- Multi-alert fan-out is supported
+**Defer**
+
+In its current state, OpenSRE is not a mature tool, and the Tracer Cloud SaaS platform remains under active development. It is not ready for on-call rotation. Reconsider when:
+- Alerting system integrations are resolved and stable.
+- Instead of relying on CLI, SAAS platform evolution over upcoming months.
+- Support for additional Kubernetes platforms (GKE, AKS, on-premises Kubernetes) is available.
+- Multi-alert fan-out is supported.
 
 ---
 
@@ -247,6 +250,6 @@ Not ready for on-call rotation. Revisit when:
 
 | Type | Link | Status |
 |------|------|--------|
-| Bug | [#1973 — helm positional arg rejected; `setup helm` also broken; `verify` uses removed `--client` flag](https://github.com/Tracer-Cloud/opensre/issues/1973) | Re-opened |
-| Bug | [#2459 — psycopg2 not bundled; `verify postgresql` fails in binary install](https://github.com/Tracer-Cloud/opensre/issues/2459) | Closed As Not Planned But Opened Another Separately([Ref](https://github.com/Tracer-Cloud/opensre/pull/2490)) |
+| Bug | [#1973 — Helm positional argument rejected; `setup helm` also broken; `verify` uses removed `--client` flag](https://github.com/Tracer-Cloud/opensre/issues/1973) | Re-opened |
+| Bug | [#2459 — psycopg2 not bundled; `verify postgresql` fails in binary install](https://github.com/Tracer-Cloud/opensre/issues/2459) | Closed as not planned; a separate issue has been opened ([Ref](https://github.com/Tracer-Cloud/opensre/pull/2490)) |
 | Bug | [#2500 — Grafana integration: API key authentication fails with 401 Unauthorized](https://github.com/Tracer-Cloud/opensre/issues/2500) | Closed |
