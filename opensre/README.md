@@ -24,7 +24,7 @@ It comes as a CLI and SaaS offering from Tracer Cloud. Rather than remediating p
 
 ### 2.1 High-Level Design (HLD)
 
-![Stack architecture](assets/architecture.png)
+![Stack architecture](.assets/architecture.png)
 
 Component overview:
 - **Agent** — OpenSRE agent wraps tools for different work (Grafana metrics, Alertmanager alerts, logs, Helm releases) allowing LLMs to invoke them directly.
@@ -116,7 +116,7 @@ Unable to correlate findings due to broken integrations across Grafana, PostgreS
 <details>
 <summary>Details</summary>
 
-![Details](assets/ss_postgresql_down_term.png)
+![Details](.assets/ss_postgresql_down_term.png)
 
 </details>
 
@@ -139,8 +139,8 @@ Identified deployment down state from alerts and Prometheus, but validations wer
 <details>
 <summary>Details</summary>
 
-![Terminal Output](assets/ss_back_down_term.png)                  
-![Slack Notification](assets/ss_backend_down_slack.png)
+![Terminal Output](.assets/ss_back_down_term.png)                  
+![Slack Notification](.assets/ss_backend_down_slack.png)
 
 </details>
 
@@ -163,8 +163,8 @@ Identified deployment down state from alerts and Prometheus, but validations wer
 <details>
 <summary>Details</summary>
 
-![Terminal Output](assets/ss_redis_down_term.png)                  
-![Slack Notification](assets/redis_down_slack.png)
+![Terminal Output](.assets/ss_redis_down_term.png)                  
+![Slack Notification](.assets/redis_down_slack.png)
 
 </details>
 
