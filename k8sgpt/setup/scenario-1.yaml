@@ -1,0 +1,25 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: scenario-1
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: broken-app
+  template:
+    metadata:
+      labels:
+        app: broken-app
+    spec:
+      containers:
+      - name: scenario-1
+        image: busybox
+        command:
+          - /bin/sh
+          - -c
+          - |
+            if [ -z "$DB_HOST" ]; then
+              echo "DB_HOST missing"
+              exit 1
+            fi

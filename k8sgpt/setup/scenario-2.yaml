@@ -1,0 +1,89 @@
+apiVersion: v1
+kind: Namespace
+metadata: 
+  name: solo-leveling
+---
+apiVersion: v1
+data:
+  nginx.conf: "events {\n    worker_connections 1024;\n}\nhttp {\n    include /etc/nginx/mime.types;\n
+    \   default_type application/octet-stream;\n    \n    server {\n        listen
+    3333;\n        server_name localhost;\n        \n        location / {\n            root
+    /usr/share/nginx/html;\n            index index.html;\n        }\n    }\n}\n"
+immutable: true
+kind: ConfigMap
+metadata:
+  name: nginx-config
+  namespace: solo-leveling
+---
+apiVersion: v1
+data:
+  index.html: "hello world"
+immutable: true
+kind: ConfigMap
+metadata:
+  name: solo-leveling-html
+  namespace: solo-leveling
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: solo-leveling-web
+  namespace: solo-leveling
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: solo-leveling
+  strategy:
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app: solo-leveling
+    spec:
+      containers:
+      - image: nginx:alpine
+        imagePullPolicy: IfNotPresent
+        name: nginx
+        ports:
+        - containerPort: 80
+          protocol: TCP
+        resources: {}
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        volumeMounts:
+        - mountPath: /etc/nginx/nginx.conf
+          name: nginx-config-volume
+          subPath: nginx.conf
+        - mountPath: /usr/share/nginx/html
+          name: html-volume
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext: {}
+      volumes:
+      - configMap:
+          defaultMode: 420
+          name: nginx-config
+        name: nginx-config-volume
+      - configMap:
+          defaultMode: 420
+          name: solo-leveling-html
+        name: html-volume
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: solo-leveling-service
+  namespace: solo-leveling
+spec:
+  ports:
+  - port: 80
+    protocol: TCP
+    targetPort: 80
+  selector:
+    app: leveling-solo
+  type: NodePort
