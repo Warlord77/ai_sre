@@ -187,7 +187,7 @@ This manifest contains a deployment, which required an environment variable to b
 
 **What actually happened:**
 
-- In the CLI Mode, It gave basic steps and some commands to debug this but it was not able to identify the root cause.
+- In the CLI Mode, It gave basic steps and some commands to debug this but *it was not able to identify the root cause*.
   - _GPT 5.4 Nano output_
     ![gpt-5.4-nano_output](screenshots/scenario-1/cli-gpt-5.4-nano.png)
 
@@ -247,9 +247,6 @@ This scenario is taken from reference [iximiuz labs](https://labs.iximiuz.com/ch
 - **Code quality:**
   - Core and operator repos are structured (Cobra CLI, pkg/analysis, operator reconcile chain, CRDs).
   - Mature OSS layout with tests and Helm charts; not evaluated deeply in this PoC.
-- **Community:**
-  - Active Github Repo with 7.8K Stars. People are raising Issues and PRs for changes.
-  - A public [#k8sgpt Slack](https://join.slack.com/t/k8sgpt/shared_invite/zt-332vhyaxv-bfjJwHZLXWVCB3QaXafEYQ) exists upstream; during this PoC it felt low-traffic compared to GitHub issues and PRs.
 - **Documentation:**
   - Marketing is ahead of usability. We do not have control over what issue to look at. Tool will follow its built-in analysers and identify issues based on rules defined. Also provides capability to write custom analysers but not that feasible.
   - Configuration Setup for Openrouter is not documented cleanly. Had to search over internet for it.
