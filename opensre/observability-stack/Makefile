@@ -2,7 +2,6 @@ SHELL := /usr/bin/env bash
 .SHELLFLAGS := -eu -o pipefail -c
 .DEFAULT_GOAL := help
 
-# Tunable via `make <target> KEY=value` or env.
 KPS_RELEASE   ?= kps
 APP_NAMESPACE ?= app
 MON_NAMESPACE ?= monitoring
@@ -19,7 +18,7 @@ help: ## Show this help.
 
 # === Top-level flows
 .PHONY: up down e2e pause resume
-up: repos secrets platform tidy build deploy ## Install platform + app onto the current kubectl context.
+up: repos secrets platform tidy build deploy
 	@echo
 	@echo "Stack is up. Run 'make verify' to check it end-to-end, or 'make port-forward' to access it."
 
