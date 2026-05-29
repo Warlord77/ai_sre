@@ -1,14 +1,16 @@
 # HolmesGPT — Evaluation
 
-| | |
-| --- | --- |
-| **Author** | `Biswa Prakash Mishra` |
-| **Date** | `2026-05-18` |
-| **Time invested** | `12 hours` |
-| **Tool version tested** | `0.30.0` |
-| **Source / Docs** | `https://holmesgpt.dev/` |
-| **License** | `Apache 2.0 License` |
-| **Category** | `AI SRE agent` |
+
+|                         |                          |
+| ----------------------- | ------------------------ |
+| **Author**              | `Biswa Prakash Mishra`   |
+| **Date**                | `2026-05-18`             |
+| **Time invested**       | `14 hours`               |
+| **Tool version tested** | `0.30.0`                 |
+| **Source / Docs**       | `https://holmesgpt.dev/` |
+| **License**             | `Apache 2.0 License`     |
+| **Category**            | `AI SRE agent`           |
+
 
 ---
 
@@ -21,24 +23,20 @@ HolmesGPT is an AI based SRE agent to solve production incident across a range o
 ## 2. How it works (architecture)
 
 - What's the core architecture? (agent loop, plugin system, API proxy, etc.)
-    - Agent Loop
-    - 2 Orchestrators
-        - Tool Calling LLM
-        - IssueInvestigator
-
+  - Agent Loop
+  - 2 Orchestrators
+    - Tool Calling LLM
+    - IssueInvestigator
 - What LLM providers / models does it use? How?
   - Can work with a wide range of [models/providers](https://holmesgpt.dev/latest/ai-providers/)
-  - They [recommend](https://holmesgpt.dev/latest/installation/cli-installation/#quick-start) using Sonnet 4.0 or Sonnet 4.5 
-
+  - They [recommend](https://holmesgpt.dev/latest/installation/cli-installation/#quick-start) using Sonnet 4.0 or Sonnet 4.5
 - What data does it need access to? What permissions?
   - Multiple data sources [integration](https://holmesgpt.dev/latest/data-sources/)
-  - Permissions are specific to data sources. Each intergration page has instructions. 
-
+  - Permissions are specific to data sources. Each intergration page has instructions.
 - Where does it run? (local CLI, sidecar, SaaS, self-hosted server)
   - Docker Container
   - Local CLI
   - K8s as a operator (in alpha at the moment of evaluation)
-
 - What does the deployment topology look like?
   - Deployment topology would depend on the platform of deployment
 
@@ -49,7 +47,7 @@ HolmesGPT is an AI based SRE agent to solve production incident across a range o
 ### Prerequisites
 
 - An API key is required from the supported [providers](https://holmesgpt.dev/latest/ai-providers/)
-- Docker 
+- Docker
 
 ## Docker
 
@@ -76,9 +74,10 @@ docker run -it --net=host \
 ask 
 ```
 
-##  CLI  
+## CLI
 
 ### Install Dependencies
+
 ```bash
 sudo apt update
 sudo apt install -y build-essential gcc python3-dev
@@ -93,22 +92,26 @@ pipx ensurepath
 ```
 
 ### Install HolmesGPT
+
 ```bash
 pipx install holmesgpt==0.30.0
 ```
 
 if using python-3.14+ use this to disable Prometheus toolset [docs](https://github.com/HolmesGPT/holmesgpt/blob/master/CONTRIBUTING.md#prerequisites)
+
 ```bash
 export DISABLE_PROMETHEUS_TOOLSET=true
 ```
 
 ## Setup Credentials
+
 ```bash
 export OPENROUTER_API_KEY="<your-open-router-key-here>" 
 export MODEL="openrouter/openai/gpt-5.4"
 ```
 
 ## To start
+
 ```bash
 holmes ask "why is my service not starting"
 ```
@@ -118,12 +121,12 @@ restart your terminal to source your config file
 ### Known setup gotchas
 
 if using python-3.14+ use this to disable Prometheus toolset [docs](https://github.com/HolmesGPT/holmesgpt/blob/master/CONTRIBUTING.md#prerequisites)
+
 ```bash
 export DISABLE_PROMETHEUS_TOOLSET=true
 ```
 
 **OTEL Instrumentation is not available in CLI installation.**
- 
 
 ---
 
@@ -132,6 +135,7 @@ export DISABLE_PROMETHEUS_TOOLSET=true
 ### Scenario 1: (Easy): An nginx pod that is not schedulable due to mismatch of node selector
 
 **What I did:**
+
 ```bash
 cat > pod.yaml
 apiVersion: v1
@@ -148,6 +152,7 @@ spec:
   nodeSelector:
     disktype: ultra-ssd
 ```
+
 ```
 laborant@dev-machine:~$ kubectl apply -f pod.yaml
 ```
@@ -165,11 +170,10 @@ Pod remained in pending state
 The agent identified the root cause and suggested possible fixes. 
 
 *Prompt* : 
+
 ```
 User: my nginx pod is pending. Please debug
 ```
-
-<details>
 
 ```
 AI Response ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
@@ -226,11 +230,9 @@ AI Response ──────────────────────�
 ╰───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
 ```
 
-</details>
-
 ---
 
-### Scenario 2 (Hard): [K8s debugging](https://labs.iximiuz.com/challenges/troubleshoot-website-not-accessible-173199c4) from iximuiz labs 
+### Scenario 2 (Hard): [K8s debugging](https://labs.iximiuz.com/challenges/troubleshoot-website-not-accessible-173199c4) from iximuiz labs
 
 Model Used: openai/gpt-5.4-nano, openai/gpt-5.4-mini, openai/gpt-5.4
 
@@ -262,30 +264,31 @@ Your task: diagnose the root cause of the service's repeated death and find a wa
 
 Outcome: The model was able to find the root cause and suggest possible fixes. The first suggested fix was applied and it solved the problem successfully. 
 
-
 ---
 
 ## 5. Demo
 
-| Demo | Link | Duration |
-|------|------|----------|
-| `Scenario 3` | `https://drive.google.com/file/d/1jkU5qq7iJoTNGgcKhnqm4fs6deN0lAfi/view?usp=sharing` | `06:36` | 
+
+| Demo         | Link                                                                                 | Duration |
+| ------------ | ------------------------------------------------------------------------------------ | -------- |
+| `Scenario 3` | `https://drive.google.com/file/d/1jkU5qq7iJoTNGgcKhnqm4fs6deN0lAfi/view?usp=sharing` | `06:36`  |
+
 
 ---
 
 ## 6. Observations
+
 - Some of the runs got stuck for a long time and had to be killed. 
 - **Code quality:** Stable releases are often shipped weekly or biweekly. Rapid development/iteration. 
 - **Community:** Slack, monthly zoom and community meetings and active github issues also. 
 - **Documentation:** Mostly Complete. Some edge cases has to be addressed. 
 - **Security posture:**  project explicitly discusses RBAC and controlled-access design
 - **Performance:** TODO: Token consumption has to be analyzed for each run across tasks of different difficulty level. 
-- **Stability:** Sometime it hanged. But root cause has to be idenified. 
+- **Stability:** Sometime it hanged. But root cause has to be idenified.
 
 ---
 
 ## 7. Comparison with alternatives
-
 
 ---
 
@@ -304,16 +307,23 @@ Outcome: The model was able to find the root cause and suggest possible fixes. T
 ## 9. Cons
 
 - It is still in CNCF sandbox project. 
-- By design HolmesGPT never modifies your infrastructure. That is a safety feature, but it stops one step short of fixing your issues. 
+- By design HolmesGPT never modifies your infrastructure. That is a safety feature, but it stops one step short of fixing your issues. Whereas a general purpose agent like codex on the same prompt will go ahead fix the issue unprompted. 
 - Installation options are limited. Only via pipx, brew or cloning the repository to run. 
-- Setup Documentation lacks complete details to run. e.g. if you run the application using python 3.14 or above you get an error and the fix to the error is in contribution docs. 
+- Setup Documentation lacks complete details to run. e.g. if you run the application using python 3.14 or above you get an error and the fix to the error is in contribution docs.
 
 ---
 
 ## 10. Cost analysis
 
-TODO: Telemetry export to Signoz enabled. Telemetry has to be analyzed. 
+For a medium K8s problem in iximuiz labs the token usage is below. 
 
+| Metric        | Tokens |
+|---------------|--------|
+| Input tokens  | ~1.01M |
+| Output tokens | ~10K   |
+| Total tokens  | ~1.1M  |
+
+TODO: The price per debugging session 
 ---
 
 ## 11. Verdict
@@ -326,17 +336,18 @@ The most promising feature of holmes GPT is the operator mode. It allows it to r
 
 Currently HolmesGPT is in CNCF sandbox stage meaning its experimental in nature and has a lot of rough edges. The tool should be re-evaluated in 2-3 months. The primary thing in the re-evaluation should be 
 
-1. what are the installation methods available and are those methods feature complete. 
-2. At what stage the operator mode is in. This is currently is alpha. 
+1. what are the installation methods available and are those methods feature complete.
+2. At what stage the operator mode is in. This is currently is alpha.
 
 ---
 
 ## 12. Issues / PRs filed
 
-| Type | Link | Status |
-|------|------|--------|
-| Docs | https://github.com/HolmesGPT/holmesgpt/issues/2047 | Closed |
-| Enhancement/Bug | https://github.com/HolmesGPT/holmesgpt/issues/2077 | Open |
+
+| Type            | Link                                                                                                     | Status |
+| --------------- | -------------------------------------------------------------------------------------------------------- | ------ |
+| Docs            | [https://github.com/HolmesGPT/holmesgpt/issues/2047](https://github.com/HolmesGPT/holmesgpt/issues/2047) | Closed |
+| Enhancement/Bug | [https://github.com/HolmesGPT/holmesgpt/issues/2077](https://github.com/HolmesGPT/holmesgpt/issues/2077) | Closed |
 
 
 ---
