@@ -1,0 +1,29 @@
+tempo:
+  resources:
+    requests:
+      cpu: 100m
+      memory: 512Mi
+    limits:
+      memory: 2Gi
+  reportingEnabled: false
+  metricsGenerator:
+    enabled: true
+    remoteWriteUrl: http://kps-kube-prometheus-stack-prometheus.monitoring.svc.cluster.local:9090/api/v1/write
+  overrides:
+    defaults:
+      metrics_generator:
+        processors:
+          - service-graphs
+          - span-metrics
+          - local-blocks
+
+persistence:
+  enabled: true
+  size: 2Gi
+
+service:
+  type: ClusterIP
+serviceMonitor:
+  enabled: true
+  labels:
+    release: kps

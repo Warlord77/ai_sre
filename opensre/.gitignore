@@ -1,0 +1,7 @@
+.env
+node_modules/
+observability-stack/.secrets/
+**/.claude/
+.DS_Store
+**/.DS_Store
+*.code-workspace

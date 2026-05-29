@@ -1,0 +1,301 @@
+prometheus:
+  prometheusSpec:
+    retention: 24h
+    # Tight scrape/eval for fast chaos-demo alert firing. Combined with
+    # for: 30s on App*Down rules, chaos → API surface in ~30-45s.
+    scrapeInterval: 15s
+    evaluationInterval: 15s
+    resources:
+      requests:
+        cpu: 100m
+        memory: 256Mi
+      limits:
+        memory: 1Gi
+    # Pick up ServiceMonitors / PodMonitors / PrometheusRules from any namespace.
+    serviceMonitorSelectorNilUsesHelmValues: false
+    podMonitorSelectorNilUsesHelmValues: false
+    ruleSelectorNilUsesHelmValues: false
+    # Required so Tempo's metrics-generator can remote_write service-graph metrics.
+    enableRemoteWriteReceiver: true
+    storageSpec:
+      volumeClaimTemplate:
+        spec:
+          storageClassName: standard
+          accessModes: ["ReadWriteOnce"]
+          resources:
+            requests:
+              storage: 2Gi
+    # External labels are attached to every alert and remote_write sample.
+    # `cluster` is what Slack messages render; change per environment.
+    externalLabels:
+      cluster: docker-desktop
+      environment: dev
+
+alertmanager:
+  enabled: true
+  alertmanagerSpec:
+    resources:
+      requests:
+        cpu: 10m
+        memory: 32Mi
+      limits:
+        memory: 128Mi
+    # Mount the grafana-slack Secret at /etc/alertmanager/secrets/grafana-slack/.
+    # The token file path is then `/etc/alertmanager/secrets/grafana-slack/SLACK_TOKEN`.
+    secrets:
+      - grafana-slack
+
+  # ===========================================================================
+  # Alertmanager configuration
+  # ---------------------------------------------------------------------------
+  config:
+    global:
+      resolve_timeout: 5m
+      # slack_api_url is intentionally NOT set globally. We set per-receiver
+    inhibit_rules:
+      # Standard kps rule kept verbatim: critical inhibits warning/info on the
+      - source_matchers: ['severity = critical']
+        target_matchers: ['severity =~ warning|info']
+        equal: [namespace, alertname]
+      - source_matchers: ['severity = warning']
+        target_matchers: ['severity = info']
+        equal: [namespace, alertname]
+      # `InfoInhibitor` is a kps-internal alert whose only purpose is to
+      - source_matchers: ['alertname = InfoInhibitor']
+        target_matchers: ['severity = info']
+        equal: [namespace]
+      - target_matchers: ['alertname = InfoInhibitor']
+      # Cluster-wide control-plane outage: if the kube-apiserver is down,
+      # virtually every other alert is collateral. Suppress them.
+      - source_matchers: ['alertname = KubeAPIDown']
+        target_matchers: ['severity =~ critical|warning|info']
+      # If a Node goes NotReady, alerts about its individual pods are noise.
+      - source_matchers: ['alertname = KubeNodeNotReady']
+        target_matchers: ['alertname =~ KubePodNotReady|KubePodCrashLooping|KubeContainerWaiting']
+        equal: [node]
+      - source_matchers: ['alertname = AppBackendDown']
+        target_matchers: ['alertname =~ AppGatewayHighErrorRate.*|AppGatewayHighLatencyP99.*']
+      - source_matchers: ['alertname = AppPodCrashLooping']
+        target_matchers: ['alertname = KubePodCrashLooping']
+        equal: [namespace, pod]
+      - source_matchers: ['alertname = AppPodNotReady']
+        target_matchers: ['alertname = KubePodNotReady']
+        equal: [namespace, pod]
+      - source_matchers: ['alertname = AppDeploymentReplicasMismatch']
+        target_matchers: ['alertname = KubeDeploymentReplicasMismatch']
+        equal: [namespace, deployment]
+    # -------------------------------------------------------------------------
+    # Routing tree
+    # -------------------------------------------------------------------------
+    route:
+      group_by: [alertname, namespace, severity]
+      group_wait: 30s
+      group_interval: 5m
+      repeat_interval: 4h
+      receiver: slack-warning   # safe default for anything unrouted
+      routes:
+        # Drop the kps InfoInhibitor sentinel — it has no human value.
+        - matchers: ['alertname = "InfoInhibitor"']
+          receiver: slack-noop
+          continue: false
+        - matchers: ['alertname = "NodeClockNotSynchronising"']
+          receiver: slack-noop
+          continue: false
+
+        - matchers: ['severity = "critical"']
+          receiver: slack-critical
+          group_wait: 10s
+          group_interval: 1m
+          repeat_interval: 1h
+          continue: false
+        - matchers: ['severity = "warning"']
+          receiver: slack-warning
+          group_wait: 1m
+          group_interval: 10m
+          repeat_interval: 4h
+          continue: false
+        - matchers: ['severity = "info"']
+          receiver: slack-info
+          group_wait: 5m
+          group_interval: 30m
+          repeat_interval: 12h
+          mute_time_intervals:
+            - weekend-quiet-hours
+          continue: false
+
+    mute_time_intervals:
+      - name: weekend-quiet-hours
+        time_intervals:
+          - weekdays: ['saturday', 'sunday']
+            location: UTC
+    receivers:
+      - name: slack-noop
+      - name: slack-critical
+        slack_configs:
+          - send_resolved: true
+            channel: 'C0B2U0D442H'
+            api_url: https://slack.com/api/chat.postMessage
+            http_config:
+              authorization:
+                type: Bearer
+                credentials_file: /etc/alertmanager/secrets/grafana-slack/SLACK_TOKEN
+            title: '{{ template "slack.opensre.title" . }}'
+            text: '{{ template "slack.opensre.text" . }}'
+            # `pretext` shows above the attachment colour-bar in Slack.
+            pretext: '{{ template "slack.opensre.pretext" . }}'
+            color: '{{ template "slack.opensre.color" . }}'
+            short_fields: false
+            footer: 'observability-stack / Alertmanager'
+
+      - name: slack-warning
+        slack_configs:
+          - send_resolved: true
+            channel: 'C0B2U0D442H'
+            api_url: https://slack.com/api/chat.postMessage
+            http_config:
+              authorization:
+                type: Bearer
+                credentials_file: /etc/alertmanager/secrets/grafana-slack/SLACK_TOKEN
+            title: '{{ template "slack.opensre.title" . }}'
+            text: '{{ template "slack.opensre.text" . }}'
+            pretext: '{{ template "slack.opensre.pretext" . }}'
+            color: '{{ template "slack.opensre.color" . }}'
+            short_fields: false
+            footer: 'observability-stack / Alertmanager'
+
+      - name: slack-info
+        slack_configs:
+          - send_resolved: false   # info-level resolves are noise
+            channel: 'C0B2U0D442H'
+            api_url: https://slack.com/api/chat.postMessage
+            http_config:
+              authorization:
+                type: Bearer
+                credentials_file: /etc/alertmanager/secrets/grafana-slack/SLACK_TOKEN
+            title: '{{ template "slack.opensre.title" . }}'
+            text: '{{ template "slack.opensre.text" . }}'
+            pretext: '{{ template "slack.opensre.pretext" . }}'
+            color: '{{ template "slack.opensre.color" . }}'
+            short_fields: false
+            footer: 'observability-stack / Alertmanager'
+
+    templates:
+      - '/etc/alertmanager/config/*.tmpl'
+  templateFiles:
+    opensre-slack.tmpl: |-
+      {{ define "slack.opensre.severity_emoji" -}}
+      {{- $sev := .CommonLabels.severity -}}
+      {{- if eq $sev "critical" }}:rotating_light:
+      {{- else if eq $sev "warning" }}:warning:
+      {{- else if eq $sev "info" }}:information_source:
+      {{- else }}:grey_question:
+      {{- end }}
+      {{- end }}
+
+      {{ define "slack.opensre.title" -}}
+      {{ template "slack.opensre.severity_emoji" . }} [{{ .Status | toUpper }}{{ if eq .Status "firing" }} x{{ .Alerts.Firing | len }}{{ end }}] {{ .CommonLabels.alertname }}
+      {{- end }}
+
+      {{ define "slack.opensre.pretext" -}}
+      *cluster:* `{{ if .CommonLabels.cluster }}{{ .CommonLabels.cluster }}{{ else }}unknown{{ end }}` &nbsp; *severity:* `{{ if .CommonLabels.severity }}{{ .CommonLabels.severity }}{{ else }}n/a{{ end }}` &nbsp; *namespace:* `{{ if .CommonLabels.namespace }}{{ .CommonLabels.namespace }}{{ else }}-{{ end }}`
+      {{- end }}
+
+      {{ define "slack.opensre.color" -}}
+      {{- if eq .Status "resolved" -}}#36a64f
+      {{- else if eq .CommonLabels.severity "critical" -}}#cc0000
+      {{- else if eq .CommonLabels.severity "warning" -}}#ffaa00
+      {{- else -}}#439fe0
+      {{- end -}}
+      {{- end }}
+
+      {{ define "slack.opensre.text" -}}
+      {{- range .Alerts -}}
+      *{{ if .Annotations.summary }}{{ .Annotations.summary }}{{ else }}{{ .Labels.alertname }}{{ end }}*
+      {{ if .Annotations.description }}{{ .Annotations.description }}{{ end }}
+
+      *labels:* {{ range .Labels.SortedPairs }}`{{ .Name }}={{ .Value }}` {{ end }}
+      {{ if .Annotations.runbook_url }}*runbook:* <{{ .Annotations.runbook_url }}|open>{{ end }}{{ if .Annotations.dashboard_url }} &nbsp; *dashboard:* <{{ .Annotations.dashboard_url }}|open>{{ end }}{{ if .GeneratorURL }} &nbsp; *source:* <{{ .GeneratorURL }}|prometheus>{{ end }}
+      ---
+      {{ end -}}
+      {{- end }}
+
+grafana:
+  adminPassword: admin
+  resources:
+    requests:
+      cpu: 50m
+      memory: 256Mi
+    limits:
+      memory: 512Mi
+  service:
+    type: ClusterIP
+  # Slack bot token is injected via the `grafana-slack` Secret (key SLACK_TOKEN).
+  envFromSecret: grafana-slack
+  alerting:
+    contactpoints.yaml:
+      apiVersion: 1
+      contactPoints:
+        - orgId: 1
+          name: slack_alerts
+          receivers:
+            - uid: aflpmdz1nl3i8e
+              type: slack
+              settings:
+                recipient: C0B2U0D442H
+                token: $SLACK_TOKEN
+              disableResolveMessage: false
+  additionalDataSources:
+    - name: Loki
+      type: loki
+      uid: loki
+      url: http://loki.monitoring.svc.cluster.local:3100
+      access: proxy
+      jsonData:
+        maxLines: 1000
+        derivedFields:
+          - name: TraceID
+            datasourceUid: tempo
+            matcherRegex: '"trace_id":"(\w+)"'
+            url: '$${__value.raw}'
+            urlDisplayLabel: 'View trace'
+    - name: Tempo
+      type: tempo
+      uid: tempo
+      url: http://tempo.monitoring.svc.cluster.local:3200
+      access: proxy
+      jsonData:
+        tracesToLogsV2:
+          datasourceUid: loki
+          spanStartTimeShift: -1m
+          spanEndTimeShift: 1m
+          tags:
+            - key: service.name
+              value: service_name
+          filterByTraceID: true
+        tracesToMetrics:
+          datasourceUid: prometheus
+        serviceMap:
+          datasourceUid: prometheus
+        nodeGraph:
+          enabled: true
+# components-we-don't-run get their default rules and ServiceMonitors disabled.
+kubeControllerManager:
+  enabled: false
+kubeScheduler:
+  enabled: false
+kubeProxy:
+  enabled: false
+kubeEtcd:
+  enabled: false
+
+defaultRules:
+  rules:
+    kubeControllerManager: false
+    kubeSchedulerAlerting: false
+    kubeSchedulerRecording: false
+    kubeProxy: false
+    etcd: false
+  disabled:
+    NodeClockNotSynchronising: true
+    Watchdog: true
+    PrometheusOperatorRejectedResources: true
