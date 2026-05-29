@@ -317,14 +317,15 @@ Outcome: The model was able to find the root cause and suggest possible fixes. T
 
 For a medium K8s problem in iximuiz labs the token usage is below. 
 
+
 | Metric        | Tokens |
-|---------------|--------|
+| ------------- | ------ |
 | Input tokens  | ~1.01M |
 | Output tokens | ~10K   |
 | Total tokens  | ~1.1M  |
 
-TODO: The price per debugging session 
----
+
+## TODO: The price per debugging session 
 
 ## 11. Verdict
 
