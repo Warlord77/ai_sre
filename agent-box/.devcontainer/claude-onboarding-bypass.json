@@ -1,0 +1,10 @@
+{
+  "hasCompletedOnboarding": true,
+  "lastOnboardingVersion": "__CLAUDE_VERSION__",
+  "projects": {
+    "/workspace": {
+      "hasTrustDialogAccepted": true,
+      "allowedTools": []
+    }
+  }
+}

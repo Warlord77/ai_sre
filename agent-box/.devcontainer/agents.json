@@ -22,8 +22,11 @@
   "claude": {
     "target": "claude",
     "image": "agent-box-claude",
-    "autorun": "claude auth login",
-    "containerEnv": {},
+    "autorun": "claude-launch",
+    "containerEnv": {
+      "CLAUDE_CODE_OAUTH_TOKEN": "${localEnv:CLAUDE_CODE_OAUTH_TOKEN}",
+      "ANTHROPIC_API_KEY": "${localEnv:ANTHROPIC_API_KEY}"
+    },
     "extensions": [],
     "postCreateCommand": "echo 'agent-box-claude ready.' > /tmp/agent-box.log 2>&1",
     "setup": {

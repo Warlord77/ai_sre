@@ -26,7 +26,7 @@ RUN groupadd --gid "${USER_GID}" "${USERNAME}" \
   && useradd --uid "${USER_UID}" --gid "${USER_GID}" --create-home --shell /bin/bash "${USERNAME}" \
   && mkdir -p /workspace \
   && chown "${USERNAME}":"${USERNAME}" /workspace \
-  && echo '{ [ "$TERM_PROGRAM" = "vscode" ] || [ -n "$VSCODE_IPC_HOOK_CLI" ]; } && [ -f /tmp/.autorun ] && { _cmd=$(cat /tmp/.autorun); rm -f /tmp/.autorun; eval "$_cmd"; }' \
+  && echo '[ -f /tmp/.autorun ] && { _cmd=$(cat /tmp/.autorun); rm -f /tmp/.autorun; eval "$_cmd"; }' \
       >> /home/agent/.bashrc \
   # VS Code attached containers ignore devcontainer.json settings; .vscode/settings.json in workspaceFolder is the only way to control the editor layout.
   && mkdir -p /home/agent/.vscode \
@@ -75,6 +75,32 @@ RUN apt-get update && apt-get install -y --no-install-recommends gnupg \
   && rm -rf /var/lib/apt/lists/*
 # hadolint ignore=DL3016
 RUN npm install -g @anthropic-ai/claude-code
+
+# Pre-populate ~/.claude.json so first interactive `claude` skips the
+# onboarding wizard (theme picker + syntax-theme picker + /login OAuth URL +
+# workspace-trust dialog). Without these markers, every fresh container would
+# show all four prompts on first interactive launch -- defeating the
+# unattended/CI use case. CLAUDE_CODE_OAUTH_TOKEN handles the actual auth.
+#
+# The template ships with __CLAUDE_VERSION__ as a placeholder; sed replaces it
+# with the version of @anthropic-ai/claude-code that npm installed above, so
+# the marker stays in sync with the installed binary.
+#
+# Refs:
+#   https://code.claude.com/docs/en/authentication  (env-var auth precedence)
+#   anthropics/claude-code#9113                     (pre-configured trust)
+COPY claude-onboarding-bypass.json /home/agent/.claude.json
+RUN sed -i "s/__CLAUDE_VERSION__/$(claude --version | awk '{print $1}')/" /home/agent/.claude.json \
+  && chown agent:agent /home/agent/.claude.json \
+  && chmod 600 /home/agent/.claude.json
+
+# Launcher: strips empty Claude auth env vars (devcontainer fills them with ""
+# when the host var is unset, which Claude treats as "set" and prefers over
+# CLAUDE_CODE_OAUTH_TOKEN at lower precedence), prints a one-line auth banner,
+# then execs `claude`. With the onboarding markers baked above, `claude` lands
+# directly at its REPL.
+COPY claude-launch.sh /usr/local/bin/claude-launch
+RUN chmod +x /usr/local/bin/claude-launch
 USER agent
 
 # ── add new agents below as additional FROM base AS <name> stages ────────────

@@ -5,7 +5,7 @@
 | **Author** | Asutosh Panda |
 | **Date** | `2026-05-20` |
 | **Time invested** | `~6 hours` |
-| **Tool version tested** | Hermes Agent `v2026.4.30` · Claude Code `v2.1.144` |
+| **Tool version tested** | Hermes Agent `v2026.4.30` · Claude Code `v2.1.159` |
 | **Source / Docs** | [NousResearch/hermes-agent](https://github.com/NousResearch/hermes-agent) · [@anthropic-ai/claude-code](https://www.npmjs.com/package/@anthropic-ai/claude-code) · [containers.dev spec](https://containers.dev/) |
 | **License** | MIT (Hermes) · Anthropic terms (Claude Code) |
 | **Category** | AI coding agent · devcontainer · workload isolation |
@@ -16,7 +16,7 @@
 
 AI coding agents (Hermes, Claude Code) run with full access to your host filesystem and credentials by default. Every agent session can silently read `~/.ssh`, `~/.aws`, environment variables, and anything else the process can reach on your machine. There is no isolation boundary between the agent and your host.
 
-**agent-box** is a minimal, config-driven sandbox for running AI coding agents in isolated containers. Security controls (capability drop, no-new-privileges) are applied at the container level. No host dotfiles or credential directories are mounted. Two auth paths are supported so the setup works for both API key and OAuth flows without code changes.
+**agent-box** is a minimal, config-driven sandbox for running AI coding agents in isolated containers. Security controls (capability drop, no-new-privileges) are applied at the container level. No host dotfiles or credential directories are mounted. Multiple auth paths are supported per agent so the setup works for API keys, long-lived OAuth tokens (for ralph loops / non-interactive use), and interactive OAuth flows without code changes.
 
 ---
 
@@ -28,7 +28,7 @@ Two separate images - one per agent - built from a single multi-stage `Dockerfil
 flowchart LR
     subgraph host["Host Machine"]
         creds["~/.ssh / ~/.aws / ~/.claude"]
-        env[".env  (HERMES_PROVIDER_* + API key)"]
+        env[".env  (HERMES_PROVIDER_* + CLAUDE_CODE_OAUTH_TOKEN / ANTHROPIC_API_KEY)"]
     end
 
     subgraph hermes_container["agent-box-hermes  |  cap-drop=ALL · no-new-privileges · user: agent"]
@@ -36,18 +36,23 @@ flowchart LR
     end
 
     subgraph claude_container["agent-box-claude  |  cap-drop=ALL · no-new-privileges · user: agent"]
-        cc["Claude Code\nNode 20\nOAuth via host browser"]
+        cc["Claude Code\nNode 20\nOAuth token / API key / browser"]
     end
 
     creds --x|"not mounted"| hermes_container
     creds --x|"not mounted"| claude_container
     env -->|"containerEnv"| hermes_container
+    env -->|"containerEnv"| claude_container
 ```
 
 **Auth paths:**
 
 - **Hermes + DeepSeek API key:** set `HERMES_PROVIDER_*` and `DEEPSEEK_API_KEY` in `.env` before running `make hermes`. The Makefile configures Hermes inside the container, then VS Code opens with a terminal already running the chat session.
-- **Claude Code + OAuth:** no key needed. `make claude` opens VS Code with a terminal that triggers `claude auth login`. The browser OAuth flow completes on the host; the session lives inside the container only.
+- **Claude Code -- two auth options (pick one in `.env`):**
+  - **OAuth token (recommended for ralph loops / non-interactive use):** generate once on the host with `claude setup-token`, paste the printed token into `CLAUDE_CODE_OAUTH_TOKEN` in `.env`. Uses Pro/Max subscription rates. Valid ~1 year. Persistent across container rebuilds.
+  - **Anthropic API key:** set `ANTHROPIC_API_KEY` in `.env` (from [console.anthropic.com](https://console.anthropic.com/settings/keys)). Uses Anthropic API pricing.
+
+  The image bakes `~/.claude.json` with `hasCompletedOnboarding` + a trusted `/workspace` entry so first-run prompts (theme picker, syntax picker, `/login` URL, folder trust) are all skipped. Auth precedence per the [Claude Code docs](https://code.claude.com/docs/en/authentication): if both env vars are set, `ANTHROPIC_API_KEY` wins over `CLAUDE_CODE_OAUTH_TOKEN`.
 
 **What is in each image:**
 
@@ -70,9 +75,11 @@ Each image contains exactly one agent and its runtime. Neither image installs th
 - VS Code + [Dev Containers extension](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers)
 - `jq` installed on host (`brew install jq`)
 - `@devcontainers/cli` installed (`npm install -g @devcontainers/cli`)
-- Choose one auth method:
+- Choose one auth method per agent:
   - **Hermes:** a DeepSeek API key from [platform.deepseek.com](https://platform.deepseek.com)
-  - **Claude:** a Claude Pro/Max account - no key needed
+  - **Claude:** either (see "Auth paths" above for details):
+    - `CLAUDE_CODE_OAUTH_TOKEN` from `claude setup-token` on the host (recommended; Pro/Max subscription)
+    - `ANTHROPIC_API_KEY` from [console.anthropic.com](https://console.anthropic.com/settings/keys)
 
 ### Step-by-step
 
@@ -88,11 +95,19 @@ make hermes
 # → first run builds the image (~3 min); subsequent runs reuse it (~5s)
 # → starts container, configures Hermes, opens VS Code with chat auto-running
 
-# 2b. Claude Code + OAuth (no key needed)
+# 2b. Claude Code (pick one auth method in .env, then run)
+#
+#  OPTION A -- OAuth token (recommended for ralph loops / non-interactive):
+#    On the host (one time):
+#      claude setup-token       # prints a token, does not save
+#    Then paste the token into CLAUDE_CODE_OAUTH_TOKEN in .env
+#
+#  OPTION B -- Anthropic API key:
+#    Set ANTHROPIC_API_KEY in .env (from console.anthropic.com)
 make claude
 # → builds image on first run (~3 min), then reuses it
-# → opens VS Code terminal with claude auth login running
-# → click "Open" in the browser popup to complete OAuth
+# → first-run onboarding (theme/syntax/login/trust) is pre-skipped via baked
+#   ~/.claude.json — container starts straight at the Claude REPL
 ```
 
 Both `make hermes` and `make claude` are idempotent - re-running them reuses the existing container and image.
@@ -110,17 +125,25 @@ DEEPSEEK_API_KEY=sk-your-key-here
 
 # Model to use (passed to hermes -m)
 HERMES_MODEL=deepseek-v4-pro
+
+# Claude Code auth -- set ONE
+#   OPTION A: long-lived OAuth token (Pro/Max subscription; ralph-loop friendly)
+#     Generate on host: claude setup-token
+CLAUDE_CODE_OAUTH_TOKEN=
+
+#   OPTION B: Anthropic API key (API pricing)
+ANTHROPIC_API_KEY=
 ```
 
-To switch providers, change the three `HERMES_PROVIDER_*` vars and add the new API key. No code changes needed.
+To switch Hermes providers, change the three `HERMES_PROVIDER_*` vars and add the new API key. To switch Claude auth, set the corresponding env var and leave the other empty. No code changes needed.
 
 ### Known setup gotchas
 
 - **`.env` is created automatically on first run** - fill in `DEEPSEEK_API_KEY` and re-run. All other vars have working defaults.
 - **Image is built automatically on first run** - no separate build step. Takes ~3 min for hermes, ~3 min for claude. Subsequent runs use Docker cache.
-- **Claude auth is ephemeral** - the OAuth session lives inside the container only. Rebuilding the container requires logging in again. This is intentional.
+- **Claude auth is persistent** -- both `CLAUDE_CODE_OAUTH_TOKEN` and `ANTHROPIC_API_KEY` are read from `.env` on every container start, so auth survives `make down` + rebuild.
 - **`devcontainer` CLI required** - `make hermes` / `make claude` use `@devcontainers/cli`. Install with `npm install -g @devcontainers/cli`.
-- **macOS only for auto terminal open** - the terminal auto-open uses `osascript`. On Linux, open a terminal manually with `Ctrl+\`` after VS Code attaches.
+- **VS Code mode is macOS-only for auto-activation** -- terminal mode (the default) works on Linux and macOS. The `vscode` attach mode uses `osascript` to bring VS Code to front, which is mac-only; on Linux, switch VS Code to front manually.
 
 ---
 
@@ -142,19 +165,30 @@ Hermes functional, running as non-root.
 
 ---
 
-### Scenario 2: Claude Code OAuth login from inside container
+### Scenario 2: Claude Code non-interactive auth via `CLAUDE_CODE_OAUTH_TOKEN`
 
 **What I did:**
 ```bash
-make claude
-# VS Code terminal opened, claude auth login ran automatically
-# Browser popup appeared: "Open external site - claude.com/cai/oauth/authorize?..."
-# Clicked "Open" - OAuth flow completed
+# One-time on host
+claude setup-token   # printed an sk-ant-oat01-... token
+# Paste the token into CLAUDE_CODE_OAUTH_TOKEN in .env
+make claude          # terminal mode
 ```
 
-**What I expected:** Browser opens on host, OAuth flow completes, session stored inside container only.
+**What I expected:** Container starts, no browser, no OAuth URL, Claude REPL ready immediately.
 
-**What actually happened:** VS Code forwarded the localhost callback port to the host browser. OAuth flow completed. `claude --version` reported 2.1.144 and a test prompt ran successfully.
+**What actually happened:**
+```
+  ✓  claude auth: CLAUDE_CODE_OAUTH_TOKEN
+╭─── Claude Code v2.1.159 ─────────────────────────╮
+│  Welcome back!                                   │
+│  Sonnet 4.6 · Claude API                         │
+│  /workspace                                      │
+╰──────────────────────────────────────────────────╯
+❯
+```
+
+No theme picker, no syntax picker, no `/login` URL, no folder-trust dialog -- all four first-run prompts skipped via baked `~/.claude.json`. First prompt ran successfully on the env token.
 
 ---
 
@@ -173,7 +207,7 @@ make claude
 
 **What actually happened:**
 - `make hermes`: VS Code opened attached to the running container. Terminal appeared automatically. Hermes chat session started immediately.
-- `make claude`: Same VS Code flow. Terminal appeared, `claude auth login` ran, browser OAuth popup appeared on the host.
+- `make claude`: Same VS Code flow. Terminal appeared, auth banner printed (`✓ claude auth: CLAUDE_CODE_OAUTH_TOKEN`), Claude REPL launched directly with no browser prompt.
 
 Both commands complete in ~5s after the first build.
 
@@ -238,8 +272,7 @@ Docker recently shipped [AI Sandboxes (`sbx`)](https://docs.docker.com/ai/sandbo
 
 - Each image is ~370-760 MB - acceptable for a devcontainer, not a production runtime
 - First run takes ~3 min each to build; subsequent runs use Docker cache (~5s)
-- `make hermes` / `make claude` are macOS-only (`osascript`) - Linux users use VS Code's attach flow
-- Claude Code OAuth is ephemeral - each container rebuild requires re-login
+- Auto-activating VS Code uses `osascript` (macOS-only). Terminal mode works on both macOS and Linux; on Linux + `vscode` mode, bring VS Code to front manually
 - `@devcontainers/cli` and `jq` are host dependencies
 
 ---
@@ -256,7 +289,7 @@ Docker recently shipped [AI Sandboxes (`sbx`)](https://docs.docker.com/ai/sandbo
 
 **Pilot** - trial with the one2n team for 2-3 weeks on a real project.
 
-The isolation story is solid for internal developer tooling. The `make hermes` / `make claude` experience matches Codespaces closely enough for a compelling demo. The main thing to validate in a pilot is day-to-day friction: does the ephemeral Claude OAuth session get annoying, and does the 3-minute first-build time put people off.
+The isolation story is solid for internal developer tooling. The `make hermes` / `make claude` experience matches Codespaces closely enough for a compelling demo. The main thing to validate in a pilot is day-to-day friction: does the 3-minute first-build time put people off, and does the env-token rotation cadence (~1 year per `claude setup-token`) need any team-wide tooling.
 
 ### Next steps for pilot
 
@@ -267,7 +300,7 @@ The isolation story is solid for internal developer tooling. The `make hermes` /
 
 ### Revisit trigger
 
-If Claude Code ships a reasonably priced team API key tier, revisit switching Option B from OAuth to API key - it would eliminate the ephemeral session problem and make the auth story uniform.
+If the baked `lastOnboardingVersion` marker stops being honored by future Claude Code releases (i.e. fresh containers start showing onboarding prompts again), revisit by checking what new keys `~/.claude.json` gains after a manual first-run on host and bake those in alongside.
 
 ---
 
@@ -335,7 +368,7 @@ claude image:
 ```
 user:    agent (non-root)
 node:    v20.20.2
-claude:  2.1.144 (Claude Code)
+claude:  2.1.159 (Claude Code)
 ```
 
 </details>

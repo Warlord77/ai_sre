@@ -1,0 +1,162 @@
+name: agent-box CI
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - 'agent-box/**'
+      - '.github/workflows/agent-box-ci.yml'
+
+jobs:
+  # ── Claude non-interactive auth flow ────────────────────────────────────────
+  # Simulates a fresh clone: jq and devcontainer CLI are NOT pre-installed.
+  # start.sh must auto-install them, bring up the claude container, and have
+  # the non-interactive auth + onboarding-skip setup work in a fresh env.
+  #
+  # Scope: Claude Code only, terminal mode only. The hermes flow and VS Code
+  # attach mode are intentionally NOT verified here.
+  #
+  # macOS runner: macos-15-intel (Intel/x86_64) — ARM runners (macos-latest)
+  # lack the HVF entitlement needed to boot a Linux VM for Docker. macos-15-intel
+  # is GitHub's supported Intel runner through August 2027.
+  claude:
+    name: claude (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-15-intel]
+
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        working-directory: agent-box
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Setup Docker (macOS)
+        if: runner.os == 'macOS'
+        uses: docker/setup-docker-action@v5
+
+      # Cache the claude image keyed on Dockerfile hash. First run builds
+      # (~3 min); subsequent runs load from cache.
+      - name: Restore Docker image cache
+        id: cache-image
+        uses: actions/cache@v5
+        with:
+          path: /tmp/agent-box-images
+          key: agent-box-claude-${{ runner.os }}-${{ hashFiles('agent-box/.devcontainer/Dockerfile', 'agent-box/.devcontainer/claude-launch.sh', 'agent-box/.devcontainer/claude-onboarding-bypass.json') }}
+
+      - name: Load cached Docker image
+        if: steps.cache-image.outputs.cache-hit == 'true'
+        run: docker load < /tmp/agent-box-images/claude.tar
+
+      # Simulate fresh env: remove jq so start.sh must auto-install it.
+      - name: Remove jq (Linux)
+        if: runner.os == 'Linux'
+        run: sudo apt-get remove -y jq && hash -r
+
+      - name: Remove jq (macOS)
+        if: runner.os == 'macOS'
+        run: brew uninstall --ignore-dependencies jq 2>/dev/null || true && hash -r
+
+      # Confirm devcontainer CLI is absent — start.sh will install it via npm.
+      - name: Confirm devcontainer CLI absent
+        run: "! command -v devcontainer"
+
+      - name: Bootstrap .env
+        run: cp .env.example .env
+
+      # Run claude via make — non-interactive (no TTY), skips attach.
+      - name: make claude
+        run: make claude
+
+      # Verify auto-install worked.
+      - name: Verify jq auto-installed
+        run: jq --version
+
+      - name: Verify devcontainer CLI auto-installed
+        run: devcontainer --version
+
+      # Find the running claude container via devcontainer label.
+      - name: Verify claude container running
+        run: |
+          CID=$(docker ps -q --filter "label=devcontainer.local_folder=$(pwd)" | head -1)
+          [ -n "$CID" ] || { echo "error: claude container not found"; exit 1; }
+          echo "CID=$CID" >> "$GITHUB_ENV"
+          docker ps --filter "id=$CID" --format "  id={{.ID}} image={{.Image}} status={{.Status}}"
+
+      - name: Verify claude binary
+        run: docker exec "$CID" claude --version
+
+      - name: Verify no credential mounts
+        run: |
+          MOUNTS=$(docker inspect "$CID" --format '{{json .Mounts}}')
+          echo "mounts: $MOUNTS"
+          if echo "$MOUNTS" | grep -qE '"Source":"[^"]*/(\.ssh|\.aws|\.claude|\.config)"'; then
+            echo "error: credential directory mounted"; exit 1
+          fi
+
+      # ── Structural checks for the non-interactive auth + onboarding-skip ────
+      # These verify the build artifacts; they do not exercise auth against
+      # Anthropic's API (that would need CLAUDE_CODE_OAUTH_TOKEN as a repo
+      # secret).
+      - name: Verify ~/.claude.json baked with onboarding-skip markers
+        run: |
+          docker exec "$CID" jq -e '.hasCompletedOnboarding == true' \
+            /home/agent/.claude.json > /dev/null \
+            || { echo "error: hasCompletedOnboarding missing or not true"; exit 1; }
+          docker exec "$CID" jq -e '.projects["/workspace"].hasTrustDialogAccepted == true' \
+            /home/agent/.claude.json > /dev/null \
+            || { echo "error: /workspace trust entry missing"; exit 1; }
+          if docker exec "$CID" grep -q '__CLAUDE_VERSION__' /home/agent/.claude.json; then
+            echo "error: __CLAUDE_VERSION__ placeholder not replaced — sed step broken"
+            exit 1
+          fi
+          VER=$(docker exec "$CID" jq -r '.lastOnboardingVersion' /home/agent/.claude.json)
+          echo "ok: ~/.claude.json baked correctly, lastOnboardingVersion=$VER"
+
+      - name: Verify claude-launch installed
+        run: |
+          docker exec "$CID" test -x /usr/local/bin/claude-launch \
+            || { echo "error: /usr/local/bin/claude-launch missing or not executable"; exit 1; }
+          docker exec "$CID" grep -q 'CLAUDE_CODE_OAUTH_TOKEN' /usr/local/bin/claude-launch \
+            || { echo "error: launcher does not reference CLAUDE_CODE_OAUTH_TOKEN"; exit 1; }
+          echo "ok: /usr/local/bin/claude-launch present and references CLAUDE_CODE_OAUTH_TOKEN"
+
+      - name: Verify agents.json autorun points to claude-launch
+        run: |
+          AUTORUN=$(jq -r '.claude.autorun' .devcontainer/agents.json)
+          [ "$AUTORUN" = "claude-launch" ] \
+            || { echo "error: claude autorun != claude-launch (got: $AUTORUN)"; exit 1; }
+          echo "ok: autorun = $AUTORUN"
+
+      - name: Save Docker image to cache
+        if: steps.cache-image.outputs.cache-hit != 'true'
+        run: |
+          mkdir -p /tmp/agent-box-images
+          CLAUDE=$(docker images --format '{{.Repository}}:{{.Tag}}' | grep '^agent-box-claude' | head -1)
+          docker save "$CLAUDE" > /tmp/agent-box-images/claude.tar
+
+      # Exercise the actual cleanup path users hit (scripts/down.sh) -- catches
+      # regressions like the `docker rmi` silently-failing bug we just fixed.
+      # The image regex catches both our base image AND devcontainer's UID-remap
+      # wrapper image (vsc-agent-box-<hash>-uid), which the devcontainer CLI
+      # builds whenever host UID differs from the image UID -- common in CI.
+      - name: Verify make down cleans everything
+        run: |
+          make down
+          REMAINING_CT=$(docker ps -aq --filter "label=devcontainer.local_folder=$(pwd)" | wc -l | tr -d ' ')
+          [ "$REMAINING_CT" = "0" ] \
+            || { echo "error: make down left $REMAINING_CT containers"; exit 1; }
+          REMAINING_IMG=$(docker images --format '{{.Repository}}' | grep -cE '(^|-)agent-box(-|$)' || true)
+          [ "$REMAINING_IMG" = "0" ] \
+            || { echo "error: make down left $REMAINING_IMG images"; exit 1; }
+          echo "ok: make down cleaned up everything"
+
+      - name: Cleanup (fallback if earlier step failed)
+        if: always()
+        run: |
+          CIDS=$(docker ps -aq --filter "label=devcontainer.local_folder=$(pwd)")
+          [ -n "$CIDS" ] && docker stop $CIDS 2>/dev/null || true
+          [ -n "$CIDS" ] && docker rm   $CIDS 2>/dev/null || true
