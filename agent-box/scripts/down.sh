@@ -21,10 +21,10 @@ fi
 # image:tag (a bare NAME silently means NAME:latest, which we never tag),
 # so we list all containers and filter the image column via awk.
 #
-# The regex catches both our base images (agent-box-hermes / agent-box-claude)
-# AND devcontainer's UID-remap wrapper images (vsc-agent-box-<hash>-uid), which
-# the devcontainer CLI builds whenever updateRemoteUserUID is true and the host
-# UID differs from the image UID -- common in CI runners.
+# The regex catches both our base image (agent-box-claude) AND devcontainer's
+# UID-remap wrapper image (vsc-agent-box-<hash>-uid), which the devcontainer
+# CLI builds whenever updateRemoteUserUID is true and host UID differs from
+# the image UID -- common in CI runners.
 CONTAINERS=$(docker ps -a --format '{{.ID}} {{.Image}}' 2>/dev/null \
   | awk '$2 ~ /(^|-)agent-box(-|:|$)/ {print $1}' \
   || true)
@@ -43,7 +43,7 @@ fi
 # ── Images ───────────────────────────────────────────────────────────────────
 # docker images -q accepts only ONE repository argument, so we list all images
 # and filter the repository column via awk (same pattern as containers above,
-# also catches devcontainer's vsc-agent-box-<hash>-uid wrappers).
+# catches both agent-box-claude and the vsc-agent-box-<hash>-uid wrapper).
 IMAGES=$(docker images --format '{{.ID}} {{.Repository}}' 2>/dev/null \
   | awk '$2 ~ /(^|-)agent-box(-|:|$)/ {print $1}' \
   | sort -u \

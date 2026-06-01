@@ -10,7 +10,6 @@ id_ed25519
 .ssh/
 .aws/
 .claude/
-.hermes/
 **/.git/
 **/node_modules/
 **/__pycache__/

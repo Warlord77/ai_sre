@@ -1,24 +1,4 @@
 {
-  "hermes": {
-    "target": "hermes",
-    "image": "agent-box-hermes",
-    "autorun": "hermes -m ${HERMES_MODEL} chat",
-    "containerEnv": {
-      "HERMES_MODEL": "${localEnv:HERMES_MODEL}"
-    },
-    "extensions": [],
-    "postCreateCommand": "echo 'agent-box-hermes ready.' > /tmp/agent-box.log 2>&1",
-    "setup": {
-      "envPassthrough": ["HERMES_MODEL"],
-      "commands": [
-        "mkdir -p ~/.hermes",
-        "printf '%s=%s\\n' \"$PROVIDER_API_KEY_ENV\" \"$PROVIDER_API_KEY\" > ~/.hermes/.env",
-        "hermes config set model.provider \"$PROVIDER_NAME\" 2>/dev/null || true",
-        "hermes config set model.base_url \"$PROVIDER_BASE_URL\" 2>/dev/null || true",
-        "hermes config set model.default \"${HERMES_MODEL}\" 2>/dev/null || true"
-      ]
-    }
-  },
   "claude": {
     "target": "claude",
     "image": "agent-box-claude",
@@ -26,12 +6,6 @@
     "containerEnv": {
       "CLAUDE_CODE_OAUTH_TOKEN": "${localEnv:CLAUDE_CODE_OAUTH_TOKEN}",
       "ANTHROPIC_API_KEY": "${localEnv:ANTHROPIC_API_KEY}"
-    },
-    "extensions": [],
-    "postCreateCommand": "echo 'agent-box-claude ready.' > /tmp/agent-box.log 2>&1",
-    "setup": {
-      "envPassthrough": [],
-      "commands": []
     }
   }
 }
