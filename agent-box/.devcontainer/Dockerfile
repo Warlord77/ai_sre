@@ -9,8 +9,8 @@ ENV DEBIAN_FRONTEND=noninteractive
 # pipefail: fail if any command in a pipe fails, not just the last one
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
-# ca-certificates + curl: HTTPS downloads (pip git+https, nodesource setup)
-# git: required by pip to install hermes-agent from a git URL
+# ca-certificates + curl: HTTPS downloads (nodesource setup, generic)
+# git: standard dev tool inside the container
 # jq + make: used by Makefile targets and launch scripts
 # hadolint ignore=DL3008
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -27,36 +27,13 @@ RUN groupadd --gid "${USER_GID}" "${USERNAME}" \
   && mkdir -p /workspace \
   && chown "${USERNAME}":"${USERNAME}" /workspace \
   && echo '[ -f /tmp/.autorun ] && { _cmd=$(cat /tmp/.autorun); rm -f /tmp/.autorun; eval "$_cmd"; }' \
-      >> /home/agent/.bashrc \
-  # VS Code attached containers ignore devcontainer.json settings; .vscode/settings.json in workspaceFolder is the only way to control the editor layout.
-  && mkdir -p /home/agent/.vscode \
-  && printf '{\n  "workbench.panel.opensMaximized": "never",\n  "terminal.integrated.defaultHeight": 12\n}\n' \
-      > /home/agent/.vscode/settings.json \
-  && chown -R "${USERNAME}":"${USERNAME}" /home/agent/.vscode
+      >> /home/agent/.bashrc
 
 USER ${USERNAME}
 WORKDIR /workspace
 CMD ["bash"]
 
-# ── hermes: Hermes agent (Option A - DeepSeek API key) ──────────────────────
-FROM base AS hermes
-
-LABEL org.opencontainers.image.title="agent-box-hermes" \
-      org.opencontainers.image.description="Isolated devcontainer for Hermes AI agent (DeepSeek via API key)" \
-      org.opencontainers.image.vendor="one2n" \
-      org.opencontainers.image.licenses="MIT" \
-      org.opencontainers.image.source="https://github.com/one2nc/ai-bites"
-
-ENV HERMES_HOME=/home/agent/.hermes
-
-USER root
-# Hermes: pinned to v2026.4.30, no [all] extras - skips Playwright/web/TUI.
-# hadolint ignore=DL3016
-RUN pip install --no-cache-dir \
-    "hermes-agent @ git+https://github.com/NousResearch/hermes-agent.git@v2026.4.30"
-USER agent
-
-# ── claude: Claude Code (Option B - Anthropic OAuth) ────────────────────────
+# ── claude: Claude Code (Anthropic non-interactive auth) ────────────────────
 FROM base AS claude
 
 LABEL org.opencontainers.image.title="agent-box-claude" \
