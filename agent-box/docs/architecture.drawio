@@ -1,0 +1,76 @@
+<mxfile host="app.diagrams.net">
+  <diagram name="agent-box demo flow" id="agentbox-demo">
+    <mxGraphModel dx="1000" dy="640" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="980" pageHeight="600" math="0" shadow="0" background="none">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <mxCell id="title" value="agent-box  ·  the demo, one `make` command at a time" style="text;html=1;align=left;verticalAlign=middle;fontSize=16;fontStyle=1;fontColor=#c8c8c8;" vertex="1" parent="1">
+          <mxGeometry x="40" y="14" width="900" height="30" as="geometry" />
+        </mxCell>
+
+        <!-- row 1: make claude -->
+        <mxCell id="c1" value="make claude" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#13161c;strokeColor=#6c8ebf;fontColor=#bcd0ec;fontSize=13;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="40" y="66" width="170" height="46" as="geometry" />
+        </mxCell>
+        <mxCell id="r1" value="Claude Code REPL, inside the sandbox" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#161616;strokeColor=#555555;fontColor=#c8c8c8;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="260" y="66" width="520" height="46" as="geometry" />
+        </mxCell>
+
+        <!-- row 2: make demo-up -->
+        <mxCell id="c2" value="make demo-up" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#13161c;strokeColor=#6c8ebf;fontColor=#bcd0ec;fontSize=13;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="40" y="128" width="170" height="46" as="geometry" />
+        </mxCell>
+        <mxCell id="r2" value="a throwaway repo + an issues/ queue  (3 tasks: 1 design, 2 build)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#161616;strokeColor=#555555;fontColor=#c8c8c8;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="260" y="128" width="520" height="46" as="geometry" />
+        </mxCell>
+
+        <!-- row 3: make demo-run -> the ralph loop (centerpiece) -->
+        <mxCell id="c3" value="make demo-run" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#13161c;strokeColor=#6c8ebf;fontColor=#bcd0ec;fontSize=13;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="40" y="234" width="170" height="46" as="geometry" />
+        </mxCell>
+        <mxCell id="ralph" value="the ralph loop   -   repeats with a fresh context each run, until the queue is empty&#10;&#10;1.  pick ONE open issue&#10;2.  architect  -&gt;  writes an ADR  (design)     /     backend-dev  -&gt;  TDD until tests pass  (build)&#10;3.  commit, then move the issue to issues/done/&#10;&#10;stop when no issues remain  -&gt;  &lt;promise&gt;NO MORE TASKS&lt;/promise&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#14241c;strokeColor=#82b366;fontColor=#a6d6a6;fontSize=12;align=left;spacingLeft=14;verticalAlign=top;spacingTop=12;" vertex="1" parent="1">
+          <mxGeometry x="260" y="190" width="520" height="150" as="geometry" />
+        </mxCell>
+
+        <!-- row 4: make demo-verify -->
+        <mxCell id="c4" value="make demo-verify" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#13161c;strokeColor=#6c8ebf;fontColor=#bcd0ec;fontSize=13;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="40" y="362" width="170" height="46" as="geometry" />
+        </mxCell>
+        <mxCell id="r4" value="npm test + typecheck pass  -  run in the box, not taken on the agent's word" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#161616;strokeColor=#555555;fontColor=#c8c8c8;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="260" y="362" width="520" height="46" as="geometry" />
+        </mxCell>
+
+        <!-- row 5: make demo-down -->
+        <mxCell id="c5" value="make demo-down" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#13161c;strokeColor=#6c8ebf;fontColor=#bcd0ec;fontSize=13;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="40" y="424" width="170" height="46" as="geometry" />
+        </mxCell>
+        <mxCell id="r5" value="everything removed  (the throwaway repo + its commits)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#161616;strokeColor=#555555;fontColor=#c8c8c8;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="260" y="424" width="520" height="46" as="geometry" />
+        </mxCell>
+
+        <!-- the sandbox frame (isolation, as one caption) -->
+        <mxCell id="sandbox" value="the sandbox  -  every command above runs Claude Code in a hardened container:&#10;non-root  &#183;  cap-drop=ALL  &#183;  no host credentials mounted  &#183;  only your working directory is mounted in" style="rounded=1;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#d79b00;fontColor=#d79b00;fontSize=12;fontStyle=2;dashed=1;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="40" y="500" width="740" height="64" as="geometry" />
+        </mxCell>
+
+        <!-- arrows: command -> result -->
+        <mxCell id="a1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;strokeColor=#8a8a8a;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="c1" target="r1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="a2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;strokeColor=#8a8a8a;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="c2" target="r2">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="a3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;strokeColor=#8a8a8a;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="c3" target="ralph">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="a4" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;strokeColor=#8a8a8a;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="c4" target="r4">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="a5" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;strokeColor=#8a8a8a;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="c5" target="r5">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

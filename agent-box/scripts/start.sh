@@ -107,9 +107,12 @@ TAG=$(docker images --format '{{.Tag}}' "$AGENT_IMAGE" 2>/dev/null | sort -r | h
 if [[ -z "$TAG" ]]; then
   TAG=$(date +%Y%m%d-%H%M%S)
   info "building ${AGENT_IMAGE}:${TAG} (first run -- takes ~3 min)"
+  # Build context is the agent-box root (not .devcontainer/) so the Dockerfile
+  # can COPY skills/ from the top-level skills/ directory. .devcontainer/-local
+  # files are referenced as `COPY .devcontainer/<file>` in the Dockerfile.
   docker build --target "$AGENT_TARGET" \
     -t "${AGENT_IMAGE}:${TAG}" \
-    -f "$DC_DIR/Dockerfile" "$DC_DIR/"
+    -f "$DC_DIR/Dockerfile" "$WORKSPACE/"
   success "image built"
 else
   success "image found: ${AGENT_IMAGE}:${TAG}"

@@ -1,5 +1,5 @@
 # ── base: minimal shared layer for all agent variants ─────────────────────────
-# python:3.13-slim is the Hermes upstream runtime (Debian bookworm base).
+# python:3.13-slim (Debian bookworm) -- minimal base layer; Node is added in the claude stage.
 # Pin to digest for reproducibility:
 #   docker pull python:3.13-slim && docker inspect --format='{{index .RepoDigests 0}}' python:3.13-slim
 FROM python:3.13-slim AS base
@@ -66,7 +66,7 @@ RUN npm install -g @anthropic-ai/claude-code
 # Refs:
 #   https://code.claude.com/docs/en/authentication  (env-var auth precedence)
 #   anthropics/claude-code#9113                     (pre-configured trust)
-COPY claude-onboarding-bypass.json /home/agent/.claude.json
+COPY .devcontainer/claude-onboarding-bypass.json /home/agent/.claude.json
 RUN sed -i "s/__CLAUDE_VERSION__/$(claude --version | awk '{print $1}')/" /home/agent/.claude.json \
   && chown agent:agent /home/agent/.claude.json \
   && chmod 600 /home/agent/.claude.json
@@ -76,8 +76,21 @@ RUN sed -i "s/__CLAUDE_VERSION__/$(claude --version | awk '{print $1}')/" /home/
 # CLAUDE_CODE_OAUTH_TOKEN at lower precedence), prints a one-line auth banner,
 # then execs `claude`. With the onboarding markers baked above, `claude` lands
 # directly at its REPL.
-COPY claude-launch.sh /usr/local/bin/claude-launch
+COPY .devcontainer/claude-launch.sh /usr/local/bin/claude-launch
 RUN chmod +x /usr/local/bin/claude-launch
+
+# Skills: bake the agent-box-curated skills set into the image so every
+# Claude invocation (REPL or headless) has the same persona library.
+# Skills live at the agent-box repo root (top-level concept), not inside
+# .devcontainer/ -- so the build context must be the agent-box root, not
+# .devcontainer/. start.sh handles this.
+COPY --chown=agent:agent skills/ /home/agent/.claude/skills/
+
 USER agent
+
+# Trust any bind-mounted repo regardless of its host owner uid. headless/ralph runs
+# mount the caller's cwd, whose files are owned by the host user, not `agent` (uid
+# 1000) -- without this, git refuses with "detected dubious ownership".
+RUN git config --global --add safe.directory '*'
 
 # ── add new agents below as additional FROM base AS <name> stages ────────────

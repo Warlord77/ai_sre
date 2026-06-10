@@ -8,3 +8,6 @@
 
 # Generated at runtime by scripts/start.sh - do not commit
 .devcontainer/devcontainer.json
+
+# Throwaway demo target repo (make demo-up / demo-down)
+.demo/
