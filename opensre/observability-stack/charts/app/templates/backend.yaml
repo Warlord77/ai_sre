@@ -40,10 +40,11 @@ spec:
               value: {{ .Values.tracing.otlpEndpoint | quote }}
           livenessProbe:
             httpGet:
-              path: /healthz
+              path: /readyz
               port: http
             initialDelaySeconds: 10
             periodSeconds: 10
+            failureThreshold: 3
           readinessProbe:
             httpGet:
               path: /readyz

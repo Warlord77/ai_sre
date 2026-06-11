@@ -73,6 +73,15 @@ alertmanager:
       - source_matchers: ['alertname = KubeNodeNotReady']
         target_matchers: ['alertname =~ KubePodNotReady|KubePodCrashLooping|KubeContainerWaiting']
         equal: [node]
+      # Postgres down causes backend liveness to fail → crashloop + backend down.
+      # Suppress the cascading symptoms; AppPostgresDown is the root-cause alert.
+      - source_matchers: ['alertname = AppPostgresDown']
+        target_matchers: ['alertname = AppBackendDown']
+        equal: [namespace]
+      - source_matchers: ['alertname = AppPostgresDown']
+        target_matchers: ['alertname = AppPodCrashLooping']
+        equal: [namespace]
+      # Backend down suppresses gateway error-rate noise (502s are a symptom).
       - source_matchers: ['alertname = AppBackendDown']
         target_matchers: ['alertname =~ AppGatewayHighErrorRate.*|AppGatewayHighLatencyP99.*']
       - source_matchers: ['alertname = AppPodCrashLooping']

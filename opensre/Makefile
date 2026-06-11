@@ -62,14 +62,18 @@ _check-llm:
 
 .PHONY: investigate
 investigate: _check-llm ## Run opensre investigation against the alert fixture (tests/actual-dev-env.alert.json).
-	opensre investigate -i tests/actual-dev-env.alert.json
+	opensre $(OPENSRE_FLAGS) investigate -i tests/actual-dev-env.alert.json
+
+ALERTMANAGER_URL ?= https://calibration-lecture-lyrics-clinical.trycloudflare.com
+GRAFANA_URL      ?= https://licensing-melbourne-collins-signing.trycloudflare.com
+OPENSRE_FLAGS    ?=
 
 # Alertmanager /api/v2/alerts returns a JSON array.
 # opensre investigate -i - requires Alertmanager webhook format (JSON object with "alerts" key). So it directly listens to alertmanager
 .PHONY: investigate-stdin
 investigate-stdin: _check-llm ## Pull live alerts from Alertmanager and feed to opensre (wraps array into webhook format).
-	@curl -s http://localhost:9093/api/v2/alerts \
-		| jq '{ \
+	@curl -s $(ALERTMANAGER_URL)/api/v2/alerts \
+		| jq --arg grafana_url "$(GRAFANA_URL)" '{ \
 			"version":"4", \
 			"status":"firing", \
 			"receiver":"opensre-live", \
@@ -77,15 +81,15 @@ investigate-stdin: _check-llm ## Pull live alerts from Alertmanager and feed to 
 			"helm_release":"app", \
 			"helm_namespace":"app", \
 			"commonLabels":{"meta.helm.sh/release-name":"app","meta.helm.sh/release-namespace":"app"}, \
-			"commonAnnotations":{"grafana_url":"http://localhost:3000"}, \
-			"externalURL":"", \
+			"commonAnnotations":{"grafana_url":$$grafana_url}, \
+			"externalURL":"$(ALERTMANAGER_URL)", \
 			"alerts": [.[] | .labels += {"meta.helm.sh/release-name":"app","meta.helm.sh/release-namespace":"app","helm_release":"app","helm_namespace":"app"}] \
 		}' \
-		| opensre investigate -i -
+		| opensre $(OPENSRE_FLAGS) investigate -i -
 
 # ── Chaos (requires stack-up + port-forward running) ─────────────────────────
 
-.PHONY: chaos-postgres-down chaos-redis-down chaos-gateway-down chaos-backend-down chaos-reset
+.PHONY: chaos-postgres-down chaos-redis-down chaos-gateway-down chaos-backend-down chaos-backend-crashloop chaos-reset
 chaos-postgres-down: ## Scale Postgres to 0 — triggers AppPostgresDown alert.
 	$(MAKE) -C observability-stack chaos-postgres-down
 
@@ -97,6 +101,9 @@ chaos-gateway-down: ## Scale gateway to 0 — triggers AppGatewayDown alert.
 
 chaos-backend-down: ## Scale backend to 0 — triggers AppBackendDown alert.
 	$(MAKE) -C observability-stack chaos-backend-down
+
+chaos-backend-crashloop: ## Force backend into CrashLoopBackOff via bogus image — triggers AppPodCrashLooping + AppBackendDown.
+	$(MAKE) -C observability-stack chaos-backend-crashloop
 
 chaos-reset: ## Restore stack to baseline.
 	$(MAKE) -C observability-stack chaos-reset

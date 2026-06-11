@@ -145,7 +145,7 @@ deploy: ## Install/upgrade the app Helm release.
 		--set backend.image.repository=$(word 1,$(subst :, ,$(BACKEND_IMAGE))) \
 		--set backend.image.tag=$(word 2,$(subst :, ,$(BACKEND_IMAGE))) \
 		--set serviceMonitor.releaseLabel=$(KPS_RELEASE) \
-		--wait --timeout 5m
+		--force-conflicts --wait --timeout 5m
 
 redeploy: build ## Rebuild images and rollout-restart the app deployments.
 	kubectl -n $(APP_NAMESPACE) rollout restart deployment/gateway deployment/backend
@@ -201,7 +201,7 @@ status: ## Show platform + app pod status.
 .PHONY: chaos-load chaos-load-stop chaos-load-status \
         chaos-errors-backend chaos-errors-gateway \
         chaos-latency \
-        chaos-crashloop chaos-oom \
+        chaos-crashloop chaos-backend-crashloop chaos-oom \
         chaos-redis-down chaos-postgres-down chaos-gateway-down chaos-backend-down \
         chaos-reset
 
@@ -222,12 +222,15 @@ chaos-load-stop: ## Stop the background load generator started by chaos-load.
 chaos-load-status: ## Show whether the load generator is running and tail its log.
 	@bash scripts/chaos-load.sh status
 
-chaos-errors-backend: ## Drive backend 5xx by killing Postgres while load runs. Expect AppBackendHighErrorRateFastBurn (2m) + AppPostgresDown (2m).
+chaos-errors-backend: ## Drive backend + gateway down by killing Postgres. Full cascade: Postgres→backend CrashLoop→gateway CrashLoop.
 	@echo "Injecting backend errors: scaling postgres StatefulSet to 0 replicas."
+	@echo "Note: backend liveness now uses /readyz — Postgres down causes CrashLoopBackOff (not just 5xx)."
+	@echo "      Gateway liveness calls backend /readyz — cascade brings gateway down too."
 	@echo "Expected alerts (need sustained load — start 'make chaos-load' first):"
 	@echo "  AppPostgresDown                        for: 2m"
-	@echo "  AppBackendHighErrorRateFastBurn        for: 2m (needs >0.05 rps + ratio > 7.2%)"
-	@echo "  AppGatewayHighErrorRateFastBurn        for: 2m (gateway returns 502 on backend failure)"
+	@echo "  AppBackendDown                         for: 2m"
+	@echo "  AppGatewayDown                         for: 2m"
+	@echo "  AppPodCrashLooping                     for: 1m"
 	kubectl -n $(APP_NAMESPACE) scale statefulset/postgres --replicas=0
 	@echo "Reset with: make chaos-reset"
 
@@ -257,6 +260,18 @@ chaos-crashloop: ## Force gateway into CrashLoopBackOff via bogus image. Expect 
 	kubectl -n $(APP_NAMESPACE) set image deployment/gateway gateway=busybox:1.36
 	@echo "Reset with: make chaos-reset"
 
+chaos-backend-crashloop: ## Force backend into CrashLoopBackOff via bogus image. Expect AppPodCrashLooping (1m) + AppBackendDown (2m).
+	@echo "Injecting crashloop: setting backend image to busybox (no backend binary inside)."
+	@echo "Scaling to 0 first so rolling update doesn't keep old healthy pod running."
+	@echo "Expected alerts:"
+	@echo "  AppPodCrashLooping                     for: 1m   (increase(restarts)[5m] > 2)"
+	@echo "  AppBackendDown                         for: 2m   (Prometheus scrape fails)"
+	@echo "  AppDeploymentReplicasMismatch          for: 10m"
+	kubectl -n $(APP_NAMESPACE) scale deployment/backend --replicas=0
+	kubectl -n $(APP_NAMESPACE) set image deployment/backend backend=busybox:1.36
+	kubectl -n $(APP_NAMESPACE) scale deployment/backend --replicas=1
+	@echo "Reset with: make chaos-reset"
+
 chaos-oom: ## Patch backend memory limit to 8Mi so it OOMKills repeatedly. Expect AppContainerOOMKilled (1m).
 	@echo "Injecting OOM: patching backend memory limit to 8Mi (Go runtime cannot start)."
 	@echo "Expected alerts:"
@@ -275,10 +290,18 @@ chaos-redis-down: ## Scale Redis Deployment to 0 replicas. Expect AppRedisDown (
 	kubectl -n $(APP_NAMESPACE) scale deployment/redis --replicas=0
 	@echo "Reset with: make chaos-reset"
 
-chaos-postgres-down: ## Scale Postgres StatefulSet to 0 replicas. Expect AppPostgresDown (2m) + backend 5xx.
+chaos-postgres-down: ## Scale Postgres StatefulSet to 0 replicas. Cascade: backend liveness fails → CrashLoopBackOff → gateway liveness fails → CrashLoopBackOff.
 	@echo "Killing Postgres: scaling statefulset to 0 replicas."
+	@echo "Cascade:"
+	@echo "  1. backend /readyz returns 503 (Postgres unreachable)"
+	@echo "  2. backend liveness probe fails 3x (~30s) → pod killed → restart → os.Exit(1) → CrashLoopBackOff"
+	@echo "  3. gateway /readyz calls backend /readyz → 503/connection-refused"
+	@echo "  4. gateway liveness probe fails 3x (~30s) → pod killed → restart → CrashLoopBackOff"
 	@echo "Expected alerts:"
-	@echo "  AppPostgresDown  "
+	@echo "  AppPostgresDown                        for: 2m"
+	@echo "  AppBackendDown                         for: 2m"
+	@echo "  AppGatewayDown                         for: 2m"
+	@echo "  AppPodCrashLooping                     for: 1m"
 	kubectl -n $(APP_NAMESPACE) scale statefulset/postgres --replicas=0
 	@echo "Reset with: make chaos-reset"
 
@@ -309,7 +332,7 @@ chaos-reset: ## Restore baseline: re-deploy chart, restart deployments, stop loa
 		--set backend.image.repository=$(word 1,$(subst :, ,$(BACKEND_IMAGE))) \
 		--set backend.image.tag=$(word 2,$(subst :, ,$(BACKEND_IMAGE))) \
 		--set serviceMonitor.releaseLabel=$(KPS_RELEASE) \
-		--wait --timeout 5m
+		--force-conflicts --wait --timeout 5m
 	@echo "Restarting app deployments to flush any wedged pods..."
 	-kubectl -n $(APP_NAMESPACE) rollout restart deployment/gateway deployment/backend deployment/redis
 	-kubectl -n $(APP_NAMESPACE) rollout restart statefulset/postgres
