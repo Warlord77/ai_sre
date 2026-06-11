@@ -134,9 +134,7 @@ make chaos-backend-down && sleep 60 && make investigate-stdin
 1. Identified replicas set to zero from Alertmanager; claim not validated via Prometheus.
 2. Misidentified root cause as OOM/CrashLoopBackOff.
 3. Inconsistently cited Alertmanager as unavailable while using its data as evidence.
-4. Incorrectly cited traces for backend with wrong names.
-
-
+4. Incorrectly citing Tempo traces.
 **Result:**
 Identified the deployment-down state from alerts, but validations were weak due to broken integrations and missing context.
 
