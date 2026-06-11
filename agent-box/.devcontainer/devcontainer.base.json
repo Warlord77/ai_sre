@@ -1,9 +1,0 @@
-{
-  "remoteUser": "agent",
-  "updateRemoteUserUID": true,
-  "workspaceFolder": "/workspace",
-  "runArgs": [
-    "--cap-drop=ALL",
-    "--security-opt=no-new-privileges"
-  ]
-}
