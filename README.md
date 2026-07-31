@@ -11,9 +11,8 @@ Each experiment is an independent silo. HolmesGPT and K8sGPT were run against [i
 
 ## Experiments
 
-Recommended reading order:
 
-| Order | Experiment | Version | Date | Test environment | README |
+| SNo | Experiment | Version | Date | Test environment | README |
 |-------|------------|---------|------|------------------|--------|
 | 1 | `holmes-gpt/` | 0.30.0 | 2026-05-18 | iximiuz Labs (K8s + Linux challenges) | [README](holmes-gpt/README.md) |
 | 2 | `k8sgpt/` | 0.4.33 | 2026-05-18 | iximiuz Labs (K8s challenge) | [README](k8sgpt/README.md) |
