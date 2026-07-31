@@ -96,10 +96,6 @@ make load-stop                Stop the background load generator
 
 </details>
 
-<details>
-<summary>All make targets — <code>observability-stack/Makefile</code></summary>
-
-Run from `observability-stack/`, or via `make -C observability-stack <target>`.
 
 ```
 make help                     Show this help
