@@ -271,7 +271,7 @@ Outcome: The model was able to find the root cause and suggest possible fixes. T
 
 | Demo         | Link                                                                                 | Duration |
 | ------------ | ------------------------------------------------------------------------------------ | -------- |
-| `Scenario 3` | `https://drive.google.com/file/d/1jkU5qq7iJoTNGgcKhnqm4fs6deN0lAfi/view?usp=sharing` | `06:36`  |
+| `Scenario 3` | `https://youtu.be/f3oi8yChjQY?si=Wr3MvsIaF-e2mMHp` | `06:36`  |
 
 
 ---

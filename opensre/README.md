@@ -44,11 +44,11 @@ Component overview:
 ### Install
 
 ```bash
-git clone https://github.com/one2nc/ai-bites.git && pushd ai-bites/opensre
+git clone https://github.com/one2nc/ai_sre.git && pushd ai_sre/opensre
 make env           # copy .env.example → .env; set LLM_PROVIDER=claude-code (or any other), SLACK_WEBHOOK_URL
 make install       # brew install tracer-cloud/tap/opensre
 opensre onboard    # Configure integrations with Grafana using service tokens, LLM Provider (Claude/OpenRouter)
-pushd observability-stack && make secret && popd # Create secret for Slack-Alertmanager integration
+pushd observability-stack && make secrets && popd # Create secret for Slack-Alertmanager integration
 make stack-up      # Deploy monitoring + app onto Docker Desktop or any other local platform. Update cluster labels accordingly.
 make port-forward  # Grafana :3000, Alertmanager :9093 — keep running in a separate terminal
 ```
@@ -184,7 +184,7 @@ Identified the deployment-down state from alerts and Prometheus, but validations
 
 | Demo | Link | Duration |
 |------|------|----------|
-| Scenario (4.2) | https://drive.google.com/file/d/1jZL7F28ZAcdgDp42cEgIqsHax10OHAAJ/view?usp=sharing | `06:24` |
+| Scenario (4.2) | https://youtu.be/3T7KOOgfLko?si=HiJkarRk7gQ0Am6e | `06:23` |
 
 ---
 
