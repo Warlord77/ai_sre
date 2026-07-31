@@ -46,23 +46,6 @@ Quick links:
 | Chaos scenarios | [opensre Makefile](opensre/Makefile) |
 | Captured Alertmanager payloads | [opensre/tests/](opensre/tests/) |
 
-## Running the sandbox
-
-```bash
-git clone https://github.com/one2nc/ai_sre.git
-cd ai_sre/opensre
-
-make stack-up            # install platform + app on Docker Desktop K8s
-make port-forward        # Grafana :3000, Alertmanager :9093 (keep running)
-
-make chaos-postgres-down # break something, watch a real alert fire
-make chaos-reset         # put it back
-```
-
-`make help` lists every target. `make -C observability-stack verify` exits with the number of failed checks. Then follow the tool-specific setup in [holmes-gpt/](holmes-gpt/README.md), [k8sgpt/](k8sgpt/README.md), or [opensre/](opensre/README.md).
-
-**Prerequisites:** Docker Desktop with Kubernetes and the containerd image store enabled, `helm` ≥ 3.13, `kubectl`, Go 1.22+, `jq`, `curl`, and an API key for whichever LLM provider you're testing. HolmesGPT and K8sGPT scenarios need an iximiuz Labs account instead of the local stack.
-
 ## Personas
 
 | Persona | What they care about |
@@ -70,7 +53,6 @@ make chaos-reset         # put it back
 | On-call SRE | Does the agent shorten time-to-root-cause on a real incident? |
 | Platform engineer | What cluster access does it need, and what can it write? |
 | Security/Compliance | What cluster data leaves the perimeter, and to which provider |
-|
 
 ## License
 
