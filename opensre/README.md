@@ -54,27 +54,107 @@ make port-forward  # Grafana :3000, Alertmanager :9093 — keep running in a sep
 ```
 
 <details>
-<summary>All make targets</summary>
+<summary>All make targets — <code>opensre/Makefile</code></summary>
 
 ```
-make env                    Create .env from .env.example
-make install                Install opensre CLI via Homebrew
-make doctor                 Run opensre diagnostics
-make integrations           Verify all opensre integrations
-make stack-up               Bring up observability stack
-make stack-down             Tear down observability stack
-make stack-status           Show pod status (monitoring + app namespaces)
-make port-forward           Port-forward Grafana :3000, Alertmanager :9093, PostgreSQL :5432
-make investigate            Investigate against tests/actual-dev-env.alert.json
-make investigate-stdin      Feed live Alertmanager alerts to opensre
-make chaos-postgres-down    Scale Postgres to 0 — triggers AppPostgresDown
-make chaos-redis-down       Scale Redis to 0 — triggers AppRedisDown
-make chaos-gateway-down     Scale gateway to 0 — triggers AppGatewayDown
-make chaos-backend-down     Scale backend to 0 — triggers AppBackendDown
-make chaos-reset            Restore stack to baseline
-make load-start             Start sustained background load against gateway (feeds Grafana metrics)
-make load-stop              Stop the background load generator
-make chaos-full-run         Run all chaos scenarios sequentially with investigate + reset between each
+make help                     Show this help
+
+# Setup
+make env                      Create .env from .env.example (first-time setup)
+make install                  Install opensre CLI via Homebrew
+make doctor                   Run opensre diagnostics
+make integrations             Verify all opensre integrations
+
+# Stack lifecycle
+make stack-up                 Bring up the full observability stack (platform + app)
+make stack-down               Tear down the observability stack
+make stack-status             Show pod status across monitoring + app namespaces
+make port-forward             Port-forward Grafana :3000, Alertmanager :9093, PostgreSQL :5432
+
+# Investigation
+make investigate              Investigate against tests/actual-dev-env.alert.json
+make investigate-stdin        Pull live alerts from Alertmanager and feed to opensre
+
+# Chaos
+make chaos-postgres-down      Scale Postgres to 0 — triggers AppPostgresDown
+make chaos-redis-down         Scale Redis to 0 — triggers AppRedisDown
+make chaos-gateway-down       Scale gateway to 0 — triggers AppGatewayDown
+make chaos-backend-down       Scale backend to 0 — triggers AppBackendDown
+make chaos-backend-crashloop  Force backend into CrashLoopBackOff via bogus image —
+                              triggers AppPodCrashLooping + AppBackendDown
+make chaos-reset              Restore stack to baseline
+make chaos-full-run           Run all chaos scenarios sequentially
+                              (postgres→redis→backend→gateway→all-down), with
+                              investigate + reset between each
+
+# Load generation
+make load-start               Start sustained background load against the gateway
+make load-stop                Stop the background load generator
+```
+
+`investigate`, `investigate-stdin`, and `chaos-full-run` require an LLM provider configured in `.env`.
+
+</details>
+
+<details>
+<summary>All make targets — <code>observability-stack/Makefile</code></summary>
+
+Run from `observability-stack/`, or via `make -C observability-stack <target>`.
+
+```
+make help                     Show this help
+
+# Lifecycle
+make up                       repos + secrets + platform + tidy + build + deploy
+make e2e                      Bring up the stack and run end-to-end verification
+make down                     Uninstall all Helm releases, delete app + monitoring namespaces
+make pause                    Silence alerts (alias for silence)
+make resume                   Scale monitoring workloads back to pre-pause replica counts
+make silence                  Create a 30-min Alertmanager silence on namespace=app
+make secrets                  Create the grafana-slack Secret from .secrets/slack-token
+
+# Build and deploy
+make repos                    Add and update Helm repos
+make platform                 Install kube-prometheus-stack, Loki, Promtail, Tempo
+make tidy                     go mod tidy in both services (creates go.sum)
+make build                    Build gateway + backend images
+make deploy                   Install/upgrade the app Helm release
+make redeploy                 Rebuild images and rollout-restart the app deployments
+
+# Inspect
+make verify                   End-to-end verification: pods Ready, app HTTP, Prometheus, Loki, Tempo.
+                              Exit code equals the failure count
+make status                   Show platform + app pod status
+make port-forward             Grafana :3000, Alertmanager :9093, PostgreSQL :5432, Gateway :8080
+make grafana-password         Print the Grafana admin password
+make demo                     Hit the gateway in a loop to generate traces, logs, metrics
+
+# Load generation
+make chaos-load               Sustained background traffic against the gateway
+make chaos-load-stop          Stop the background load generator
+make chaos-load-status        Show whether the load generator is running, tail its log
+
+# Chaos — availability
+make chaos-postgres-down      Scale Postgres StatefulSet to 0. Cascade: backend liveness fails →
+                              CrashLoopBackOff → gateway liveness fails → CrashLoopBackOff
+make chaos-redis-down         Scale Redis to 0. Expect AppRedisDown (2m)
+make chaos-gateway-down       Scale gateway to 0. Expect AppGatewayDown (2m)
+make chaos-backend-down       Scale backend to 0. Expect AppBackendDown (2m)
+
+# Chaos — degradation
+make chaos-errors-backend     Kill Postgres for the full cascade to gateway CrashLoop
+make chaos-errors-gateway     Kill backend while load runs. Expect
+                              AppGatewayHighErrorRateFastBurn (2m) + AppBackendDown (2m)
+make chaos-latency            Throttle backend CPU to 5m so p99 climbs. Expect
+                              AppBackendHighLatencyP99 (10m), likely AppGatewayHighLatencyP99
+make chaos-crashloop          Gateway CrashLoopBackOff via bogus image. Expect
+                              AppPodCrashLooping (1m) + AppGatewayDown (2m)
+make chaos-backend-crashloop  Backend CrashLoopBackOff via bogus image. Expect
+                              AppPodCrashLooping (1m) + AppBackendDown (2m)
+make chaos-oom                Patch backend memory limit to 8Mi so it OOMKills repeatedly.
+                              Expect AppContainerOOMKilled (1m)
+make chaos-reset              Restore baseline: re-deploy chart, restart deployments,
+                              stop load, drop silences
 ```
 
 </details>
