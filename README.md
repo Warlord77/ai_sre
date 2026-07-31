@@ -31,7 +31,7 @@ What the local sandbox exposes:
 | Layer | What's observable |
 |-------|------------------|
 | HTTP/API | Gateway → backend request latency, status codes, RED metrics |
-| Logs | Structured `slog` JSON on stdout carrying `trace_id`, shipped by Promtail to Loki |
+| Logs | Structured `log` JSON on stdout carrying `trace_id`, shipped by Promtail to Loki |
 | Traces | OpenTelemetry spans from both services into Tempo; pivot from a Loki `trace_id` to the trace and back |
 | Datastores | Postgres and Redis calls as child spans, with up/down alerts |
 | Alerting | `kube-prometheus-stack` `PrometheusRule`s firing real `AppPostgresDown` / `AppRedisDown` / `AppBackendDown` / `AppGatewayDown` into Alertmanager and Slack |
