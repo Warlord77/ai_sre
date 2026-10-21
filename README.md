@@ -21,6 +21,8 @@ Each experiment is an independent silo. HolmesGPT and K8sGPT were run against [i
 | 5 | `holmes-gpt-sregym-lite/` | 0.45.0 | 2026-10-21 | [SREGym-Lite](https://github.com/SREGym/SREGym/blob/main/docs/SREGym-Lite.md) benchmark, 17 graded problems (kind, `svelte` profile, 8 GB) | [README](holmes-gpt-sregym-lite/README.md) |
 
 
+**Combined report:** [HolmesGPT — Combined Evaluation](holmes-gpt-combined/README.md) merges experiments 1, 4 and 5 into one verdict, compared against K8sGPT and OpenSRE.
+
 ## Scorecard
 
 <!-- SCORECARD:START -->
