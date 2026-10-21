@@ -1,4 +1,4 @@
-**Diagnosis pass rate: 1/6 evaluated** · 9/17 problems run · runs `1021_1159, 1021_1349, 1021_1509, 1021_1540, 1021_1548, 1021_1609, 1021_1616` · updated 2026-10-21 16:16
+**Diagnosis pass rate: 1/7 evaluated** · 10/17 problems run · runs `1021_1159, 1021_1349, 1021_1509, 1021_1540, 1021_1548, 1021_1609, 1021_1616, 1021_1622` · updated 2026-10-21 16:23
 
 | # | Problem | Diagnosis | Score | Investigation | Judge notes |
 |---|---------|-----------|------:|--------------:|-------------|
@@ -12,7 +12,7 @@
 | 8 | `internal_traffic_policy_local_astronomy_shop` | deploy failed |  |  |  |
 | 9 | `service_dns_resolution_failure_social_network` | not run | | | |
 | 10 | `service_wrong_pod_selection_hotel_reservation` | ❌ fail | 0.0 | 2.2 min | Verdict: False (composite=0.00). D1 Fault Localization: 0.00 / D2 Fault Characterization: 0.00 / D3 Scope Precision: 0.00. Weakest dimension: Fault Localization (0.00). Checklist details: [{"id": "D1-Q1", "answer": "No", |
-| 11 | `namespace_memory_limit` | not run | | | |
+| 11 | `namespace_memory_limit` | ❌ fail | 56.0 | 2.1 min | Verdict: False (composite=0.56). D1 Fault Localization: 0.00 / D2 Fault Characterization: 1.00 / D3 Scope Precision: 0.67. Weakest dimension: Fault Localization (0.00). Checklist details: [{"id": "D1-Q1", "answer": "No", |
 | 12 | `valkey_auth_disruption` | not run | | | |
 | 13 | `secret_rotation_stale_env_credentials_astronomy_shop` | not run | | | |
 | 14 | `unschedulable_incorrect_port_assignment` | not run | | | |
