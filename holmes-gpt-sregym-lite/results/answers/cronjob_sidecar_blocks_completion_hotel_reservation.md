@@ -1,34 +1,57 @@
 # cronjob_sidecar_blocks_completion_hotel_reservation
 
-Perfect! The frontend also has NO readiness probe. Despite the Consul connection errors during initialization, the frontend logs show "Successfull" and "Serving http", meaning it continued to start even though it couldn't retrieve service instances from Consul. This means the frontend is serving HTTP requests but doesn't have proper service discovery information for the backend services, causing requests to timeout.
+Perfect! Now I have all the evidence I need. Let me create a comprehensive summary of the root cause.
 
 ## ROOT CAUSE
 
 **Faulty Component(s):**
-- **Deployment: `consul`** in namespace `hotel-reservation`
-- **Deployment: `frontend`** in namespace `hotel-reservation`
+- **Kind:** ConfigMap
+- **Name:** `otel-collector-agent` 
+- **Namespace:** `astronomy-shop`
+- **Affected Resource:** DaemonSet `otel-collector-agent` in namespace `astronomy-shop`
 
 **Root Cause:**
 
-The Consul deployment is missing a readiness probe, causing a race condition during application startup that breaks service discovery and leads to request timeouts.
-
-**What is misconfigured:**
-
-1. **Consul deployment has no readiness probe**: Without a readiness probe, Kubernetes immediately marks the Consul pod as Ready when it starts, even though Consul's HTTP API server on port 8500 takes approximately 500ms to start listening (starts at 06:29:57.000Z, HTTP server ready at 06:29:57.535Z).
-
-2. **Frontend deployment has no readiness probe**: The frontend starts simultaneously with Consul (both at 06:29:57Z) and immediately tries to query Consul's HTTP API to discover backend services (search, profile, recommendation, user, reservation). Because Consul isn't ready yet, these queries fail with "connection refused" errors.
-
-3. **Frontend continues serving despite failed service discovery**: The frontend proceeds to serve HTTP requests even though it couldn't retrieve service instance information from Consul during initialization, resulting in incomplete or missing backend service connections.
+The OpenTelemetry Collector agent configuration contains an incorrect endpoint for trace export. The `otlp/jaeger` exporter is configured with `endpoint: jaeger:4317`, which uses a short hostname that cannot be resolved via DNS.
 
 **Why it breaks the application:**
 
-The wrk2 load testing job consistently reports **186 timeout errors per 30-second test run** (out of ~3158 total requests). These timeouts occur because the frontend cannot properly route requests to backend services - it either has no service discovery information or incomplete information due to the failed Consul queries during startup. When client requests arrive at the frontend, it cannot successfully forward them to the appropriate backend services, causing the requests to timeout.
+1. **DNS Resolution Failure:** The hostname `jaeger` (without namespace qualification) cannot be resolved. While ExternalName services exist (`jaeger`, `jaeger-agent`, `jaeger-collector`, `jaeger-query`) pointing to `otel-collector.observe.svc.cluster.local`, these services have selectors (`app: jaeger`, etc.) that don't match any pods, making them non-functional for DNS resolution.
+
+2. **Collector Pod Crashes:** The previous otel-collector-agent pod (`otel-collector-agent-jf6pw`) crashed due to this misconfiguration, with errors showing:
+   - `lookup jaeger on 10.96.0.10:53: no such host`
+   - `failed to shutdown service after error: failed to shutdown meter provider`
+   - The pod was marked `Unhealthy` and eventually replaced
+
+3. **Trace Export Failures:** Applications attempting to send traces experience export failures, though the current collector pod (`otel-collector-agent-cp2fc`) continues running because it hasn't yet hit the fatal error condition.
 
 **Evidence:**
 
-1. Consul deployment has no readiness or liveness probes (confirmed via `kubectl get deployment consul -o jsonpath`)
-2. Consul logs show HTTP server started at `2026-10-21T06:29:57.535Z` with message "Starting server: address=[::]:8500"
-3. Frontend logs show 6 connection refused errors at `2026-10-21T06:29:57Z` trying to query Consul for services: srv-search, srv-profile, and srv-recommendation
-4. Frontend proceeded to "Serving http" despite these failures
-5. wrk2 load test consistently shows `Socket errors: connect 0, read 0, write 0, timeout 186` across multiple test rounds (06:30:40, 06:31:11, 06:31:42, 06:32:13, 06:32:44, 06:33:15, 06:33:46)
-6. Alert firing: `KubePodNotReady` for audit-log-archiver pods (unrelated to main issue - these are CronJob pods with completed main containers)
+1. **ConfigMap misconfiguration** (from `otel-collector-agent` ConfigMap):
+   ```yaml
+   exporters:
+     otlp/jaeger:
+       endpoint: jaeger:4317  # ← INCORRECT: should be fully qualified
+   ```
+
+2. **DNS lookup failures** (from `otel-collector-agent-jf6pw` logs at 06:54:00-06:54:03):
+   ```
+   lookup jaeger on 10.96.0.10:53: no such host
+   Exporting failed. Dropping data.
+   ```
+
+3. **Pod crash and replacement** (from events at 06:54:03):
+   ```
+   Unhealthy: Readiness probe failed: HTTP probe failed with statuscode: 503
+   Killing pod/otel-collector-agent-jf6pw
+   SuccessfulCreate: Created pod: otel-collector-agent-cp2fc
+   ```
+
+4. **Application export errors** (from application logs):
+   - `product-catalog`: `connection refused: dial tcp 10.96.36.9:4317: connect: connection refused`
+   - `quote`: `Failed to connect to otel-collector port 4318`
+   - `recommendation`: `StatusCode.UNAVAILABLE encountered while exporting logs to otel-collector:4317`
+
+**Fix:**
+
+Change the endpoint in the `otel-collector-agent` ConfigMap from `endpoint: jaeger:4317` to `endpoint: otel-collector.observe.svc.cluster.local:4317` to use the fully qualified domain name that correctly resolves to the otel-collector service in the observe namespace.

@@ -1,9 +1,9 @@
-**Diagnosis pass rate: 0/1 evaluated** · 1/17 problems run · run `1021_1159` · updated 2026-10-21 12:08
+**Diagnosis pass rate: 0/2 evaluated** · 2/17 problems run · run `1021_1159` · updated 2026-10-21 12:29
 
 | # | Problem | Diagnosis | Score | Investigation | Judge notes |
 |---|---------|-----------|------:|--------------:|-------------|
 | 1 | `cronjob_sidecar_blocks_completion_hotel_reservation` | ❌ fail | 0.0 | 2.8 min | Verdict: False (composite=0.00). D1 Fault Localization: 0.00 / D2 Fault Characterization: 0.00 / D3 Scope Precision: 0.00. Weakest dimension: Fault Localization (0.00). Checklist details: [{"id": "D1-Q1", "answer": "No", |
-| 2 | `edge_request_filter_cpu_saturation` | not run | | | |
+| 2 | `edge_request_filter_cpu_saturation` | ❌ fail | 0.0 | 2.2 min | Verdict: False (composite=0.00). D1 Fault Localization: 0.00 / D2 Fault Characterization: 0.00 / D3 Scope Precision: 0.00. Weakest dimension: Fault Localization (0.00). Checklist details: [{"id": "D1-Q1", "answer": "No", |
 | 3 | `network_policy_block` | not run | | | |
 | 4 | `env_variable_shadowing_astronomy_shop` | not run | | | |
 | 5 | `mutating_webhook_resource_limits_social_network` | not run | | | |
