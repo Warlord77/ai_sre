@@ -76,9 +76,9 @@ resume: preflight install ## Resume a lite run (CSV=<path to results csv>).
 	$(RUN) --suite sregym-lite --resume $(CSV)
 
 .PHONY: summary
-summary: ## Collect results into results/ and regenerate the README results block (RUN=<results dir>).
-	@python3 scripts/summarize.py --sregym $(SREGYM_ABS) --out results --readme README.md $(if $(RUN),--run $(RUN))
+summary: ## Collect results into results/ and regenerate the README results block (RUNS="<dir>...").
+	@python3 scripts/summarize.py --sregym $(SREGYM_ABS) --out results --readme README.md --root-readme ../README.md $(if $(RUNS),--run $(RUNS))
 
 .PHONY: watch
-watch: ## Regenerate README after every finished problem until the run ends (RUN=<results dir>).
-	@scripts/watch.sh $(SREGYM_ABS) $(RUN)
+watch: ## Regenerate + commit README after every problem until the run ends (RUNS="<dir> [<dir>...]").
+	@scripts/watch.sh $(SREGYM_ABS) $(RUNS)
