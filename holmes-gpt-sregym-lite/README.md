@@ -118,11 +118,11 @@ SREGym-Lite asks for 16 GB. To fit a 16 GB Mac with 8 GB given to Docker:
 
 | Problems run | ✅ Passed | ❌ Failed | ⚠️ Not graded | Pass rate | Avg judge score | Avg investigation |
 |---:|---:|---:|---:|---:|---:|---:|
-| 7/17 | 1 | 4 | 2 | 20% | 16/100 | 2.8 min |
+| 9/17 | 1 | 5 | 3 | 17% | 13/100 | 2.7 min |
 <!-- SCORECARD:END -->
 
 <!-- RESULTS:START -->
-**Diagnosis pass rate: 1/5 evaluated** · 7/17 problems run · runs `1021_1159, 1021_1349, 1021_1509, 1021_1540, 1021_1548` · updated 2026-10-21 15:49
+**Diagnosis pass rate: 1/6 evaluated** · 9/17 problems run · runs `1021_1159, 1021_1349, 1021_1509, 1021_1540, 1021_1548, 1021_1609, 1021_1616` · updated 2026-10-21 16:16
 
 | # | Problem | Diagnosis | Score | Investigation | Judge notes |
 |---|---------|-----------|------:|--------------:|-------------|
@@ -133,13 +133,12 @@ SREGym-Lite asks for 16 GB. To fit a 16 GB Mac with 8 GB given to Docker:
 | 5 | `mutating_webhook_resource_limits_social_network` | ⚠️ invalid: HolmesGPT crashed on a dropped OpenRouter stream; driver submitted the raw CLI transcript (driver fixed; rerun pending) |  | 0.8 min |  |
 | 6 | `finalizer_deadlock_controller_hotel_reservation` | ❌ fail | 0.0 | 3.1 min | Verdict: False (composite=0.00). D1 Fault Localization: 0.00 / D2 Fault Characterization: 0.00 / D3 Scope Precision: 0.00. Weakest dimension: Fault Localization (0.00). Checklist details: [{"id": "D1-Q1", "answer": "No", |
 | 7 | `kafka_poison_pill_hol_block` | ✅ pass | 78.0 | 3.6 min | Verdict: True (composite=0.78). D1 Fault Localization: 0.67 / D2 Fault Characterization: 1.00 / D3 Scope Precision: 0.67. Weakest dimension: Fault Localization (0.67). Checklist details: [{"id": "D1-Q1", "answer": "Yes", |
-| 8 | `internal_traffic_policy_local_astronomy_shop` | not run | | | |
+| 8 | `internal_traffic_policy_local_astronomy_shop` | deploy failed |  |  |  |
 | 9 | `service_dns_resolution_failure_social_network` | not run | | | |
-| 10 | `service_wrong_pod_selection_hotel_reservation` | not run | | | |
+| 10 | `service_wrong_pod_selection_hotel_reservation` | ❌ fail | 0.0 | 2.2 min | Verdict: False (composite=0.00). D1 Fault Localization: 0.00 / D2 Fault Characterization: 0.00 / D3 Scope Precision: 0.00. Weakest dimension: Fault Localization (0.00). Checklist details: [{"id": "D1-Q1", "answer": "No", |
 | 11 | `namespace_memory_limit` | not run | | | |
 | 12 | `valkey_auth_disruption` | not run | | | |
 | 13 | `secret_rotation_stale_env_credentials_astronomy_shop` | not run | | | |
-| 10 | `service_wrong_pod_selection_hotel_reservation` | `frontend` Service selector broadened to `service-route=frontend`, which also matches a `search` pod (port 8082 vs targetPort 5000), so some frontend traffic hits the wrong pod | `rate` QPS limit 500 / queue 256 overloads under load; search retries time out | Same story as problem 6, built from the chart's default `rate` settings. It never inspected Service selectors or Endpoints (38 tool calls; the only "selector" hits are tool parameters like `label_selector=None`). Score 0/100. |
 | 14 | `unschedulable_incorrect_port_assignment` | not run | | | |
 | 15 | `duplicate_pvc_mounts_social_network` | not run | | | |
 | 16 | `rolling_update_misconfigured_social_network` | not run | | | |
