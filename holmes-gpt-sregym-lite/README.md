@@ -97,7 +97,7 @@ SREGym-Lite asks for 16 GB. To fit a 16 GB Mac with 8 GB given to Docker:
    in `monitoring` collided with SREGym's own install (host port 9100 for node-exporter, cluster-scoped
    `loki-clusterrole`). The `monitoring` namespace was removed so SREGym could install its own stack.
 4. **ARM64 Envoy OOM (SREGym bug).** On Apple-silicon kind nodes, astronomy-shop's `frontend-proxy` (Envoy) OOMKills at the upstream 65Mi limit. SREGym's ARM64 override doesn't cover it. Added locally to `sregym/service/apps/values/astronomy-shop-arm64.yaml`:
-   `components.frontend-proxy.resources.limits.memory: 160Mi`. Results for astronomy-shop problems run before this fix (2, 4) are rerun.
+   `components.frontend-proxy.resources.limits.memory: 160Mi`. Problem 4 ran before this fix and is rerun; problem 2's trace shows no Envoy OOM, so it stands.
 5. **Single node.** Problems that rely on multiple nodes may not reproduce faithfully; they are flagged
    below if they fail to deploy.
 
@@ -110,18 +110,18 @@ SREGym-Lite asks for 16 GB. To fit a 16 GB Mac with 8 GB given to Docker:
 
 | Problems run | ✅ Passed | ❌ Failed | ⚠️ Not graded | Pass rate | Avg judge score | Avg investigation |
 |---:|---:|---:|---:|---:|---:|---:|
-| 4/17 | 0 | 4 | 0 | 0% | 14/100 | 2.2 min |
+| 4/17 | 0 | 3 | 1 | 0% | 0/100 | 2.5 min |
 <!-- SCORECARD:END -->
 
 <!-- RESULTS:START -->
-**Diagnosis pass rate: 0/4 evaluated** · 4/17 problems run · run `1021_1159` · updated 2026-10-21 12:40
+**Diagnosis pass rate: 0/3 evaluated** · 4/17 problems run · run `1021_1159` · updated 2026-10-21 12:41
 
 | # | Problem | Diagnosis | Score | Investigation | Judge notes |
 |---|---------|-----------|------:|--------------:|-------------|
 | 1 | `cronjob_sidecar_blocks_completion_hotel_reservation` | ❌ fail | 0.0 | 2.8 min | Verdict: False (composite=0.00). D1 Fault Localization: 0.00 / D2 Fault Characterization: 0.00 / D3 Scope Precision: 0.00. Weakest dimension: Fault Localization (0.00). Checklist details: [{"id": "D1-Q1", "answer": "No", |
 | 2 | `edge_request_filter_cpu_saturation` | ❌ fail | 0.0 | 2.2 min | Verdict: False (composite=0.00). D1 Fault Localization: 0.00 / D2 Fault Characterization: 0.00 / D3 Scope Precision: 0.00. Weakest dimension: Fault Localization (0.00). Checklist details: [{"id": "D1-Q1", "answer": "No", |
 | 3 | `network_policy_block` | ❌ fail | 0.0 | 2.4 min | Verdict: False (composite=0.00). D1 Fault Localization: 0.00 / D2 Fault Characterization: 0.00 / D3 Scope Precision: 0.00. Weakest dimension: Fault Localization (0.00). Checklist details: [{"id": "D1-Q1", "answer": "No", |
-| 4 | `env_variable_shadowing_astronomy_shop` | ❌ fail | 56.0 | 1.2 min | Verdict: False (composite=0.56). D1 Fault Localization: 1.00 / D2 Fault Characterization: 0.00 / D3 Scope Precision: 0.67. Weakest dimension: Fault Characterization (0.00). Checklist details: [{"id": "D1-Q1", "answer": " |
+| 4 | `env_variable_shadowing_astronomy_shop` | ⚠️ invalid: ARM64 Envoy OOM at 65Mi (environment bug, fixed; rerun pending) | 56.0 | 1.2 min | Verdict: False (composite=0.56). D1 Fault Localization: 1.00 / D2 Fault Characterization: 0.00 / D3 Scope Precision: 0.67. Weakest dimension: Fault Characterization (0.00). Checklist details: [{"id": "D1-Q1", "answer": " |
 | 5 | `mutating_webhook_resource_limits_social_network` | not run | | | |
 | 6 | `finalizer_deadlock_controller_hotel_reservation` | not run | | | |
 | 7 | `kafka_poison_pill_hol_block` | not run | | | |
@@ -153,4 +153,4 @@ Reviewed by hand after each problem finishes (the tables above are generated; th
 | 1 | `cronjob_sidecar_blocks_completion_hotel_reservation` | `CronJob/audit-log-archiver`: a sidecar keeps the Job pod from completing | Missing readiness probes on `consul` and `frontend` cause a startup race and wrk2 timeouts | Never listed CronJobs/Jobs in the namespace (43 tool calls). It anchored on wrk2 timeout counts and Deployment specs, so it built a plausible but unrelated story. Score 0/100 on all three dimensions. |
 | 2 | `edge_request_filter_cpu_saturation` | `frontend-proxy`: a new edge/WAF filter regex backtracks catastrophically on long `waf` query values, saturating CPU and timing out healthy paths | `otel-collector-agent` ConfigMap exports to the unqualified `jaeger:4317`, which a previous collector pod failed to resolve | Never checked `frontend-proxy` CPU or its filter config (33 tool calls). It followed the loudest error in the logs. **Possible profile artefact:** under `svelte`, astronomy-shop's bundled Jaeger is disabled, so no `jaeger` Service exists until SREGym creates its ExternalName. The early collector crash HolmesGPT latched onto may not appear under `full`. Score 0/100. |
 | 3 | `network_policy_block` | NetworkPolicy `deny-all-recommendation` blocks all traffic to the `recommendation` service | Missing readiness probe on `consul` causes a startup race; frontend gets `connection refused` from Consul | Never queried NetworkPolicies (0 mentions in 45 tool calls). It reached the same wrong answer as problem 1: the frontend's `connection refused` errors at startup, logged in the ~1 s before Consul listens, are benign noise on every hotel-reservation deploy. Score 0/100 (the earlier smoke run of this problem scored 11/100). |
-| 4 | `env_variable_shadowing_astronomy_shop` | `frontend-proxy` defines `FRONTEND_HOST` twice; the later `localhost` shadows `frontend`, so it routes to the wrong upstream while staying Running/Ready | `frontend-proxy` 65Mi memory limit too low; Envoy is OOMKilled in a crash loop | **⚠️ Invalid: environment bug.** On ARM64, Envoy really was OOMKilled at the upstream 65Mi limit. SREGym's `astronomy-shop-arm64.yaml` raises limits only for `product-catalog`/`checkout`. HolmesGPT correctly diagnosed a real crash loop (16 tool calls) but not the injected fault, which assumes the pod is Ready. Fixed locally (160Mi limit on ARM64); this problem and problem 2 will be rerun. |
+| 4 | `env_variable_shadowing_astronomy_shop` | `frontend-proxy` defines `FRONTEND_HOST` twice; the later `localhost` shadows `frontend`, so it routes to the wrong upstream while staying Running/Ready | `frontend-proxy` 65Mi memory limit too low; Envoy is OOMKilled in a crash loop | **⚠️ Invalid: environment bug.** On ARM64, Envoy really was OOMKilled at the upstream 65Mi limit. SREGym's `astronomy-shop-arm64.yaml` raises limits only for `product-catalog`/`checkout`. HolmesGPT correctly diagnosed a real crash loop (16 tool calls) but not the injected fault, which assumes the pod is Ready. Fixed locally (160Mi limit on ARM64); this problem will be rerun. |

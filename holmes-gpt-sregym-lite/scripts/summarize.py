@@ -74,7 +74,21 @@ def replace_block(path: Path, name: str, body: str) -> None:
     path.write_text(re.sub(rf"<!-- {name}:START -->.*?<!-- {name}:END -->", lambda _: block, text, flags=re.S))
 
 
-def status(row: dict) -> str:
+def load_invalid(path: Path) -> dict[str, str]:
+    """problem_id -> reason, for runs broken by the environment rather than the agent."""
+    if not path.exists():
+        return {}
+    out = {}
+    for line in path.read_text().splitlines():
+        if line.strip() and not line.startswith("#"):
+            pid, _, reason = line.strip().partition(" ")
+            out[pid] = reason.strip()
+    return out
+
+
+def status(row: dict, invalid: dict[str, str]) -> str:
+    if row["problem_id"] in invalid:
+        return f"⚠️ invalid: {invalid[row['problem_id']]}"
     if row.get("deploy_failed") == "True":
         return "deploy failed"
     if row.get("run_status") == "incomplete":
@@ -99,6 +113,7 @@ def main():
     answers.mkdir(parents=True, exist_ok=True)
 
     rows = latest_rows(args.sregym, args.run)
+    invalid = load_invalid(Path(__file__).resolve().parents[1] / "invalid.txt")
     fields: list[str] = []
     table = [
         "| # | Problem | Diagnosis | Score | Investigation | Judge notes |",
@@ -111,7 +126,7 @@ def main():
             continue
         run_dir, row = rows[pid]
         fields += [k for k in row if k not in fields]
-        st = status(row)
+        st = status(row, invalid)
         if st in ("✅ pass", "❌ fail"):
             evaluated += 1
             passed += st == "✅ pass"
@@ -139,7 +154,9 @@ def main():
     )
     summary = header + "\n\n" + "\n".join(table)
     (args.out / "summary.md").write_text(summary + "\n")
-    sc = scorecard(rows, args.run)
+    sc = scorecard({k: v for k, v in rows.items() if k not in invalid}, args.run)
+    sc["not_graded"] += sum(k in invalid for k in rows)
+    sc["run"] = len(rows)
     pct = f"{100 * sc['passed'] / (sc['passed'] + sc['failed']):.0f}%" if sc["passed"] + sc["failed"] else "—"
     avg_score = f"{sc['avg_score']:.0f}/100" if sc["avg_score"] is not None else "—"
     avg_min = f"{sc['avg_min']:.1f} min" if sc["avg_min"] is not None else "—"

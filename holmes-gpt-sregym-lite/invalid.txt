@@ -1,0 +1,2 @@
+# problem_id  reason  (excluded from the pass rate until rerun)
+env_variable_shadowing_astronomy_shop  ARM64 Envoy OOM at 65Mi (environment bug, fixed; rerun pending)
