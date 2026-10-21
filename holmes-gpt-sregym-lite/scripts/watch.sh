@@ -3,12 +3,21 @@
 # commit the experiment folder to the ai_sre repo (local commit, no push).
 # Exits when the run ends.
 # Usage: scripts/watch.sh <sregym-dir> <run-dir-name>...   (a resumed campaign spans several)
+#        scripts/watch.sh <sregym-dir> since:<run-dir-name>  (every run dir from that one on)
 set -euo pipefail
 
 SREGYM=$1; shift
 RUNS=("$@")
 [ ${#RUNS[@]} -gt 0 ] || RUNS=("$(ls -t "$SREGYM/results" | grep -E '^[0-9]{4}_[0-9]{4}$' | head -1)")
 HERE=$(cd "$(dirname "$0")/.." && pwd)
+SINCE=""
+[[ ${RUNS[0]} == since:* ]] && SINCE=${RUNS[0]#since:}
+refresh_runs() {
+  [ -n "$SINCE" ] || return 0
+  RUNS=()
+  for d in $(ls "$SREGYM/results" | grep -E '^[0-9]{4}_[0-9]{4}$' | sort); do [[ ! $d < $SINCE ]] && RUNS+=("$d"); done
+}
+refresh_runs
 echo "watching ${RUNS[*]}"
 
 update() {
@@ -30,8 +39,9 @@ count() {
 
 last=-1
 while :; do
+  refresh_runs
   n=$(count)
   if [ "$n" != "$last" ]; then update "$n"; last=$n; fi
-  pgrep -f "main.py --agent holmesgpt" >/dev/null || { update "$(count)"; echo "run finished"; break; }
+  pgrep -f "main.py --agent holmesgpt|scripts/run-list.sh" >/dev/null || { update "$(count)"; echo "run finished"; break; }
   sleep 30
 done

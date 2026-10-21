@@ -71,6 +71,10 @@ run-one: preflight install ## Run one problem (PROBLEM=<id>).
 run-lite: preflight install ## Run all 17 SREGym-Lite problems.
 	$(RUN) --suite sregym-lite
 
+.PHONY: run-list
+run-list: ## Run the given problems one at a time (PROBLEMS="<id> <id>...").
+	@scripts/run-list.sh $(PROBLEMS)
+
 .PHONY: resume
 resume: preflight install ## Resume a lite run (CSV=<path to results csv>).
 	$(RUN) --suite sregym-lite --resume $(CSV)
