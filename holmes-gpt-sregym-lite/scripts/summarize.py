@@ -5,10 +5,14 @@ checkout (latest run per problem wins), copies the HolmesGPT answer for each
 problem, and writes results/summary.md + results/results.csv.
 """
 
+from __future__ import annotations
+
 import argparse
 import csv
 import json
+import re
 import shutil
+from datetime import datetime
 from pathlib import Path
 
 LITE = [
@@ -32,9 +36,9 @@ LITE = [
 ]
 
 
-def latest_rows(sregym: Path) -> dict[str, tuple[Path, dict]]:
+def latest_rows(sregym: Path, run: str | None) -> dict[str, tuple[Path, dict]]:
     rows: dict[str, tuple[Path, dict]] = {}
-    for csv_path in sorted((sregym / "results").glob("*/holmesgpt/*/*_holmesgpt_results.csv")):
+    for csv_path in sorted((sregym / "results").glob(f"{run or '*'}/holmesgpt/*/*_holmesgpt_results.csv")):
         with csv_path.open() as f:
             for row in csv.DictReader(f):
                 rows[row["problem_id"]] = (csv_path.parent, row)
@@ -55,6 +59,8 @@ def main():
     p = argparse.ArgumentParser()
     p.add_argument("--sregym", type=Path, required=True)
     p.add_argument("--out", type=Path, default=Path("results"))
+    p.add_argument("--run", help="SREGym results/<run> directory name (default: latest result per problem)")
+    p.add_argument("--readme", type=Path, help="README whose RESULTS block is replaced with the summary")
     args = p.parse_args()
 
     raw = args.out / "raw"
@@ -62,13 +68,16 @@ def main():
     raw.mkdir(parents=True, exist_ok=True)
     answers.mkdir(parents=True, exist_ok=True)
 
-    rows = latest_rows(args.sregym)
+    rows = latest_rows(args.sregym, args.run)
     fields: list[str] = []
-    table = ["| # | Problem | Diagnosis | Judge notes |", "|---|---------|-----------|-------------|"]
+    table = [
+        "| # | Problem | Diagnosis | Score | Investigation | Judge notes |",
+        "|---|---------|-----------|------:|--------------:|-------------|",
+    ]
     passed = evaluated = 0
     for i, pid in enumerate(LITE, 1):
         if pid not in rows:
-            table.append(f"| {i} | `{pid}` | not run | |")
+            table.append(f"| {i} | `{pid}` | not run | | | |")
             continue
         run_dir, row = rows[pid]
         fields += [k for k in row if k not in fields]
@@ -77,7 +86,10 @@ def main():
             evaluated += 1
             passed += st == "✅ pass"
         notes = (row.get("Diagnosis.reasoning") or row.get("Diagnosis.judgment") or "").replace("\n", " ").replace("|", "/")
-        table.append(f"| {i} | `{pid}` | {st} | {notes[:220]} |")
+        score = row.get("Diagnosis.composite_score") or row.get("Diagnosis.accuracy") or ""
+        secs = row.get("phase.stage:diagnosis.duration_s") or ""
+        took = f"{float(secs) / 60:.1f} min" if secs else ""
+        table.append(f"| {i} | `{pid}` | {st} | {score} | {took} | {notes[:220]} |")
 
         shutil.copytree(run_dir, raw / pid, dirs_exist_ok=True)
         for log in sorted(run_dir.rglob("holmes_*.json"))[-1:]:
@@ -91,8 +103,16 @@ def main():
             if pid in rows:
                 w.writerow(rows[pid][1])
 
-    summary = f"**Diagnosis pass rate: {passed}/{evaluated} evaluated ({len(rows)}/{len(LITE)} run)**\n\n" + "\n".join(table)
+    header = (
+        f"**Diagnosis pass rate: {passed}/{evaluated} evaluated** · {len(rows)}/{len(LITE)} problems run"
+        f" · run `{args.run or 'latest per problem'}` · updated {datetime.now():%Y-%m-%d %H:%M}"
+    )
+    summary = header + "\n\n" + "\n".join(table)
     (args.out / "summary.md").write_text(summary + "\n")
+    if args.readme:
+        text = args.readme.read_text()
+        block = f"<!-- RESULTS:START -->\n{summary}\n<!-- RESULTS:END -->"
+        args.readme.write_text(re.sub(r"<!-- RESULTS:START -->.*?<!-- RESULTS:END -->", lambda _: block, text, flags=re.S))
     print(summary)
 
 

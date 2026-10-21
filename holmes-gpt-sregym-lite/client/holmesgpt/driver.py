@@ -152,6 +152,8 @@ def run_holmes(prompt: str, logs_dir: Path, problem_id: str) -> tuple[int, str, 
     timeout = int(os.environ.get("HOLMES_TIMEOUT", "1500"))
     cmd = [
         "docker", "run", "--rm",
+        # Shares the Docker VM with the kind node; keep it from starving the cluster.
+        "--memory", os.environ.get("HOLMES_MEMORY", "1g"),
         "--add-host", f"{DOCKER_HOST_ALIAS}:host-gateway",
         "-e", "OPENROUTER_API_KEY",
         "-e", "KUBECONFIG=/work/kubeconfig.yaml",

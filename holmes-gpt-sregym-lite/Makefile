@@ -18,11 +18,16 @@ HOLMES_IMAGE ?= us-central1-docker.pkg.dev/genuine-flight-317411/devel/holmes:la
 # SREGym-Lite is graded on diagnosis only: HolmesGPT is read-only and never remediates.
 STAGES       ?= diagnosis
 PROBLEM      ?= network_policy_block
+# 8 GB Docker Desktop: 'svelte' drops components nothing in SREGym reads (Alertmanager,
+# Pushgateway, astronomy-shop's OpenSearch/Grafana/Jaeger, OpenEBS NDM) and caps Prometheus.
+PROFILE      ?= svelte
+HOLMES_MEMORY ?= 1g
 
 export SREGYM_ROOT := $(SREGYM_ABS)
+export HOLMES_MEMORY
 
 RUN := cd $(SREGYM_ABS) && uv run main.py --agent holmesgpt --model $(MODEL) \
-	--judge-model $(JUDGE_MODEL) --stages $(STAGES) --internet-access open
+	--judge-model $(JUDGE_MODEL) --stages $(STAGES) --internet-access open --profile $(PROFILE)
 
 .PHONY: help
 help: ## Show available targets.
@@ -31,6 +36,9 @@ help: ## Show available targets.
 .PHONY: preflight
 preflight: ## Check docker, cluster, uv, API key and the HolmesGPT image.
 	@docker info >/dev/null 2>&1 && echo "  docker      ok" || { echo "  docker      FAIL"; exit 1; }
+	@mem=$$(docker info --format '{{.MemTotal}}'); gib=$$((mem / 1073741824)); \
+		echo "  docker mem  $${gib} GiB (profile $(PROFILE))"; \
+		[ $$gib -ge 7 ] || { echo "  docker mem  FAIL — need >= 8 GB in Docker Desktop"; exit 1; }
 	@kubectl config current-context | grep -qx '$(KUBE_CONTEXT)' && echo "  context     ok ($(KUBE_CONTEXT))" || { echo "  context     FAIL — kubectl config use-context $(KUBE_CONTEXT)"; exit 1; }
 	@kubectl get nodes >/dev/null && echo "  cluster     ok" || { echo "  cluster     FAIL"; exit 1; }
 	@command -v uv >/dev/null && echo "  uv          ok" || { echo "  uv          FAIL — brew install uv"; exit 1; }
@@ -68,5 +76,9 @@ resume: preflight install ## Resume a lite run (CSV=<path to results csv>).
 	$(RUN) --suite sregym-lite --resume $(CSV)
 
 .PHONY: summary
-summary: ## Collect SREGym results + HolmesGPT logs into results/.
-	@python3 scripts/summarize.py --sregym $(SREGYM_ABS) --out results
+summary: ## Collect results into results/ and regenerate the README results block (RUN=<results dir>).
+	@python3 scripts/summarize.py --sregym $(SREGYM_ABS) --out results --readme README.md $(if $(RUN),--run $(RUN))
+
+.PHONY: watch
+watch: ## Regenerate README after every finished problem until the run ends (RUN=<results dir>).
+	@scripts/watch.sh $(SREGYM_ABS) $(RUN)
