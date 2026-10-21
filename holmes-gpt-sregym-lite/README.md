@@ -99,7 +99,14 @@ SREGym-Lite asks for 16 GB. To fit a 16 GB Mac with 8 GB given to Docker:
 4. **ARM64 Envoy OOM (SREGym bug).** On Apple-silicon kind nodes, astronomy-shop's `frontend-proxy` (Envoy) OOMKills at the upstream 65Mi limit. SREGym's ARM64 override doesn't cover it. Added locally to `sregym/service/apps/values/astronomy-shop-arm64.yaml`:
    `components.frontend-proxy.resources.limits.memory: 160Mi`. Problem 4 ran before this fix and is rerun; problem 2's trace shows no Envoy OOM, so it stands.
 5. **First social-network deploy is slow.** On a fresh node, social-network's ~27 images pull serially. One hung pull held the namespace in `ContainerCreating` for ~35 min before recovering on its own. Later social-network problems reuse the cached images.
-6. **Single node.** Problems that rely on multiple nodes may not reproduce faithfully; they are flagged
+6. **An aborted run can leave fault state behind.** When the judge hung on problem 5's bad submission, SREGym aborted the campaign without running `recover_fault`. Problem 5's five MutatingWebhookConfigurations (one active, four decoys) and the `platform-ops` namespace stayed installed. Every later social-network deploy then got a forced 16Mi memory limit, its MongoDB pods were OOMKilled, and the deploy hung for 75+ min. SREGym's "next startup will clean the remaining fault state" did not remove them. Manual cleanup:
+   ```bash
+   kubectl delete mutatingwebhookconfiguration cert-manager-webhook gatekeeper-mutating-webhook-configuration \
+     istio-sidecar-injector kyverno-resource-mutating-webhook-cfg linkerd-proxy-injector-webhook-config
+   kubectl delete ns platform-ops; kubectl -n social-network delete pods --all
+   ```
+   The remaining problems then ran with `make run-list` (one `run-one` per problem), non-social-network problems first.
+7. **Single node.** Problems that rely on multiple nodes may not reproduce faithfully; they are flagged
    below if they fail to deploy.
 
 ---
