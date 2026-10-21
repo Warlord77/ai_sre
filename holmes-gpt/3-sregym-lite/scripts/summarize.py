@@ -48,10 +48,10 @@ def latest_rows(sregym: Path, runs: list[str]) -> dict[str, tuple[Path, dict]]:
 
 # Earlier ai_sre experiments: hand-picked scenarios, outcomes taken from their READMEs.
 PRIOR_EXPERIMENTS = [
-    ("1", "[HolmesGPT v0.30](holmes-gpt/exp1-iximiuz-v0.30/README.md)", "iximiuz Labs, 3 scenarios", "2/3 (+1 partial)", "—", "Defer"),
+    ("1", "[HolmesGPT v0.30](holmes-gpt/1-iximiuz-v0.30/README.md)", "iximiuz Labs, 3 scenarios", "2/3 (+1 partial)", "—", "Defer"),
     ("2", "[K8sGPT 0.4.33](k8sgpt/README.md)", "iximiuz Labs, 2 scenarios", "0/2 (CLI)", "—", "Reject"),
     ("3", "[OpenSRE 0.1](opensre/README.md)", "observability-stack, 3 scenarios", "0/3", "—", "Defer"),
-    ("4", "[HolmesGPT v0.45](holmes-gpt/exp4-sre-gym/README.md)", "observability-stack, 3 scenarios", "2/3 (+1 partial)", "—", "Pilot"),
+    ("4", "[HolmesGPT v0.45](holmes-gpt/2-sre-gym-sandbox/README.md)", "observability-stack, 3 scenarios", "2/3 (+1 partial)", "—", "Pilot"),
 ]
 
 
@@ -177,7 +177,7 @@ def main():
             "| # | Experiment | Test set | Correct RCA | Avg judge score | Verdict |",
             "|---|------------|----------|-------------|----------------:|---------|",
             *[f"| {' | '.join(r)} |" for r in PRIOR_EXPERIMENTS],
-            f"| 5 | [HolmesGPT v0.45 on SREGym-Lite](holmes-gpt/exp5-sregym-lite/README.md) | SREGym-Lite, "
+            f"| 5 | [HolmesGPT v0.45 on SREGym-Lite](holmes-gpt/3-sregym-lite/README.md) | SREGym-Lite, "
             f"{sc['run']}/{len(LITE)} problems run | {sc['passed']}/{sc['passed'] + sc['failed']} ({pct}) | {avg_score} | "
             f"{'In progress' if sc['run'] < len(LITE) else 'See README'} |",
             "",

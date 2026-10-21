@@ -9,7 +9,7 @@
 | **Source / Docs** | [holmesgpt.dev](https://holmesgpt.dev/) · [GitHub](https://github.com/HolmesGPT/holmesgpt) |
 | **License** | `Apache 2.0` |
 | **Category** | `AI SRE agent` |
-| **Builds on** | [Experiment 1 — HolmesGPT v0.30 on iximiuz Labs](../exp1-iximiuz-v0.30/README.md) |
+| **Builds on** | [Experiment 1 — HolmesGPT v0.30 on iximiuz Labs](../1-iximiuz-v0.30/README.md) |
 
 ---
 
@@ -65,7 +65,7 @@ Alertmanager ──► HolmesGPT (Docker)
 ### Step-by-step
 
 ```bash
-cd holmes-gpt/exp4-sre-gym
+cd holmes-gpt/2-sre-gym-sandbox
 
 # 1. Copy env and fill in keys
 cp .env.example .env
@@ -387,8 +387,8 @@ Each issue is documented in detail (symptom / root cause / fix) in [`issues.md`]
 - [HolmesGPT v0.45 docs — toolset config format](https://holmesgpt.dev/latest/data-sources/builtin-toolsets/)
 - [mcp-server-kubernetes@4.1.9 on npm](https://www.npmjs.com/package/mcp-server-kubernetes)
 - [opensre/observability-stack README](../../opensre/observability-stack/README.md)
-- [Experiment 1 — HolmesGPT v0.30 baseline](../exp1-iximiuz-v0.30/README.md)
-- [Experiment 3 — OpenSRE (for Alertmanager/Prometheus integration comparison)](../../opensre/README.md)
+- [Experiment 1 — HolmesGPT v0.30 baseline](../1-iximiuz-v0.30/README.md)
+- [OpenSRE evaluation (for Alertmanager/Prometheus integration comparison)](../../opensre/README.md)
 
 ---
 

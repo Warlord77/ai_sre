@@ -9,13 +9,13 @@
 | **Source / Docs** | [holmesgpt.dev](https://holmesgpt.dev/) · [GitHub](https://github.com/HolmesGPT/holmesgpt) |
 | **License** | `Apache 2.0` |
 | **Category** | `AI SRE agent` |
-| **Builds on** | [Experiment 4 — HolmesGPT on the SRE Gym sandbox](../exp4-sre-gym/README.md) |
+| **Builds on** | [Experiment 2 — HolmesGPT on the SRE Gym sandbox](../2-sre-gym-sandbox/README.md) |
 
 ---
 
 ## 1. What problem does this answer?
 
-Experiments 1 and 4 ran HolmesGPT on a handful of hand-picked scenarios. This experiment runs it on
+Experiments 1 and 2 ran HolmesGPT on a handful of hand-picked scenarios. This experiment runs it on
 [SREGym-Lite](https://github.com/SREGym/SREGym/blob/main/docs/SREGym-Lite.md), a curated, independently
 graded set of 17 Kubernetes incidents (network policies, DNS, admission webhooks, Kafka poison pills,
 secret rotation, rolling updates, ...). Each problem injects a fault and an LLM judge scores the agent's
@@ -49,7 +49,7 @@ answer ──► POST /submit ──► LLM judge (score /100, pass/fail)
 - **Prompt:** application name, namespace(s) and description from SREGym, plus an instruction to end with a
   `ROOT CAUSE` section naming the faulty resources. HolmesGPT is not told what kind of fault it is.
 - SREGym's proxy certificate includes a `host.docker.internal` SAN, so the x509 failures from
-  Experiment 4 do not occur here.
+  Experiment 2 do not occur here.
 
 ---
 
@@ -65,7 +65,7 @@ answer ──► POST /submit ──► LLM judge (score /100, pass/fail)
 ### Steps
 
 ```bash
-cd holmes-gpt/exp5-sregym-lite
+cd holmes-gpt/3-sregym-lite
 cp .env.example .env          # set OPENROUTER_API_KEY
 make preflight                # docker, memory, context, uv, key, HolmesGPT image
 make run-one PROBLEM=network_policy_block
@@ -123,7 +123,7 @@ SREGym-Lite asks for 16 GB. To fit a 16 GB Mac with 8 GB given to Docker:
 <!-- SCORECARD:END -->
 
 <!-- RESULTS:START -->
-**Diagnosis pass rate: 1/7 evaluated** · 10/17 problems run · runs `1021_1159, 1021_1349, 1021_1509, 1021_1540, 1021_1548, 1021_1609, 1021_1616, 1021_1622` · updated 2026-10-21 16:47
+**Diagnosis pass rate: 1/7 evaluated** · 10/17 problems run · runs `1021_1159, 1021_1349, 1021_1509, 1021_1540, 1021_1548, 1021_1609, 1021_1616, 1021_1622` · updated 2026-10-21 16:57
 
 | # | Problem | Diagnosis | Score | Investigation | Judge notes |
 |---|---------|-----------|------:|--------------:|-------------|

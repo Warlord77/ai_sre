@@ -2,9 +2,10 @@
 
 | | |
 | --- | --- |
-| **Compiled from** | [Exp 1 — v0.30 on iximiuz Labs](exp1-iximiuz-v0.30/README.md) (Biswa Prakash Mishra) · [Exp 4 — v0.45 on the SRE Gym sandbox](exp4-sre-gym/README.md) (Sahil Joseph) · [Exp 5 — v0.45 on SREGym-Lite](exp5-sregym-lite/README.md) (Sahil Joseph) |
+| **Compiled from** | [Exp 1 — v0.30 on iximiuz Labs](1-iximiuz-v0.30/README.md) (Biswa Prakash Mishra) · [Exp 2 — v0.45 on the SRE Gym sandbox](2-sre-gym-sandbox/README.md) (Sahil Joseph) · [Exp 3 — v0.45 on SREGym-Lite](3-sregym-lite/README.md) (Sahil Joseph) |
+| **Numbering** | Experiments 1–3 here are experiments 1, 4 and 5 in the [repo-wide table](../README.md#experiments) (2 and 3 there are K8sGPT and OpenSRE) |
 | **Date range** | `2026-05-18` → `2026-10-21` |
-| **Time invested** | ~14 h (Exp 1) + ~5 h (Exp 4) + ~1 day (Exp 5) |
+| **Time invested** | ~14 h (Exp 1) + ~5 h (Exp 2) + ~1 day (Exp 3) |
 | **Tool versions tested** | `0.30.0`, `0.45.0` |
 | **Source / Docs** | [holmesgpt.dev](https://holmesgpt.dev/) · [GitHub](https://github.com/HolmesGPT/holmesgpt) |
 | **License** | `Apache 2.0` |
@@ -14,7 +15,7 @@
 
 ## TL;DR
 
-| | Exp 1 (v0.30) | Exp 4 (v0.45) | Exp 5 (v0.45) |
+| | Exp 1 (v0.30) | Exp 2 (v0.45) | Exp 3 (v0.45) |
 |---|---|---|---|
 | Test set | 3 iximiuz challenges (2 K8s, 1 Linux) | 3 alert-driven chaos scenarios on our own stack | SREGym-Lite: 17 independently graded K8s incidents |
 | Data sources | K8s API only | K8s + Prometheus + Loki + Tempo + Alertmanager | K8s (filtered proxy) + Prometheus + Loki + Jaeger (MCP) |
@@ -39,7 +40,7 @@ fixes. It can be driven ad hoc (`holmes ask`), from alerts (`holmes investigate 
 via an operator (alpha).
 
 Across our three experiments the question narrowed from *"does it work?"* (Exp 1) to *"does more observability
-make it better?"* (Exp 4) to *"how often is it actually right on incidents it hasn't seen?"* (Exp 5).
+make it better?"* (Exp 2) to *"how often is it actually right on incidents it hasn't seen?"* (Exp 3).
 
 ---
 
@@ -60,8 +61,8 @@ alert / prompt ──► HolmesGPT agent loop (ToolCallingLLM / IssueInvestigato
                    RCA text (CLI, JSON file, Slack)
 ```
 
-- **Agent loop:** LLM-driven tool calls. Typical investigations made 16–70 tool calls in 1–4 minutes (Exp 5).
-- **Models used:** `gpt-5.4`, `gpt-5.4-mini`, `gpt-5.4-nano` (Exp 1); `claude-sonnet-4-5` via OpenRouter (Exp 4, 5).
+- **Agent loop:** LLM-driven tool calls. Typical investigations made 16–70 tool calls in 1–4 minutes (Exp 3).
+- **Models used:** `gpt-5.4`, `gpt-5.4-mini`, `gpt-5.4-nano` (Exp 1); `claude-sonnet-4-5` via OpenRouter (Exp 2, 5).
 - **Access:** read-only by design. It never changes the cluster. RBAC `get/list/watch` is enough.
 - **Deployment:** Docker image, pipx/brew CLI, or the K8s operator (alpha in v0.30, not re-tested).
 
@@ -70,9 +71,9 @@ alert / prompt ──► HolmesGPT agent loop (ToolCallingLLM / IssueInvestigato
 ## 3. Setup and reproduction
 
 Each experiment's README has full steps:
-- [Exp 1](exp1-iximiuz-v0.30/README.md#3-setup-and-reproduction-steps): Docker and pipx
-- [Exp 4](exp4-sre-gym/README.md#3-setup-and-reproduction-steps): Docker + observability stack
-- [Exp 5](exp5-sregym-lite/README.md#3-setup-and-reproduction): `make run-lite` against SREGym
+- [Exp 1](1-iximiuz-v0.30/README.md#3-setup-and-reproduction-steps): Docker and pipx
+- [Exp 2](2-sre-gym-sandbox/README.md#3-setup-and-reproduction-steps): Docker + observability stack
+- [Exp 3](3-sregym-lite/README.md#3-setup-and-reproduction): `make run-lite` against SREGym
 
 ### Consolidated setup gotchas
 
@@ -80,21 +81,21 @@ Each experiment's README has full steps:
 |---|--------|---------|--------|-----|
 | 1 | Python 3.14+ breaks the Prometheus toolset; the fix is only in CONTRIBUTING.md | Exp 1 | CLI won't start | `DISABLE_PROMETHEUS_TOOLSET=true` |
 | 2 | OTEL instrumentation is Docker-only, not in the CLI install | Exp 1 | No self-telemetry from CLI | Use the Docker image |
-| 3 | v0.45 disables Prometheus/Grafana toolsets by default; env vars no longer enable them, with no migration note | Exp 4 | Metrics/logs silently absent | Explicit `toolsets:` YAML ([issues #1](exp4-sre-gym/issues.md)) |
-| 4 | `--net=host` (in all official Docker examples) doesn't reach host ports on macOS | Exp 4 | Container can't reach anything | Use `host.docker.internal` |
-| 5 | Kubeconfig rewritten to `host.docker.internal` fails x509 SAN checks on kind | Exp 4 | `describe`/`get -o yaml` fail → wrong-image RCA missed | Use an endpoint whose cert carries that SAN (SREGym's proxy does) |
-| 6 | `grafana/loki` / `grafana/tempo` need `grafana_datasource_uid` | Exp 4 | "Unable to connect" | Set the datasource UID |
-| 7 | Intermittent `TypeError` in `prometheus.py:1869` drops ~30% of range queries | Exp 4 | Silent metric gaps | None (upstream) |
-| 8 | `bash`/`kubectl` tool calls blocked by the approval prompt when piped | Exp 4 | Investigation stalls | `--no-interactive` |
-| 9 | A dropped LLM stream (`incomplete chunked read`) kills the run with no result | Exp 5 | No answer at all | Retry wrapper (our driver retries 3×) |
-| 10 | Requests up to 64K output tokens per call; fails with HTTP 402 when the remaining budget is below that | Exp 5 | Hard stop near a spend cap | Budget headroom or a lower max-tokens setting |
+| 3 | v0.45 disables Prometheus/Grafana toolsets by default; env vars no longer enable them, with no migration note | Exp 2 | Metrics/logs silently absent | Explicit `toolsets:` YAML ([issues #1](2-sre-gym-sandbox/issues.md)) |
+| 4 | `--net=host` (in all official Docker examples) doesn't reach host ports on macOS | Exp 2 | Container can't reach anything | Use `host.docker.internal` |
+| 5 | Kubeconfig rewritten to `host.docker.internal` fails x509 SAN checks on kind | Exp 2 | `describe`/`get -o yaml` fail → wrong-image RCA missed | Use an endpoint whose cert carries that SAN (SREGym's proxy does) |
+| 6 | `grafana/loki` / `grafana/tempo` need `grafana_datasource_uid` | Exp 2 | "Unable to connect" | Set the datasource UID |
+| 7 | Intermittent `TypeError` in `prometheus.py:1869` drops ~30% of range queries | Exp 2 | Silent metric gaps | None (upstream) |
+| 8 | `bash`/`kubectl` tool calls blocked by the approval prompt when piped | Exp 2 | Investigation stalls | `--no-interactive` |
+| 9 | A dropped LLM stream (`incomplete chunked read`) kills the run with no result | Exp 3 | No answer at all | Retry wrapper (our driver retries 3×) |
+| 10 | Requests up to 64K output tokens per call; fails with HTTP 402 when the remaining budget is below that | Exp 3 | Hard stop near a spend cap | Budget headroom or a lower max-tokens setting |
 | 11 | Some runs hang and must be killed | Exp 1 | Wasted time | Wall-clock timeout around the CLI |
 
 ---
 
 ## 4. Scenarios tested (all experiments)
 
-### 4.1 Hand-picked scenarios (Exp 1 and Exp 4)
+### 4.1 Hand-picked scenarios (Exp 1 and Exp 2)
 
 | Exp | Scenario | Data available | Outcome |
 |---|---|---|---|
@@ -105,10 +106,10 @@ Each experiment's README has full steps:
 | 4 | Postgres scaled to 0 (`AppPostgresDown`) | K8s + Prom + Loki | ✅ Correct but hedged (1 of 4 possibilities) |
 | 4 | Backend image swapped to busybox (`AppPodCrashLooping`) | K8s + Prom + Loki | ⚠️ Traced the Redis/Postgres connection cascade, missed the wrong image (TLS blocked the spec read) |
 
-### 4.2 SREGym-Lite benchmark (Exp 5)
+### 4.2 SREGym-Lite benchmark (Exp 3)
 
 10 of 17 problems attempted before the OpenRouter key hit its $10 limit. Full per-problem analysis:
-[Exp 5 §5](exp5-sregym-lite/README.md#5-per-problem-observations).
+[Exp 3 §5](3-sregym-lite/README.md#5-per-problem-observations).
 
 | # | Problem | Fault lives in | HolmesGPT | Score |
 |---|---------|----------------|-----------|------:|
@@ -130,7 +131,7 @@ Each experiment's README has full steps:
 | Demo | Link | Duration |
 |------|------|----------|
 | Exp 1 — Linux vanishing worker service | [YouTube](https://youtu.be/f3oi8yChjQY?si=Wr3MvsIaF-e2mMHp) | 06:36 |
-| Exp 5 — every investigation (raw answers) | [`results/answers/`](exp5-sregym-lite/results/answers/) | — |
+| Exp 3 — every investigation (raw answers) | [`results/answers/`](3-sregym-lite/results/answers/) | — |
 
 ---
 
@@ -139,9 +140,9 @@ Each experiment's README has full steps:
 ### Where HolmesGPT is good
 
 - **Explicit-error faults.** It reliably finds faults that announce themselves: `FailedScheduling` events (Exp 1),
-  a Redis SIGTERM in Loki correlated with a Prometheus replica drop (Exp 4), a Kafka consumer's parse error at a
-  specific offset (Exp 5 #7), an admission rejection `must specify memory` (Exp 5 #11).
-- **More observability helps, for those faults.** Exp 4 vs Exp 1: with Prometheus + Loki, timelines became precise
+  a Redis SIGTERM in Loki correlated with a Prometheus replica drop (Exp 2), a Kafka consumer's parse error at a
+  specific offset (Exp 3 #7), an admission rejection `must specify memory` (Exp 3 #11).
+- **More observability helps, for those faults.** Exp 2 vs Exp 1: with Prometheus + Loki, timelines became precise
   to the second, and Loki covered pods that were already gone or unreachable via kubectl.
 - **Graceful tool degradation.** When kubectl calls failed (TLS) or Prometheus queries errored, it switched to
   `kubernetes_jq_query` or Loki rather than giving up.
@@ -152,14 +153,14 @@ Each experiment's README has full steps:
 - **Anchoring on the loudest error.** In 5 of the 6 graded misses (all but #11) it built a coherent story around a
   real but unrelated signal. Hotel-reservation: brief Consul `connection refused` errors at startup (#1, #3) and
   the baseline wrk2 timeout count (#1, #6). Astronomy-shop: the `jaeger` ExternalName Service (#2, #7).
-- **It doesn't enumerate where faults can hide.** Across 300+ tool calls in Exp 5 it never listed NetworkPolicies,
+- **It doesn't enumerate where faults can hide.** Across 300+ tool calls in Exp 3 it never listed NetworkPolicies,
   CronJobs, RBAC, Service selectors/Endpoints, or admission webhooks unless an error pointed there. Configuration
   faults with quiet symptoms were invisible to it.
 - **Confident fabrication.** In #6 it asserted a default setting "should be 5000" with no source, and reused the
   same invented story in #10. Every wrong answer read as confidently as the right ones.
 - **Symptom over origin.** In #11 it found the right mechanism but named the affected Deployment as the faulty
   component and the ResourceQuota as merely "associated".
-- **Hedging when blocked.** In Exp 4, when TLS blocked the StatefulSet spec read, it listed 4 possibilities
+- **Hedging when blocked.** In Exp 2, when TLS blocked the StatefulSet spec read, it listed 4 possibilities
   instead of committing.
 
 ### Process and quality signals
@@ -170,10 +171,10 @@ Each experiment's README has full steps:
   are undocumented or buried.
 - **Security posture:** read-only; never writes to the cluster. It sends cluster data (logs, specs, metrics) to the
   configured LLM provider. There is no anonymization, unlike K8sGPT's `--anonymize`.
-- **Stability:** occasional hangs (Exp 1), one crash on a dropped LLM stream (Exp 5), and the Prometheus
-  `TypeError` (Exp 4).
+- **Stability:** occasional hangs (Exp 1), one crash on a dropped LLM stream (Exp 3), and the Prometheus
+  `TypeError` (Exp 2).
 
-### Benchmark caveats (Exp 5)
+### Benchmark caveats (Exp 3)
 
 Partial run (7 valid of 17). It used the SREGym `svelte` profile on a single-node, 8 GB kind cluster with one
 model (`claude-sonnet-4-5`), and HolmesGPT got a generic prompt with no runbooks. SREGym notes that `svelte`
@@ -207,7 +208,7 @@ correlates metrics and logs. But "strongest of three" still means a 14% pass rat
 ## 8. Pros
 
 - **Broadest integrations.** 40+ toolsets plus arbitrary MCP servers. SREGym's Prometheus, Loki and Jaeger MCP servers plugged in with 10 lines of YAML.
-- **Correlates metrics and logs into timelines.** It turned a Prometheus replica drop plus a Loki SIGTERM into a correct, timestamped RCA in about a minute (Exp 4).
+- **Correlates metrics and logs into timelines.** It turned a Prometheus replica drop plus a Loki SIGTERM into a correct, timestamped RCA in about a minute (Exp 2).
 - **Excellent on explicit errors.** Kafka poison pill (78/100), admission rejection, scheduling failures and crash loops.
 - **Read-only and RBAC-friendly.** Safe to grant to an on-call bot.
 - **Model-agnostic via LiteLLM.** Small models (`gpt-5.4-nano`) handled simple K8s cases (Exp 1).
@@ -217,11 +218,11 @@ correlates metrics and logs. But "strongest of three" still means a 14% pass rat
 
 ## 9. Cons
 
-- **Wrong answers look like right answers.** No calibrated confidence. In Exp 5, 0/100 and 78/100 answers had the same assertive tone, so a responder can't tell which to trust.
+- **Wrong answers look like right answers.** No calibrated confidence. In Exp 3, 0/100 and 78/100 answers had the same assertive tone, so a responder can't tell which to trust.
 - **Blind to quiet configuration faults.** NetworkPolicies, RBAC, selectors, CronJobs and webhooks were never inspected unless an error pointed there. These are common real-world causes.
 - **Anchors on baseline noise.** Startup races and load-generator timeouts that exist on every healthy deploy were repeatedly reported as root causes.
 - **No remediation.** It stops at the RCA by design. A general-purpose agent with write access goes on to fix it (noted in Exp 1).
-- **Setup friction on macOS and Docker.** Gotchas 3–6 cost hours in Exp 4 and are undocumented.
+- **Setup friction on macOS and Docker.** Gotchas 3–6 cost hours in Exp 2 and are undocumented.
 - **Sends cluster data to the LLM with no anonymization.** It's a compliance question before any production use.
 - **Fragile at the edges.** A dropped stream ends the run with no result, and a spend cap gives a hard 402.
 
@@ -232,11 +233,11 @@ correlates metrics and logs. But "strongest of three" still means a 14% pass rat
 | Source | Measurement |
 |---|---|
 | Exp 1 | Medium iximiuz K8s problem: ~1.01M input + ~10K output tokens (~1.1M total) |
-| Exp 4 | 16–30 tool calls, ~80–150K input tokens per incident, estimated **$0.40–0.75 per incident** on Sonnet 4.5 |
-| Exp 5 | **$11.04** of OpenRouter spend for ~11 investigations, including retries and the SREGym judge (also Sonnet 4.5). About $1 per problem all-in; the agent's share is below that |
+| Exp 2 | 16–30 tool calls, ~80–150K input tokens per incident, estimated **$0.40–0.75 per incident** on Sonnet 4.5 |
+| Exp 3 | **$11.04** of OpenRouter spend for ~11 investigations, including retries and the SREGym judge (also Sonnet 4.5). About $1 per problem all-in; the agent's share is below that |
 
-- **Infra:** none beyond a container. In Exp 5 it ran comfortably under `--memory 1g`.
-- **Human:** about 5 hours of setup per new environment, mostly toolset config and networking. Per-incident time saved is about 10–15 minutes *when it's right* (Exp 4). In Exp 5 a wrong answer would have cost a responder time chasing the decoy.
+- **Infra:** none beyond a container. In Exp 3 it ran comfortably under `--memory 1g`.
+- **Human:** about 5 hours of setup per new environment, mostly toolset config and networking. Per-incident time saved is about 10–15 minutes *when it's right* (Exp 2). In Exp 3 a wrong answer would have cost a responder time chasing the decoy.
 - **Production extrapolation:** at ~$0.5–1 per alert, 50 alerts a day is roughly $750–1,500 a month on Sonnet 4.5. That's cheap if accuracy is high. At a 14% graded pass rate, most of that money buys confident wrong answers.
 
 ---
@@ -247,8 +248,8 @@ correlates metrics and logs. But "strongest of three" still means a 14% pass rat
 
 ### Rationale
 
-Exp 1 and Exp 4 showed HolmesGPT working well on incidents with loud, explicit errors, and Exp 4 showed real
-gains from observability integrations, which justified Exp 4's *Pilot*. Exp 5 tested it on independently graded
+Exp 1 and Exp 2 showed HolmesGPT working well on incidents with loud, explicit errors, and Exp 2 showed real
+gains from observability integrations, which justified Exp 2's *Pilot*. Exp 3 tested it on independently graded
 incidents it hadn't seen: 1 of 7 valid problems passed, the average score was 19/100, and the misses were
 confident and plausible rather than "I don't know". For on-call use, a tool that is wrong about 85% of the time
 on configuration faults, without signalling uncertainty, does more harm than good as a first responder.
@@ -269,7 +270,7 @@ configuration-class incidents to it, and don't page on its RCA alone.
 
 ### Next experiment to run
 
-Finish Exp 5: 8 runs remain (12, 13, 17, 5, 9, 15, 16, and the rerun of 4), roughly $10 of credit. Then repeat
+Finish Exp 3: 8 runs remain (12, 13, 17, 5, 9, 15, 16, and the rerun of 4), roughly $10 of credit. Then repeat
 the same suite with a **runbook or skill that forces enumerating NetworkPolicies, RBAC, Service selectors,
 webhooks and CronJobs**. That isolates whether the gap is the agent's investigation strategy or the model.
 
@@ -281,18 +282,18 @@ webhooks and CronJobs**. That isolates whether the gap is the agent's investigat
 |------|------|--------|--------|
 | Docs | [holmesgpt#2047](https://github.com/HolmesGPT/holmesgpt/issues/2047) | Exp 1 | Closed |
 | Enhancement/Bug | [holmesgpt#2077](https://github.com/HolmesGPT/holmesgpt/issues/2077) | Exp 1 | Closed |
-| Bug/Docs | Toolsets disabled by default in v0.45, no migration note | Exp 4 [issues.md](exp4-sre-gym/issues.md) | Candidate to file |
-| Docs | `--net=host` doesn't reach host ports on macOS Docker Desktop | Exp 4 | Candidate to file |
-| Bug | Prometheus range-query `TypeError` (`prometheus.py:1869`) | Exp 4 | Candidate to file |
-| Bug | Dropped LLM stream ends `holmes ask` with no result and no retry | Exp 5 | Candidate to file |
-| Bug (SREGym) | ARM64: astronomy-shop `frontend-proxy` OOMKills at 65Mi; `astronomy-shop-arm64.yaml` doesn't raise it | Exp 5 | Candidate to file upstream (SREGym) |
-| Bug (SREGym) | Aborted campaign leaves `mutating_webhook_resource_limits` webhooks installed; restart doesn't clean them | Exp 5 | Candidate to file upstream (SREGym) |
+| Bug/Docs | Toolsets disabled by default in v0.45, no migration note | Exp 2 [issues.md](2-sre-gym-sandbox/issues.md) | Candidate to file |
+| Docs | `--net=host` doesn't reach host ports on macOS Docker Desktop | Exp 2 | Candidate to file |
+| Bug | Prometheus range-query `TypeError` (`prometheus.py:1869`) | Exp 2 | Candidate to file |
+| Bug | Dropped LLM stream ends `holmes ask` with no result and no retry | Exp 3 | Candidate to file |
+| Bug (SREGym) | ARM64: astronomy-shop `frontend-proxy` OOMKills at 65Mi; `astronomy-shop-arm64.yaml` doesn't raise it | Exp 3 | Candidate to file upstream (SREGym) |
+| Bug (SREGym) | Aborted campaign leaves `mutating_webhook_resource_limits` webhooks installed; restart doesn't clean them | Exp 3 | Candidate to file upstream (SREGym) |
 
 ---
 
 ## 13. References
 
-- Experiment write-ups: [Exp 1](exp1-iximiuz-v0.30/README.md) · [Exp 4](exp4-sre-gym/README.md) · [Exp 4 issues](exp4-sre-gym/issues.md) · [Exp 5](exp5-sregym-lite/README.md)
+- Experiment write-ups: [Exp 1](1-iximiuz-v0.30/README.md) · [Exp 2](2-sre-gym-sandbox/README.md) · [Exp 2 issues](2-sre-gym-sandbox/issues.md) · [Exp 3](3-sregym-lite/README.md)
 - Alternatives evaluated: [K8sGPT](../k8sgpt/README.md) · [OpenSRE](../opensre/README.md)
 - [HolmesGPT docs — data sources](https://holmesgpt.dev/latest/data-sources/) · [AI providers](https://holmesgpt.dev/latest/ai-providers/)
 - [SREGym-Lite](https://github.com/SREGym/SREGym/blob/main/docs/SREGym-Lite.md)
