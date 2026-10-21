@@ -35,7 +35,7 @@ experiment 5 is graded by SREGym's LLM judge against the known root cause.
 | 4 | [HolmesGPT v0.45](holmes-gpt-sre-gym/README.md) | observability-stack, 3 scenarios | 2/3 (+1 partial) | — | Pilot |
 | 5 | [HolmesGPT v0.45 on SREGym-Lite](holmes-gpt-sregym-lite/README.md) | SREGym-Lite, 10/17 problems run | 1/7 (14%) | 19/100 | In progress |
 
-_Last updated 2026-10-21 16:23._
+_Last updated 2026-10-21 16:29._
 <!-- SCORECARD:END -->
 
 ## Test environments

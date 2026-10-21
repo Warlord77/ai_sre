@@ -106,7 +106,8 @@ SREGym-Lite asks for 16 GB. To fit a 16 GB Mac with 8 GB given to Docker:
    kubectl delete ns platform-ops; kubectl -n social-network delete pods --all
    ```
    The remaining problems then ran with `make run-list` (one `run-one` per problem), non-social-network problems first.
-7. **Single node.** Problems that rely on multiple nodes may not reproduce faithfully; they are flagged
+7. **Budget.** Eleven HolmesGPT investigations plus judge calls on `claude-sonnet-4-5` used the key's $10 OpenRouter limit (about $1 per problem including retries and the judge). HolmesGPT requests up to 64K output tokens per call, so it fails outright once the remaining balance is below that reservation.
+8. **Single node.** Problems that rely on multiple nodes may not reproduce faithfully; they are flagged
    below if they fail to deploy.
 
 ---
@@ -122,7 +123,7 @@ SREGym-Lite asks for 16 GB. To fit a 16 GB Mac with 8 GB given to Docker:
 <!-- SCORECARD:END -->
 
 <!-- RESULTS:START -->
-**Diagnosis pass rate: 1/7 evaluated** · 10/17 problems run · runs `1021_1159, 1021_1349, 1021_1509, 1021_1540, 1021_1548, 1021_1609, 1021_1616, 1021_1622` · updated 2026-10-21 16:23
+**Diagnosis pass rate: 1/7 evaluated** · 10/17 problems run · runs `1021_1159, 1021_1349, 1021_1509, 1021_1540, 1021_1548, 1021_1609, 1021_1616, 1021_1622` · updated 2026-10-21 16:29
 
 | # | Problem | Diagnosis | Score | Investigation | Judge notes |
 |---|---------|-----------|------:|--------------:|-------------|
