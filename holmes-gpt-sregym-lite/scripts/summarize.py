@@ -36,9 +36,10 @@ LITE = [
 ]
 
 
-def latest_rows(sregym: Path, run: str | None) -> dict[str, tuple[Path, dict]]:
+def latest_rows(sregym: Path, runs: list[str]) -> dict[str, tuple[Path, dict]]:
     rows: dict[str, tuple[Path, dict]] = {}
-    for csv_path in sorted((sregym / "results").glob(f"{run or '*'}/holmesgpt/*/*_holmesgpt_results.csv")):
+    paths = [p for run in (runs or ["*"]) for p in (sregym / "results").glob(f"{run}/holmesgpt/*/*_holmesgpt_results.csv")]
+    for csv_path in sorted(paths):
         with csv_path.open() as f:
             for row in csv.DictReader(f):
                 rows[row["problem_id"]] = (csv_path.parent, row)
@@ -102,7 +103,7 @@ def main():
     p = argparse.ArgumentParser()
     p.add_argument("--sregym", type=Path, required=True)
     p.add_argument("--out", type=Path, default=Path("results"))
-    p.add_argument("--run", help="SREGym results/<run> directory name (default: latest result per problem)")
+    p.add_argument("--run", nargs="*", default=[], help="SREGym results/<run> directories of one campaign (a resume adds one); latest result per problem wins")
     p.add_argument("--readme", type=Path, help="README whose RESULTS block is replaced with the summary")
     p.add_argument("--root-readme", type=Path, help="ai_sre README whose SCORECARD block covers all experiments")
     args = p.parse_args()
@@ -150,7 +151,7 @@ def main():
 
     header = (
         f"**Diagnosis pass rate: {passed}/{evaluated} evaluated** · {len(rows)}/{len(LITE)} problems run"
-        f" · run `{args.run or 'latest per problem'}` · updated {datetime.now():%Y-%m-%d %H:%M}"
+        f" · runs `{', '.join(args.run) or 'all'}` · updated {datetime.now():%Y-%m-%d %H:%M}"
     )
     summary = header + "\n\n" + "\n".join(table)
     (args.out / "summary.md").write_text(summary + "\n")
