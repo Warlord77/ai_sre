@@ -104,11 +104,11 @@ SREGym-Lite asks for 16 GB. To fit a 16 GB Mac with 8 GB given to Docker:
 ## 4. Results
 
 <!-- RESULTS:START -->
-**Diagnosis pass rate: 0/0 evaluated** · 0/17 problems run · run `1021_1159` · updated 2026-10-21 12:06
+**Diagnosis pass rate: 0/1 evaluated** · 1/17 problems run · run `1021_1159` · updated 2026-10-21 12:07
 
 | # | Problem | Diagnosis | Score | Investigation | Judge notes |
 |---|---------|-----------|------:|--------------:|-------------|
-| 1 | `cronjob_sidecar_blocks_completion_hotel_reservation` | not run | | | |
+| 1 | `cronjob_sidecar_blocks_completion_hotel_reservation` | ❌ fail | 0.0 | 2.8 min | Verdict: False (composite=0.00). D1 Fault Localization: 0.00 / D2 Fault Characterization: 0.00 / D3 Scope Precision: 0.00. Weakest dimension: Fault Localization (0.00). Checklist details: [{"id": "D1-Q1", "answer": "No", |
 | 2 | `edge_request_filter_cpu_saturation` | not run | | | |
 | 3 | `network_policy_block` | not run | | | |
 | 4 | `env_variable_shadowing_astronomy_shop` | not run | | | |
