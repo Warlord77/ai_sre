@@ -1,57 +1,39 @@
 # cronjob_sidecar_blocks_completion_hotel_reservation
 
-Perfect! Now I have all the evidence I need. Let me create a comprehensive summary of the root cause.
+Perfect! I have all the evidence I need. The Consul HTTP API started at 07:00:46.257Z, but the frontend pod was created at 07:00:45Z and tried to connect to Consul at 07:00:45Z, which was before Consul was ready to accept connections.
 
 ## ROOT CAUSE
 
-**Faulty Component(s):**
-- **Kind:** ConfigMap
-- **Name:** `otel-collector-agent` 
-- **Namespace:** `astronomy-shop`
-- **Affected Resource:** DaemonSet `otel-collector-agent` in namespace `astronomy-shop`
+**Faulty Component:**
+- **Deployment:** `consul` in namespace `hotel-reservation`
 
 **Root Cause:**
-
-The OpenTelemetry Collector agent configuration contains an incorrect endpoint for trace export. The `otlp/jaeger` exporter is configured with `endpoint: jaeger:4317`, which uses a short hostname that cannot be resolved via DNS.
-
-**Why it breaks the application:**
-
-1. **DNS Resolution Failure:** The hostname `jaeger` (without namespace qualification) cannot be resolved. While ExternalName services exist (`jaeger`, `jaeger-agent`, `jaeger-collector`, `jaeger-query`) pointing to `otel-collector.observe.svc.cluster.local`, these services have selectors (`app: jaeger`, etc.) that don't match any pods, making them non-functional for DNS resolution.
-
-2. **Collector Pod Crashes:** The previous otel-collector-agent pod (`otel-collector-agent-jf6pw`) crashed due to this misconfiguration, with errors showing:
-   - `lookup jaeger on 10.96.0.10:53: no such host`
-   - `failed to shutdown service after error: failed to shutdown meter provider`
-   - The pod was marked `Unhealthy` and eventually replaced
-
-3. **Trace Export Failures:** Applications attempting to send traces experience export failures, though the current collector pod (`otel-collector-agent-cp2fc`) continues running because it hasn't yet hit the fatal error condition.
+The Consul deployment is missing a **readiness probe**, causing a race condition during application startup. When pods start simultaneously, the frontend service attempts to connect to Consul for service discovery before Consul's HTTP API is ready to accept connections.
 
 **Evidence:**
 
-1. **ConfigMap misconfiguration** (from `otel-collector-agent` ConfigMap):
-   ```yaml
-   exporters:
-     otlp/jaeger:
-       endpoint: jaeger:4317  # ← INCORRECT: should be fully qualified
+1. **Missing Readiness Probe:** The `consul` deployment has no readiness probe configured, meaning Kubernetes marks the pod as "Ready" immediately when the container starts, not when Consul's HTTP API is actually accepting connections.
+
+2. **Timing Evidence:**
+   - Frontend pod created: `2026-10-21T07:00:45Z`
+   - Consul pod created: `2026-10-21T07:00:45Z` (same time)
+   - Consul HTTP API became ready: `2026-10-21T07:00:46.257Z` (1.2 seconds later)
+   - Frontend tried to connect to Consul: `2026-10-21T07:00:45Z` (too early)
+
+3. **Connection Refused Errors:** Frontend logs show repeated connection failures:
+   ```
+   2026/10/21 07:00:45 grpc/lb/consul: error retrieving instances from Consul: Get "http://consul:8500/v1/health/service/srv-search?passing=1": dial tcp 10.96.99.81:8500: connect: connection refused
    ```
 
-2. **DNS lookup failures** (from `otel-collector-agent-jf6pw` logs at 06:54:00-06:54:03):
+4. **Application Impact:** The frontend's `SearchHandler CheckAvailability` function fails repeatedly because it cannot discover the `srv-search` and `srv-reservation` services via Consul. The frontend logs show continuous errors:
    ```
-   lookup jaeger on 10.96.0.10:53: no such host
-   Exporting failed. Dropping data.
-   ```
-
-3. **Pod crash and replacement** (from events at 06:54:03):
-   ```
-   Unhealthy: Readiness probe failed: HTTP probe failed with statuscode: 503
-   Killing pod/otel-collector-agent-jf6pw
-   SuccessfulCreate: Created pod: otel-collector-agent-cp2fc
+   SearchHandler CheckAvailability failed
    ```
 
-4. **Application export errors** (from application logs):
-   - `product-catalog`: `connection refused: dial tcp 10.96.36.9:4317: connect: connection refused`
-   - `quote`: `Failed to connect to otel-collector port 4318`
-   - `recommendation`: `StatusCode.UNAVAILABLE encountered while exporting logs to otel-collector:4317`
+5. **Transient Issues:** Both `reservation` and `user` pods experienced initial startup failures (1 restart each) due to similar timing issues - `reservation` couldn't reach MongoDB initially, and `user` couldn't resolve the Jaeger hostname during the DNS/service startup window.
+
+**Why It Breaks the Application:**
+The frontend depends on Consul for service discovery to locate backend services (search, reservation, profile, recommendation, user). Without a readiness probe, Consul is marked ready before its HTTP API is listening, causing the frontend's gRPC load balancer to fail when querying Consul for service endpoints. This results in the frontend being unable to route requests to backend services, breaking the hotel search and reservation functionality.
 
 **Fix:**
-
-Change the endpoint in the `otel-collector-agent` ConfigMap from `endpoint: jaeger:4317` to `endpoint: otel-collector.observe.svc.cluster.local:4317` to use the fully qualified domain name that correctly resolves to the otel-collector service in the observe namespace.
+Add a readiness probe to the Consul deployment that checks the HTTP API endpoint (e.g., `http://localhost:8500/v1/status/leader`) to ensure Consul is fully operational before Kubernetes routes traffic to it.
