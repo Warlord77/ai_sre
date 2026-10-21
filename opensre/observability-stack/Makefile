@@ -1,5 +1,6 @@
 SHELL := /usr/bin/env bash
 .SHELLFLAGS := -eu -o pipefail -c
+export PATH := /opt/homebrew/bin:$(PATH)
 .DEFAULT_GOAL := help
 
 KPS_RELEASE   ?= kps
@@ -8,6 +9,9 @@ MON_NAMESPACE ?= monitoring
 
 GATEWAY_IMAGE ?= opensre/gateway:dev
 BACKEND_IMAGE ?= opensre/backend:dev
+
+KIND_CLUSTER_NAME ?= sre-gym
+KIND_CONFIG       ?= kind-cluster.yaml
 
 .PHONY: help
 help: ## Show this help.
@@ -348,3 +352,52 @@ chaos-reset: ## Restore baseline: re-deploy chart, restart deployments, stop loa
 			|| echo "(silence cleanup failed — continuing)"; \
 	fi
 	@echo "Reset complete. Verify with: make status && make verify"
+
+# === Kind cluster lifecycle
+.PHONY: kind-up kind-down kind-load kind-secrets
+
+kind-up: ## Create kind cluster (sre-gym) and deploy the full observability stack.
+	kind create cluster --name $(KIND_CLUSTER_NAME) --config $(KIND_CONFIG) --wait 90s
+	$(MAKE) repos
+	$(MAKE) kind-secrets
+	$(MAKE) kind-platform
+	$(MAKE) tidy
+	$(MAKE) build
+	$(MAKE) kind-load
+	$(MAKE) deploy
+	@echo ""
+	@echo "Stack is up on kind/$(KIND_CLUSTER_NAME). Run 'make verify' or 'make port-forward'."
+
+kind-down: ## Tear down the observability stack then delete the kind cluster.
+	-$(MAKE) down
+	kind delete cluster --name $(KIND_CLUSTER_NAME)
+
+kind-load: ## Load locally-built app images into the kind cluster node cache.
+	kind load docker-image $(GATEWAY_IMAGE) --name $(KIND_CLUSTER_NAME)
+	kind load docker-image $(BACKEND_IMAGE) --name $(KIND_CLUSTER_NAME)
+
+kind-secrets: ## Create grafana-slack Secret with a placeholder token (Slack notifications disabled).
+	kubectl get ns $(MON_NAMESPACE) >/dev/null 2>&1 || kubectl create ns $(MON_NAMESPACE)
+	kubectl -n $(MON_NAMESPACE) create secret generic grafana-slack \
+		--from-literal=SLACK_TOKEN="placeholder-no-slack" \
+		--dry-run=client -o yaml | kubectl apply -f -
+
+kind-platform: ## Install monitoring platform into kind (overrides cluster label to kind-$(KIND_CLUSTER_NAME)).
+	kubectl get ns $(MON_NAMESPACE) >/dev/null 2>&1 || kubectl create ns $(MON_NAMESPACE)
+	helm upgrade --install $(KPS_RELEASE) prometheus-community/kube-prometheus-stack \
+		-n $(MON_NAMESPACE) \
+		-f platform/values-kube-prometheus-stack.yaml \
+		--set prometheus.prometheusSpec.externalLabels.cluster=kind-$(KIND_CLUSTER_NAME) \
+		--wait --timeout 10m
+	helm upgrade --install loki grafana/loki \
+		-n $(MON_NAMESPACE) \
+		-f platform/values-loki.yaml \
+		--wait --timeout 10m
+	helm upgrade --install promtail grafana/promtail \
+		-n $(MON_NAMESPACE) \
+		-f platform/values-promtail.yaml \
+		--wait --timeout 5m
+	helm upgrade --install tempo grafana/tempo \
+		-n $(MON_NAMESPACE) \
+		-f platform/values-tempo.yaml \
+		--wait --timeout 5m

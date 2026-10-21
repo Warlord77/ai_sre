@@ -17,6 +17,7 @@ Each experiment is an independent silo. HolmesGPT and K8sGPT were run against [i
 | 1 | `holmes-gpt/` | 0.30.0 | 2026-05-18 | iximiuz Labs (K8s + Linux challenges) | [README](holmes-gpt/README.md) |
 | 2 | `k8sgpt/` | 0.4.33 | 2026-05-18 | iximiuz Labs (K8s challenge) | [README](k8sgpt/README.md) |
 | 3 | `opensre/` | 0.1 | 2026-05-24 | Local `observability-stack` sandbox | [README](opensre/README.md) |
+| 4 | `holmes-gpt-sre-gym/` | 0.45.0 | 2026-10-20 | Local `observability-stack` sandbox (kind + Prometheus + Loki + Tempo) | [README](holmes-gpt-sre-gym/README.md) |
 
 
 ## Test environments
@@ -24,7 +25,7 @@ Each experiment is an independent silo. HolmesGPT and K8sGPT were run against [i
 | Environment | Used by | What it provides |
 |-------------|---------|------------------|
 | [iximiuz Labs](https://labs.iximiuz.com/playgrounds) challenge playgrounds | HolmesGPT, K8sGPT | Pre-broken K8s and Linux scenarios with a known correct answer, so tool output can be scored against ground truth |
-| [`opensre/observability-stack/`](opensre/observability-stack/README.md) | OpenSRE | Local Docker Desktop K8s sandbox: instrumented Go services, Grafana stack, real alerts, chaos targets |
+| [`opensre/observability-stack/`](opensre/observability-stack/README.md) | OpenSRE, HolmesGPT SRE Gym | Local Docker Desktop K8s sandbox: instrumented Go services, Grafana stack, real alerts, chaos targets |
 
 What the local sandbox exposes:
 
