@@ -139,6 +139,7 @@ SREGym-Lite asks for 16 GB. To fit a 16 GB Mac with 8 GB given to Docker:
 | 11 | `namespace_memory_limit` | not run | | | |
 | 12 | `valkey_auth_disruption` | not run | | | |
 | 13 | `secret_rotation_stale_env_credentials_astronomy_shop` | not run | | | |
+| 11 | `namespace_memory_limit` | Namespace ResourceQuota `memory-limit-quota` requires memory declarations the workloads lack; recreating `search` gets rejected with `must specify memory` | `search` can't create pods because `ResourceQuota/memory-limit-quota` (1Gi) requires memory requests/limits its pod template lacks | **Near miss (56/100, fail).** Right mechanism and right resource, found via quota/admission events (32 tool calls). It ranked `Deployment/search` as the faulty component and the quota as only "associated", where the ground truth makes the quota the fault origin, and it didn't flag the other noncompliant workloads at risk on restart. |
 | 14 | `unschedulable_incorrect_port_assignment` | not run | | | |
 | 15 | `duplicate_pvc_mounts_social_network` | not run | | | |
 | 16 | `rolling_update_misconfigured_social_network` | not run | | | |
@@ -156,7 +157,7 @@ Reviewed by hand after each problem finishes (the tables above are generated; th
 
 **Pattern so far:** HolmesGPT latches onto the loudest error in logs and builds a root cause around it, without enumerating the resource kinds that could carry the fault (CronJobs, NetworkPolicies, proxy config). On hotel-reservation, the brief Consul `connection refused` errors at startup are an attractive decoy; it chose that story in problems 1 and 3. The baseline wrk2 timeout count (~190 per 30 s round) is a second decoy (problems 1, 6). In problem 6 HolmesGPT also invented an "expected" value for a default setting, and it reused the same `rate` QPS story in problem 10. On astronomy-shop, the decoy is the `jaeger` Service, which SREGym turns into an ExternalName pointing at its own collector while leaving the old selector in place. HolmesGPT flagged it in problems 2 and 7.
 
-**What worked (problem 7):** when the fault leaves an explicit error in a consumer's own logs (a parse error at a specific offset), HolmesGPT finds and explains it well.
+**What worked (problems 7, 11):** when the fault leaves an explicit error, HolmesGPT finds and explains it well. In problem 7 that was a parse error at a specific offset in a consumer's logs, and in problem 11 an admission rejection (`must specify memory`) in events. In 11 it then blamed the symptom (`search`) over the origin (the quota).
 
 | # | Problem | Ground truth | What HolmesGPT concluded | Why it missed / how it got there |
 |---|---------|--------------|--------------------------|----------------------------------|
