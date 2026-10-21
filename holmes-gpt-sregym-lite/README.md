@@ -139,6 +139,7 @@ SREGym-Lite asks for 16 GB. To fit a 16 GB Mac with 8 GB given to Docker:
 | 11 | `namespace_memory_limit` | not run | | | |
 | 12 | `valkey_auth_disruption` | not run | | | |
 | 13 | `secret_rotation_stale_env_credentials_astronomy_shop` | not run | | | |
+| 10 | `service_wrong_pod_selection_hotel_reservation` | `frontend` Service selector broadened to `service-route=frontend`, which also matches a `search` pod (port 8082 vs targetPort 5000), so some frontend traffic hits the wrong pod | `rate` QPS limit 500 / queue 256 overloads under load; search retries time out | Same story as problem 6, built from the chart's default `rate` settings. It never inspected Service selectors or Endpoints (38 tool calls; the only "selector" hits are tool parameters like `label_selector=None`). Score 0/100. |
 | 14 | `unschedulable_incorrect_port_assignment` | not run | | | |
 | 15 | `duplicate_pvc_mounts_social_network` | not run | | | |
 | 16 | `rolling_update_misconfigured_social_network` | not run | | | |
@@ -154,7 +155,7 @@ Raw per-problem HolmesGPT answers: [`results/answers/`](./results/answers/) · f
 
 Reviewed by hand after each problem finishes (the tables above are generated; this section is not).
 
-**Pattern so far:** HolmesGPT latches onto the loudest error in logs and builds a root cause around it, without enumerating the resource kinds that could carry the fault (CronJobs, NetworkPolicies, proxy config). On hotel-reservation, the brief Consul `connection refused` errors at startup are an attractive decoy; it chose that story in problems 1 and 3. The baseline wrk2 timeout count (~190 per 30 s round) is a second decoy (problems 1, 6). In problem 6 HolmesGPT also invented an "expected" value for a default setting. On astronomy-shop, the decoy is the `jaeger` Service, which SREGym turns into an ExternalName pointing at its own collector while leaving the old selector in place. HolmesGPT flagged it in problems 2 and 7.
+**Pattern so far:** HolmesGPT latches onto the loudest error in logs and builds a root cause around it, without enumerating the resource kinds that could carry the fault (CronJobs, NetworkPolicies, proxy config). On hotel-reservation, the brief Consul `connection refused` errors at startup are an attractive decoy; it chose that story in problems 1 and 3. The baseline wrk2 timeout count (~190 per 30 s round) is a second decoy (problems 1, 6). In problem 6 HolmesGPT also invented an "expected" value for a default setting, and it reused the same `rate` QPS story in problem 10. On astronomy-shop, the decoy is the `jaeger` Service, which SREGym turns into an ExternalName pointing at its own collector while leaving the old selector in place. HolmesGPT flagged it in problems 2 and 7.
 
 **What worked (problem 7):** when the fault leaves an explicit error in a consumer's own logs (a parse error at a specific offset), HolmesGPT finds and explains it well.
 
