@@ -1,0 +1,22 @@
+toolsets:
+  prometheus/metrics:
+    enabled: true
+    config:
+      prometheus_url: "http://host.docker.internal:9090"
+  grafana/dashboards:
+    enabled: true
+    config:
+      api_url: "http://host.docker.internal:3000"
+      api_key: "<grafana-service-account-token>"
+  grafana/loki:
+    enabled: true
+    config:
+      api_url: "http://host.docker.internal:3000"
+      api_key: "<grafana-service-account-token>"
+      grafana_datasource_uid: "loki"
+  grafana/tempo:
+    enabled: true
+    config:
+      api_url: "http://host.docker.internal:3000"
+      api_key: "<grafana-service-account-token>"
+      grafana_datasource_uid: "tempo"

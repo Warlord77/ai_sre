@@ -70,6 +70,8 @@ cd holmes-gpt/2-sre-gym-sandbox
 # 1. Copy env and fill in keys
 cp .env.example .env
 # Set OPENROUTER_API_KEY and GRAFANA_API_KEY in .env
+cp holmes-config.example.yaml holmes-config.yaml
+# Set the Grafana service-account token in holmes-config.yaml (gitignored)
 
 # 2. Generate a Grafana service account token
 curl -s -X POST http://admin:admin@localhost:3000/api/serviceaccounts \
