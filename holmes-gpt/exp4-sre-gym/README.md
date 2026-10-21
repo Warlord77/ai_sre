@@ -9,7 +9,7 @@
 | **Source / Docs** | [holmesgpt.dev](https://holmesgpt.dev/) · [GitHub](https://github.com/HolmesGPT/holmesgpt) |
 | **License** | `Apache 2.0` |
 | **Category** | `AI SRE agent` |
-| **Builds on** | [Experiment 1 — HolmesGPT v0.30 on iximiuz Labs](../holmes-gpt/README.md) |
+| **Builds on** | [Experiment 1 — HolmesGPT v0.30 on iximiuz Labs](../exp1-iximiuz-v0.30/README.md) |
 
 ---
 
@@ -57,7 +57,7 @@ Alertmanager ──► HolmesGPT (Docker)
 
 ### Prerequisites
 
-- Docker Desktop with kind cluster `sre-gym` running (see [`../opensre/observability-stack/`](../opensre/observability-stack/README.md))
+- Docker Desktop with kind cluster `sre-gym` running (see [`../../opensre/observability-stack/`](../../opensre/observability-stack/README.md))
 - Port-forwards active: `make port-forward` in `observability-stack/`
 - OpenRouter API key
 - `node` / `npx` (for `mcp-server-kubernetes`)
@@ -65,7 +65,7 @@ Alertmanager ──► HolmesGPT (Docker)
 ### Step-by-step
 
 ```bash
-cd holmes-gpt-sre-gym
+cd holmes-gpt/exp4-sre-gym
 
 # 1. Copy env and fill in keys
 cp .env.example .env
@@ -129,7 +129,7 @@ A `TypeError: '>' not supported between instances of 'NoneType' and 'int'` in `p
 
 ## 4. Scenarios tested
 
-All scenarios run against the `sre-gym` kind cluster with the observability stack from `../opensre/observability-stack/`. Load generator was running throughout for baseline metric data.
+All scenarios run against the `sre-gym` kind cluster with the observability stack from `../../opensre/observability-stack/`. Load generator was running throughout for baseline metric data.
 
 **Active toolsets in every run:**
 `kubernetes/core`, `kubernetes/kube-prometheus-stack`, `kubernetes/logs`, `prometheus/metrics`, `grafana/loki`, `grafana/tempo`, `grafana/dashboards`, `helm/core`
@@ -386,9 +386,9 @@ Each issue is documented in detail (symptom / root cause / fix) in [`issues.md`]
 - [HolmesGPT v0.45 docs — data sources](https://holmesgpt.dev/latest/data-sources/)
 - [HolmesGPT v0.45 docs — toolset config format](https://holmesgpt.dev/latest/data-sources/builtin-toolsets/)
 - [mcp-server-kubernetes@4.1.9 on npm](https://www.npmjs.com/package/mcp-server-kubernetes)
-- [opensre/observability-stack README](../opensre/observability-stack/README.md)
-- [Experiment 1 — HolmesGPT v0.30 baseline](../holmes-gpt/README.md)
-- [Experiment 3 — OpenSRE (for Alertmanager/Prometheus integration comparison)](../opensre/README.md)
+- [opensre/observability-stack README](../../opensre/observability-stack/README.md)
+- [Experiment 1 — HolmesGPT v0.30 baseline](../exp1-iximiuz-v0.30/README.md)
+- [Experiment 3 — OpenSRE (for Alertmanager/Prometheus integration comparison)](../../opensre/README.md)
 
 ---
 

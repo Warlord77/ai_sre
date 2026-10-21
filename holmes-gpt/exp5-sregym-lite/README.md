@@ -9,7 +9,7 @@
 | **Source / Docs** | [holmesgpt.dev](https://holmesgpt.dev/) · [GitHub](https://github.com/HolmesGPT/holmesgpt) |
 | **License** | `Apache 2.0` |
 | **Category** | `AI SRE agent` |
-| **Builds on** | [Experiment 4 — HolmesGPT on the SRE Gym sandbox](../holmes-gpt-sre-gym/README.md) |
+| **Builds on** | [Experiment 4 — HolmesGPT on the SRE Gym sandbox](../exp4-sre-gym/README.md) |
 
 ---
 
@@ -58,14 +58,14 @@ answer ──► POST /submit ──► LLM judge (score /100, pass/fail)
 ### Prerequisites
 
 - Docker Desktop with **≥ 8 GB** memory, kind cluster `kind-sre-gym` as current context
-- SREGym checkout next to this repo (`../../SREGym`) with submodules: `git submodule update --init --recursive`
+- SREGym checkout next to this repo (`../../../SREGym` from this folder) with submodules: `git submodule update --init --recursive`
 - `uv`, `kubectl`, `helm`
 - OpenRouter API key
 
 ### Steps
 
 ```bash
-cd holmes-gpt-sregym-lite
+cd holmes-gpt/exp5-sregym-lite
 cp .env.example .env          # set OPENROUTER_API_KEY
 make preflight                # docker, memory, context, uv, key, HolmesGPT image
 make run-one PROBLEM=network_policy_block
@@ -123,7 +123,7 @@ SREGym-Lite asks for 16 GB. To fit a 16 GB Mac with 8 GB given to Docker:
 <!-- SCORECARD:END -->
 
 <!-- RESULTS:START -->
-**Diagnosis pass rate: 1/7 evaluated** · 10/17 problems run · runs `1021_1159, 1021_1349, 1021_1509, 1021_1540, 1021_1548, 1021_1609, 1021_1616, 1021_1622` · updated 2026-10-21 16:30
+**Diagnosis pass rate: 1/7 evaluated** · 10/17 problems run · runs `1021_1159, 1021_1349, 1021_1509, 1021_1540, 1021_1548, 1021_1609, 1021_1616, 1021_1622` · updated 2026-10-21 16:47
 
 | # | Problem | Diagnosis | Score | Investigation | Judge notes |
 |---|---------|-----------|------:|--------------:|-------------|

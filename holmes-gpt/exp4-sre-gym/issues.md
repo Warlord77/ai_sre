@@ -1,7 +1,7 @@
 # HolmesGPT Issues
 
 Issues and gotchas encountered running HolmesGPT v0.45.0 (Docker) against the local
-SRE Gym kind cluster. Format mirrors [`../opensre/issues.md`](../opensre/issues.md).
+SRE Gym kind cluster. Format mirrors [`../../opensre/issues.md`](../../opensre/issues.md).
 
 ---
 

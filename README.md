@@ -14,14 +14,14 @@ Each experiment is an independent silo. HolmesGPT and K8sGPT were run against [i
 
 | SNo | Experiment | Version | Date | Test environment | README |
 |-------|------------|---------|------|------------------|--------|
-| 1 | `holmes-gpt/` | 0.30.0 | 2026-05-18 | iximiuz Labs (K8s + Linux challenges) | [README](holmes-gpt/README.md) |
+| 1 | `holmes-gpt/exp1-iximiuz-v0.30/` | 0.30.0 | 2026-05-18 | iximiuz Labs (K8s + Linux challenges) | [README](holmes-gpt/exp1-iximiuz-v0.30/README.md) |
 | 2 | `k8sgpt/` | 0.4.33 | 2026-05-18 | iximiuz Labs (K8s challenge) | [README](k8sgpt/README.md) |
 | 3 | `opensre/` | 0.1 | 2026-05-24 | Local `observability-stack` sandbox | [README](opensre/README.md) |
-| 4 | `holmes-gpt-sre-gym/` | 0.45.0 | 2026-10-20 | Local `observability-stack` sandbox (kind + Prometheus + Loki + Tempo) | [README](holmes-gpt-sre-gym/README.md) |
-| 5 | `holmes-gpt-sregym-lite/` | 0.45.0 | 2026-10-21 | [SREGym-Lite](https://github.com/SREGym/SREGym/blob/main/docs/SREGym-Lite.md) benchmark, 17 graded problems (kind, `svelte` profile, 8 GB) | [README](holmes-gpt-sregym-lite/README.md) |
+| 4 | `holmes-gpt/exp4-sre-gym/` | 0.45.0 | 2026-10-20 | Local `observability-stack` sandbox (kind + Prometheus + Loki + Tempo) | [README](holmes-gpt/exp4-sre-gym/README.md) |
+| 5 | `holmes-gpt/exp5-sregym-lite/` | 0.45.0 | 2026-10-21 | [SREGym-Lite](https://github.com/SREGym/SREGym/blob/main/docs/SREGym-Lite.md) benchmark, 17 graded problems (kind, `svelte` profile, 8 GB) | [README](holmes-gpt/exp5-sregym-lite/README.md) |
 
 
-**Combined report:** [HolmesGPT — Combined Evaluation](holmes-gpt-combined/README.md) merges experiments 1, 4 and 5 into one verdict, compared against K8sGPT and OpenSRE.
+**Combined report:** [HolmesGPT — Combined Evaluation](holmes-gpt/README.md) merges experiments 1, 4 and 5 into one verdict, compared against K8sGPT and OpenSRE.
 
 ## Scorecard
 
@@ -31,13 +31,13 @@ experiment 5 is graded by SREGym's LLM judge against the known root cause.
 
 | # | Experiment | Test set | Correct RCA | Avg judge score | Verdict |
 |---|------------|----------|-------------|----------------:|---------|
-| 1 | [HolmesGPT v0.30](holmes-gpt/README.md) | iximiuz Labs, 3 scenarios | 2/3 (+1 partial) | — | Defer |
+| 1 | [HolmesGPT v0.30](holmes-gpt/exp1-iximiuz-v0.30/README.md) | iximiuz Labs, 3 scenarios | 2/3 (+1 partial) | — | Defer |
 | 2 | [K8sGPT 0.4.33](k8sgpt/README.md) | iximiuz Labs, 2 scenarios | 0/2 (CLI) | — | Reject |
 | 3 | [OpenSRE 0.1](opensre/README.md) | observability-stack, 3 scenarios | 0/3 | — | Defer |
-| 4 | [HolmesGPT v0.45](holmes-gpt-sre-gym/README.md) | observability-stack, 3 scenarios | 2/3 (+1 partial) | — | Pilot |
-| 5 | [HolmesGPT v0.45 on SREGym-Lite](holmes-gpt-sregym-lite/README.md) | SREGym-Lite, 10/17 problems run | 1/7 (14%) | 19/100 | In progress |
+| 4 | [HolmesGPT v0.45](holmes-gpt/exp4-sre-gym/README.md) | observability-stack, 3 scenarios | 2/3 (+1 partial) | — | Pilot |
+| 5 | [HolmesGPT v0.45 on SREGym-Lite](holmes-gpt/exp5-sregym-lite/README.md) | SREGym-Lite, 10/17 problems run | 1/7 (14%) | 19/100 | In progress |
 
-_Last updated 2026-10-21 16:30._
+_Last updated 2026-10-21 16:47._
 <!-- SCORECARD:END -->
 
 ## Test environments

@@ -9,7 +9,7 @@ ifneq (,$(wildcard $(ENV_FILE)))
   export
 endif
 
-SREGYM_DIR   ?= ../../SREGym
+SREGYM_DIR   ?= ../../../SREGym
 SREGYM_ABS   := $(abspath $(SREGYM_DIR))
 MODEL        ?= openrouter/anthropic/claude-sonnet-4-5
 JUDGE_MODEL  ?= $(MODEL)
@@ -82,7 +82,7 @@ resume: preflight install ## Resume a lite run (CSV=<path to results csv>).
 
 .PHONY: summary
 summary: ## Collect results into results/ and regenerate the README results block (RUNS="<dir>...").
-	@python3 scripts/summarize.py --sregym $(SREGYM_ABS) --out results --readme README.md --root-readme ../README.md $(if $(RUNS),--run $(RUNS))
+	@python3 scripts/summarize.py --sregym $(SREGYM_ABS) --out results --readme README.md --root-readme ../../README.md $(if $(RUNS),--run $(RUNS))
 
 .PHONY: watch
 watch: ## Regenerate + commit README after every problem until the run ends (RUNS="<dir> [<dir>...]").

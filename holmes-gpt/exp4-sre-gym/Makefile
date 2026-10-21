@@ -21,7 +21,7 @@ KUBE_CONTEXT     ?= kind-sre-gym
 CHAOS_WAIT ?= 75
 
 # SRE gym observability-stack directory (relative)
-SRE_GYM ?= ../opensre/observability-stack
+SRE_GYM ?= ../../opensre/observability-stack
 
 FINDINGS_DIR := findings
 
