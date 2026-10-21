@@ -175,3 +175,47 @@ The frontend-proxy serves as the entry point/gateway for the OpenTelemetry Demo 
 **Fix Required:**
 Increase the memory limit for the `frontend-proxy` deployment to at least 128Mi-256Mi to allow Envoy proxy to initialize and operate normally.",False,83.50644588470459,1,0,svelte,open,api,,98.027,,135.872,,9.318,,0.704,0.645,74.187,submitted,,6.215,env_variable_shadowing_astronomy_shop,complete,,,,,,
 ,,,,,,,,,1,0,svelte,open,api,,,,594.348,,,,0.757,19.472,47.045,submitted,,0.161,mutating_webhook_resource_limits_social_network,incomplete,1,evaluation_timeout_after_agent_exit,diagnosis,diagnosis,incomplete,2426.066
+0.0,"[{'id': 'D1-Q1', 'answer': 'No', 'evidence': ""Diagnosis names 'Deployment rate' as faulty component; ground-truth identifies 'ClusterRole/configmap-cleanup-controller and configmap/reservation-cleanup-token' as fault origin."", 'confidence': 'High'}, {'id': 'D1-Q2', 'answer': 'No', 'evidence': 'Diagnosis treats rate service timeouts as root cause; ground-truth shows RBAC misconfiguration on cleanup-controller is the actual origin, not rate service.', 'confidence': 'High'}, {'id': 'D1-Q3', 'answer': 'No', 'evidence': ""Diagnosis misidentifies healthy 'rate' deployment as fault origin when ground-truth fault is in ClusterRole configmap-cleanup-controller RBAC permissions."", 'confidence': 'High'}, {'id': 'D2-Q1', 'answer': 'No', 'evidence': 'Diagnosis claims misconfigured env var RATE_BACKEND_QPS_LIMIT; ground-truth mechanism is ClusterRole changed to read-only, missing patch permission for ConfigMaps.', 'confidence': 'High'}, {'id': 'D2-Q2', 'answer': 'No', 'evidence': ""Diagnosis cites wrong value '500 should be 5000'; ground-truth details ClusterRole missing patch permission, HTTP 403 Forbidden, finalizer cleanup.reservations.io/pending-cleanup stuck."", 'confidence': 'High'}, {'id': 'D2-Q3', 'answer': 'No', 'evidence': 'Diagnosis attributes fault to QPS throttling misconfiguration; ground-truth problem is RBAC permission misconfiguration preventing finalizer removal.', 'confidence': 'High'}, {'id': 'D3-Q1', 'answer': 'No', 'evidence': 'Diagnosis blames rate, search, and frontend services; ground-truth fault involves only ClusterRole configmap-cleanup-controller and ConfigMap reservation-cleanup-token components.', 'confidence': 'High'}, {'id': 'D3-Q2', 'answer': 'No', 'evidence': 'Diagnosis omits ClusterRole configmap-cleanup-controller, ServiceAccount cleanup-controller, Deployment cleanup-controller, and ConfigMap reservation-cleanup-token entirely.', 'confidence': 'High'}, {'id': 'D3-Q3', 'answer': 'No', 'evidence': 'Diagnosis describes timeout errors from QPS throttling; ground-truth impact is ConfigMap stuck Terminating with finalizer, controller logging HTTP 403 Forbidden errors.', 'confidence': 'High'}]",0.0,"{'D1': {'name': 'Fault Localization', 'score': 0.0}, 'D2': {'name': 'Fault Characterization', 'score': 0.0}, 'D3': {'name': 'Scope Precision', 'score': 0.0}}",False,"Verdict: False (composite=0.00). D1 Fault Localization: 0.00 | D2 Fault Characterization: 0.00 | D3 Scope Precision: 0.00. Weakest dimension: Fault Localization (0.00). Checklist details: [{""id"": ""D1-Q1"", ""answer"": ""No"", ""evidence"": ""Diagnosis names 'Deployment rate' as faulty component; ground-truth identifies 'ClusterRole/configmap-cleanup-controller and configmap/reservation-cleanup-token' as fault origin."", ""confidence"": ""High""}, {""id"": ""D1-Q2"", ""answer"": ""No"", ""evidence"": ""Diagnosis treats rate service timeouts as root cause; ground-truth shows RBAC misconfiguration on cleanup-controller is the actual origin, not rate service."", ""confidence"": ""High""}, {""id"": ""D1-Q3"", ""answer"": ""No"", ""evidence"": ""Diagnosis misidentifies healthy 'rate' deployment as fault origin when ground-truth fault is in ClusterRole configmap-cleanup-controller RBAC permissions."", ""confidence"": ""High""}, {""id"": ""D2-Q1"", ""answer"": ""No"", ""evidence"": ""Diagnosis claims misconfigured env var RATE_BACKEND_QPS_LIMIT; ground-truth mechanism is ClusterRole changed to read-only, missing patch permission for ConfigMaps."", ""confidence"": ""High""}, {""id"": ""D2-Q2"", ""answer"": ""No"", ""evidence"": ""Diagnosis cites wrong value '500 should be 5000'; ground-truth details ClusterRole missing patch permission, HTTP 403 Forbidden, finalizer cleanup.reservations.io/pending-cleanup stuck."", ""confidence"": ""High""}, {""id"": ""D2-Q3"", ""answer"": ""No"", ""evidence"": ""Diagnosis attributes fault to QPS throttling misconfiguration; ground-truth problem is RBAC permission misconfiguration preventing finalizer removal."", ""confidence"": ""High""}, {""id"": ""D3-Q1"", ""answer"": ""No"", ""evidence"": ""Diagnosis blames rate, search, and frontend services; ground-truth fault involves only ClusterRole configmap-cleanup-controller and ConfigMap reservation-cleanup-token components."", ""confidence"": ""High""}, {""id"": ""D3-Q2"", ""answer"": ""No"", ""evidence"": ""Diagnosis omits ClusterRole configmap-cleanup-controller, ServiceAccount cleanup-controller, Deployment cleanup-controller, and ConfigMap reservation-cleanup-token entirely."", ""confidence"": ""High""}, {""id"": ""D3-Q3"", ""answer"": ""No"", ""evidence"": ""Diagnosis describes timeout errors from QPS throttling; ground-truth impact is ConfigMap stuck Terminating with finalizer, controller logging HTTP 403 Forbidden errors."", ""confidence"": ""High""}]","Perfect! I've identified the root cause. Let me create a comprehensive summary of my findings.
+
+## ROOT CAUSE
+
+**Faulty Component:**
+- **Kubernetes Resource:** Deployment `rate` in namespace `hotel-reservation`
+- **Container:** `hotel-reserv-rate`
+
+**Root Cause:**
+The `rate` service has a misconfigured environment variable `RATE_BACKEND_QPS_LIMIT` set to `500` (queries per second), which should be `5000`. This artificially low limit throttles the rate service's backend database queries to only 500 QPS, causing request queueing and timeouts when the application is under load.
+
+**Why it breaks the application:**
+1. The `search` service calls the `rate` service with a 1-second timeout (`RATE_RPC_TIMEOUT_MS: 1000`)
+2. When load increases, the rate service hits its 500 QPS limit and queues requests (queue capacity: 256)
+3. Queued requests exceed the 1-second timeout, causing the search service to timeout
+4. This cascades to the frontend, resulting in 188-192 timeout errors per 30-second load test run (~6% failure rate)
+
+**Evidence:**
+1. **Wrk2 load test results:** Consistent timeout errors across multiple test runs:
+   - Round #1: 188 socket timeouts out of 2972 requests
+   - Round #2: 192 socket timeouts out of 2899 requests  
+   - Round #3: 187 socket timeouts out of 2896 requests
+
+2. **Configuration verification:**
+   ```
+   Deployment: rate
+   Environment Variables:
+   - RATE_BACKEND_QPS_LIMIT: ""500""  ← MISCONFIGURED (should be 5000)
+   - RATE_QUEUE_CAPACITY: ""256""
+   ```
+
+3. **Search service timeout configuration:**
+   ```
+   Deployment: search
+   Environment Variables:
+   - RATE_RPC_TIMEOUT_MS: ""1000""
+   - RATE_RPC_MAX_ATTEMPTS: ""2""
+   ```
+
+4. **Resource utilization:** The rate service pod is using 47m CPU (47% of its 100m request), indicating it's under load but artificially constrained by the QPS limit, not by CPU resources.
+
+5. **No other services have QPS limits:** The geo service and other backend services don't have similar QPS limit configurations, confirming this is an anomaly specific to the rate service.
+
+**Fix:** Change the `RATE_BACKEND_QPS_LIMIT` environment variable in the `rate` deployment from `500` to `5000` to allow the service to handle the expected query load.",False,199.11489415168762,1,0,svelte,open,api,,153.091,,17.685,,10.36,,0.735,4.094,188.755,submitted,,5.07,finalizer_deadlock_controller_hotel_reservation,complete,,,,,,1465.334

@@ -118,11 +118,11 @@ SREGym-Lite asks for 16 GB. To fit a 16 GB Mac with 8 GB given to Docker:
 
 | Problems run | ✅ Passed | ❌ Failed | ⚠️ Not graded | Pass rate | Avg judge score | Avg investigation |
 |---:|---:|---:|---:|---:|---:|---:|
-| 5/17 | 0 | 3 | 2 | 0% | 0/100 | 2.5 min |
+| 6/17 | 0 | 4 | 2 | 0% | 0/100 | 2.7 min |
 <!-- SCORECARD:END -->
 
 <!-- RESULTS:START -->
-**Diagnosis pass rate: 0/3 evaluated** · 5/17 problems run · runs `1021_1159, 1021_1349, 1021_1509` · updated 2026-10-21 15:09
+**Diagnosis pass rate: 0/4 evaluated** · 6/17 problems run · runs `1021_1159, 1021_1349, 1021_1509, 1021_1540` · updated 2026-10-21 15:40
 
 | # | Problem | Diagnosis | Score | Investigation | Judge notes |
 |---|---------|-----------|------:|--------------:|-------------|
@@ -131,7 +131,7 @@ SREGym-Lite asks for 16 GB. To fit a 16 GB Mac with 8 GB given to Docker:
 | 3 | `network_policy_block` | ❌ fail | 0.0 | 2.4 min | Verdict: False (composite=0.00). D1 Fault Localization: 0.00 / D2 Fault Characterization: 0.00 / D3 Scope Precision: 0.00. Weakest dimension: Fault Localization (0.00). Checklist details: [{"id": "D1-Q1", "answer": "No", |
 | 4 | `env_variable_shadowing_astronomy_shop` | ⚠️ invalid: ARM64 Envoy OOM at 65Mi (environment bug, fixed; rerun pending) | 56.0 | 1.2 min | Verdict: False (composite=0.56). D1 Fault Localization: 1.00 / D2 Fault Characterization: 0.00 / D3 Scope Precision: 0.67. Weakest dimension: Fault Characterization (0.00). Checklist details: [{"id": "D1-Q1", "answer": " |
 | 5 | `mutating_webhook_resource_limits_social_network` | ⚠️ invalid: HolmesGPT crashed on a dropped OpenRouter stream; driver submitted the raw CLI transcript (driver fixed; rerun pending) |  | 0.8 min |  |
-| 6 | `finalizer_deadlock_controller_hotel_reservation` | not run | | | |
+| 6 | `finalizer_deadlock_controller_hotel_reservation` | ❌ fail | 0.0 | 3.1 min | Verdict: False (composite=0.00). D1 Fault Localization: 0.00 / D2 Fault Characterization: 0.00 / D3 Scope Precision: 0.00. Weakest dimension: Fault Localization (0.00). Checklist details: [{"id": "D1-Q1", "answer": "No", |
 | 7 | `kafka_poison_pill_hol_block` | not run | | | |
 | 8 | `internal_traffic_policy_local_astronomy_shop` | not run | | | |
 | 9 | `service_dns_resolution_failure_social_network` | not run | | | |
