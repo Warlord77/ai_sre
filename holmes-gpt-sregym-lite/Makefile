@@ -64,8 +64,9 @@ uninstall: ## Remove the client link and agent registration from SREGym.
 	@cd $(SREGYM_ABS) && git checkout -- agents.yaml
 
 .PHONY: run-one
-run-one: preflight install ## Run one problem (PROBLEM=<id>).
-	$(RUN) --problem $(PROBLEM)
+run-one: ## Run one problem (PROBLEM=<id>); ids listed in skip.txt are skipped.
+	@if grep -qx '$(PROBLEM)' skip.txt 2>/dev/null; then echo "=== skipping $(PROBLEM) (skip.txt)"; else \
+		$(MAKE) --no-print-directory preflight install && $(RUN) --problem $(PROBLEM); fi
 
 .PHONY: run-lite
 run-lite: preflight install ## Run all 17 SREGym-Lite problems.

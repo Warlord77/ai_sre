@@ -23,7 +23,7 @@ echo "watching ${RUNS[*]}"
 update() {
   line=$(python3 "$HERE/scripts/summarize.py" --sregym "$SREGYM" --run "${RUNS[@]}" --out "$HERE/results" \
     --readme "$HERE/README.md" --root-readme "$HERE/../README.md" | head -1)
-  git -C "$HERE" add README.md Makefile .gitignore .env.example invalid.txt client scripts results ../README.md
+  git -C "$HERE" add README.md Makefile .gitignore .env.example invalid.txt skip.txt client scripts results ../README.md
   if ! git -C "$HERE" diff --cached --quiet -- . ../README.md; then
     git -C "$HERE" commit -q -m "holmesgpt sregym-lite: results after $1 finished problems" \
       -m "Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>" -- . ../README.md
