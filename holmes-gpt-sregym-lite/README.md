@@ -137,3 +137,13 @@ SREGym-Lite asks for 16 GB. To fit a 16 GB Mac with 8 GB given to Docker:
 
 Raw per-problem HolmesGPT answers: [`results/answers/`](./results/answers/) · full CSV:
 [`results/results.csv`](./results/results.csv).
+
+---
+
+## 5. Per-problem observations
+
+Reviewed by hand after each problem finishes (the tables above are generated; this section is not).
+
+| # | Problem | Ground truth | What HolmesGPT concluded | Why it missed / how it got there |
+|---|---------|--------------|--------------------------|----------------------------------|
+| 1 | `cronjob_sidecar_blocks_completion_hotel_reservation` | `CronJob/audit-log-archiver`: a sidecar keeps the Job pod from completing | Missing readiness probes on `consul` and `frontend` cause a startup race and wrk2 timeouts | Never listed CronJobs/Jobs in the namespace (43 tool calls). It anchored on wrk2 timeout counts and Deployment specs, so it built a plausible but unrelated story. Score 0/100 on all three dimensions. |
