@@ -141,15 +141,14 @@ def write_holmes_config(workdir: Path) -> Path:
     return out
 
 
-def run_holmes(prompt: str, logs_dir: Path, problem_id: str) -> tuple[int, str, dict]:
+def run_holmes(prompt: str, logs_dir: Path, problem_id: str, timeout: int) -> tuple[int, str, dict]:
     workdir = Path(tempfile.mkdtemp(prefix="holmes-sregym-"))
     workdir.chmod(0o755)
-    kubeconfig = write_container_kubeconfig(workdir)
+    write_container_kubeconfig(workdir)
     holmes_config = write_holmes_config(workdir)
     (workdir / "prompt.txt").write_text(prompt)
 
     model = os.environ.get("AGENT_MODEL_ID", "openrouter/anthropic/claude-sonnet-4-5")
-    timeout = int(os.environ.get("HOLMES_TIMEOUT", "1500"))
     cmd = [
         "docker", "run", "--rm",
         # Shares the Docker VM with the kind node; keep it from starving the cluster.
@@ -189,8 +188,18 @@ def run_holmes(prompt: str, logs_dir: Path, problem_id: str) -> tuple[int, str, 
             pass
         (logs_dir / f"holmes_{problem_id}_{stamp}.json").write_text(out_json.read_text())
 
-    answer = output.get("result") or output.get("analysis") or stdout.strip()
+    # Only HolmesGPT's own result counts as an answer: stdout is the CLI transcript
+    # (prompt, toolset banner, tracebacks), not a diagnosis.
+    answer = output.get("result") or output.get("analysis") or ""
     return rc, answer, output
+
+
+def last_error(logs_dir: Path, problem_id: str) -> str:
+    logs = sorted(logs_dir.glob(f"holmes_{problem_id}_*.log"))
+    if not logs:
+        return "unknown error"
+    lines = [ln.strip() for ln in logs[-1].read_text().splitlines() if "Error" in ln or "Exception" in ln]
+    return lines[-1][:300] if lines else "no result produced"
 
 
 def main():
@@ -206,9 +215,21 @@ def main():
     stage = get_stage()
     rc = 0
     if stage == "diagnosis":
-        rc, answer, _ = run_holmes(build_prompt(app_info), logs_dir, problem_id)
+        # Retry transient LLM/provider failures (e.g. a dropped OpenRouter stream) inside
+        # SREGym's agent budget (--agent-timeout, 1800s by default).
+        deadline = time.time() + int(os.environ.get("HOLMES_BUDGET", "1650"))
+        attempts = int(os.environ.get("HOLMES_ATTEMPTS", "3"))
+        answer = ""
+        for attempt in range(1, attempts + 1):
+            remaining = int(deadline - time.time())
+            if remaining < 120:
+                break
+            rc, answer, _ = run_holmes(build_prompt(app_info), logs_dir, problem_id, timeout=min(900, remaining))
+            if answer:
+                break
+            logger.warning(f"HolmesGPT attempt {attempt}/{attempts} produced no result (rc={rc}); retrying")
         if not answer:
-            answer = "HolmesGPT produced no answer."
+            answer = f"HolmesGPT failed to produce a diagnosis after retries: {last_error(logs_dir, problem_id)}"
         logger.info(f"HolmesGPT answer:\n{answer}")
         submit(answer)
         stage = wait_for_stage({"mitigation"}, timeout=120)
