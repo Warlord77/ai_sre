@@ -123,3 +123,54 @@ The frontend depends on Consul for service discovery to locate backend services 
 
 **Fix:**
 Add a readiness probe to the Consul deployment that checks the HTTP API endpoint (e.g., `http://localhost:8500/v1/status/leader`) to ensure Consul is fully operational before Kubernetes routes traffic to it.",False,155.89526295661926,1,0,svelte,open,api,,104.294,,119.128,,9.641,,0.763,0.013,146.254,submitted,,5.078,network_policy_block,complete
+56.0,"[{'id': 'D1-Q1', 'answer': 'Yes', 'evidence': ""Diagnosis names 'deployment frontend-proxy in namespace astronomy-shop' matching ground-truth component=deployment/frontend-proxy; namespace=astronomy-shop"", 'confidence': 'High'}, {'id': 'D1-Q2', 'answer': 'Yes', 'evidence': ""Diagnosis identifies frontend-proxy as root cause, not secondary failures. States 'frontend-proxy serves as entry point' causing downstream connection failures."", 'confidence': 'High'}, {'id': 'D1-Q3', 'answer': 'Yes', 'evidence': 'Diagnosis correctly blames frontend-proxy deployment, does not misidentify any healthy component as fault origin.', 'confidence': 'High'}, {'id': 'D2-Q1', 'answer': 'No', 'evidence': ""Diagnosis claims 'insufficient memory limit of 65Mi' and 'OOMKilled' but ground-truth states duplicate FRONTEND_HOST env var causing routing misconfiguration."", 'confidence': 'High'}, {'id': 'D2-Q2', 'answer': 'No', 'evidence': ""Diagnosis provides memory limit details (65Mi) but ground-truth specifies 'FRONTEND_HOST defined twice, later value localhost shadows earlier value frontend'."", 'confidence': 'High'}, {'id': 'D2-Q3', 'answer': 'No', 'evidence': 'Diagnosis attributes fault to resource limit problem but ground-truth problem is environment variable duplication causing routing misconfiguration.', 'confidence': 'High'}, {'id': 'D3-Q1', 'answer': 'Yes', 'evidence': 'Diagnosis only blames frontend-proxy deployment, does not attribute fault to other uninvolved components.', 'confidence': 'High'}, {'id': 'D3-Q2', 'answer': 'Yes', 'evidence': 'Diagnosis identifies frontend-proxy as faulty component matching ground-truth. No other components listed as contributing in ground-truth.', 'confidence': 'High'}, {'id': 'D3-Q3', 'answer': 'No', 'evidence': ""Diagnosis describes OOMKilled crashes but ground-truth states 'pod remains Running and Ready' with wrong routing due to env var shadowing."", 'confidence': 'High'}]",0.56,"{'D1': {'name': 'Fault Localization', 'score': 1.0}, 'D2': {'name': 'Fault Characterization', 'score': 0.0}, 'D3': {'name': 'Scope Precision', 'score': 0.67}}",False,"Verdict: False (composite=0.56). D1 Fault Localization: 1.00 | D2 Fault Characterization: 0.00 | D3 Scope Precision: 0.67. Weakest dimension: Fault Characterization (0.00). Checklist details: [{""id"": ""D1-Q1"", ""answer"": ""Yes"", ""evidence"": ""Diagnosis names 'deployment frontend-proxy in namespace astronomy-shop' matching ground-truth component=deployment/frontend-proxy; namespace=astronomy-shop"", ""confidence"": ""High""}, {""id"": ""D1-Q2"", ""answer"": ""Yes"", ""evidence"": ""Diagnosis identifies frontend-proxy as root cause, not secondary failures. States 'frontend-proxy serves as entry point' causing downstream connection failures."", ""confidence"": ""High""}, {""id"": ""D1-Q3"", ""answer"": ""Yes"", ""evidence"": ""Diagnosis correctly blames frontend-proxy deployment, does not misidentify any healthy component as fault origin."", ""confidence"": ""High""}, {""id"": ""D2-Q1"", ""answer"": ""No"", ""evidence"": ""Diagnosis claims 'insufficient memory limit of 65Mi' and 'OOMKilled' but ground-truth states duplicate FRONTEND_HOST env var causing routing misconfiguration."", ""confidence"": ""High""}, {""id"": ""D2-Q2"", ""answer"": ""No"", ""evidence"": ""Diagnosis provides memory limit details (65Mi) but ground-truth specifies 'FRONTEND_HOST defined twice, later value localhost shadows earlier value frontend'."", ""confidence"": ""High""}, {""id"": ""D2-Q3"", ""answer"": ""No"", ""evidence"": ""Diagnosis attributes fault to resource limit problem but ground-truth problem is environment variable duplication causing routing misconfiguration."", ""confidence"": ""High""}, {""id"": ""D3-Q1"", ""answer"": ""Yes"", ""evidence"": ""Diagnosis only blames frontend-proxy deployment, does not attribute fault to other uninvolved components."", ""confidence"": ""High""}, {""id"": ""D3-Q2"", ""answer"": ""Yes"", ""evidence"": ""Diagnosis identifies frontend-proxy as faulty component matching ground-truth. No other components listed as contributing in ground-truth."", ""confidence"": ""High""}, {""id"": ""D3-Q3"", ""answer"": ""No"", ""evidence"": ""Diagnosis describes OOMKilled crashes but ground-truth states 'pod remains Running and Ready' with wrong routing due to env var shadowing."", ""confidence"": ""High""}]","Perfect! The pod now has 3 restarts (it was 2 earlier), confirming the issue is ongoing. Now I have all the evidence needed for a comprehensive root cause analysis.
+
+---
+
+## ROOT CAUSE
+
+**Faulty Component:**
+- **Kind:** Deployment
+- **Name:** `frontend-proxy`
+- **Namespace:** `astronomy-shop`
+
+**Root Cause:**
+The `frontend-proxy` deployment has an insufficient memory limit of **65Mi** configured for its Envoy proxy container. Envoy proxy requires more memory to initialize and run properly. The container repeatedly crashes with **OOMKilled** (Out Of Memory Killed) status, causing a crash loop with continuous restarts.
+
+**Why it breaks the application:**
+The frontend-proxy serves as the entry point/gateway for the OpenTelemetry Demo Astronomy Shop application. Without a functioning frontend-proxy:
+1. External traffic cannot reach the application
+2. Load generator requests fail with ""Connection refused"" errors
+3. The entire shopping platform becomes inaccessible to users
+
+**Evidence:**
+
+1. **Pod Status & Restart Loop:**
+   - Pod `frontend-proxy-d5f84b788-ksbtr` has 3 restarts and counting
+   - Container state: `Terminated` with reason `OOMKilled` (Exit Code 137)
+   - Pod events show: `Back-off restarting failed container frontend-proxy`
+
+2. **Deployment Status:**
+   - Deployment `frontend-proxy` shows: `READY: <none>`, `DESIRED: 1`, `AVAILABLE: <none>`
+   - Deployment condition: `Available: False` with reason `MinimumReplicasUnavailable`
+
+3. **Memory Configuration:**
+   - Current memory limit: **65Mi**
+   - Comparable services in the same application have much higher limits:
+     - `frontend`: 250Mi
+     - `ad`: 512Mi
+     - `fraud-detection`: 512Mi
+     - `cart`: 160Mi
+     - `accounting`: 120Mi
+
+4. **Application Impact:**
+   - Load generator logs show multiple `ConnectionRefusedError(111, 'Connection refused')` errors for all API endpoints
+   - 100% failure ratio for requests attempting to reach the application through the frontend-proxy
+
+5. **Kubernetes Events Timeline:**
+   - 07:07:40 - New ReplicaSet scaled up (deployment rollout)
+   - 07:07:42-07:07:56 - Multiple OOMKilled terminations
+   - Continuous restart attempts with BackOff warnings
+
+**Fix Required:**
+Increase the memory limit for the `frontend-proxy` deployment to at least 128Mi-256Mi to allow Envoy proxy to initialize and operate normally.",False,83.50644588470459,1,0,svelte,open,api,,98.027,,135.872,,9.318,,0.704,0.645,74.187,submitted,,6.215,env_variable_shadowing_astronomy_shop,complete

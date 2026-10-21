@@ -33,9 +33,9 @@ experiment 5 is graded by SREGym's LLM judge against the known root cause.
 | 2 | [K8sGPT 0.4.33](k8sgpt/README.md) | iximiuz Labs, 2 scenarios | 0/2 (CLI) | — | Reject |
 | 3 | [OpenSRE 0.1](opensre/README.md) | observability-stack, 3 scenarios | 0/3 | — | Defer |
 | 4 | [HolmesGPT v0.45](holmes-gpt-sre-gym/README.md) | observability-stack, 3 scenarios | 2/3 (+1 partial) | — | Pilot |
-| 5 | [HolmesGPT v0.45 on SREGym-Lite](holmes-gpt-sregym-lite/README.md) | SREGym-Lite, 3/17 problems run | 0/3 (0%) | 0/100 | In progress |
+| 5 | [HolmesGPT v0.45 on SREGym-Lite](holmes-gpt-sregym-lite/README.md) | SREGym-Lite, 4/17 problems run | 0/4 (0%) | 14/100 | In progress |
 
-_Last updated 2026-10-21 12:35._
+_Last updated 2026-10-21 12:40._
 <!-- SCORECARD:END -->
 
 ## Test environments
