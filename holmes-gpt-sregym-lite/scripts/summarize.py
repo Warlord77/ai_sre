@@ -45,6 +45,35 @@ def latest_rows(sregym: Path, run: str | None) -> dict[str, tuple[Path, dict]]:
     return rows
 
 
+# Earlier ai_sre experiments: hand-picked scenarios, outcomes taken from their READMEs.
+PRIOR_EXPERIMENTS = [
+    ("1", "[HolmesGPT v0.30](holmes-gpt/README.md)", "iximiuz Labs, 3 scenarios", "2/3 (+1 partial)", "—", "Defer"),
+    ("2", "[K8sGPT 0.4.33](k8sgpt/README.md)", "iximiuz Labs, 2 scenarios", "0/2 (CLI)", "—", "Reject"),
+    ("3", "[OpenSRE 0.1](opensre/README.md)", "observability-stack, 3 scenarios", "0/3", "—", "Defer"),
+    ("4", "[HolmesGPT v0.45](holmes-gpt-sre-gym/README.md)", "observability-stack, 3 scenarios", "2/3 (+1 partial)", "—", "Pilot"),
+]
+
+
+def scorecard(rows: dict, run: str | None) -> dict:
+    graded = [r for _, r in rows.values() if r.get("Diagnosis.success") in ("True", "False")]
+    scores = [float(r["Diagnosis.accuracy"]) for r in graded if r.get("Diagnosis.accuracy")]
+    times = [float(r["phase.stage:diagnosis.duration_s"]) for r in graded if r.get("phase.stage:diagnosis.duration_s")]
+    return {
+        "run": len(rows),
+        "passed": sum(r["Diagnosis.success"] == "True" for r in graded),
+        "failed": sum(r["Diagnosis.success"] == "False" for r in graded),
+        "not_graded": len(rows) - len(graded),
+        "avg_score": sum(scores) / len(scores) if scores else None,
+        "avg_min": sum(times) / len(times) / 60 if times else None,
+    }
+
+
+def replace_block(path: Path, name: str, body: str) -> None:
+    text = path.read_text()
+    block = f"<!-- {name}:START -->\n{body}\n<!-- {name}:END -->"
+    path.write_text(re.sub(rf"<!-- {name}:START -->.*?<!-- {name}:END -->", lambda _: block, text, flags=re.S))
+
+
 def status(row: dict) -> str:
     if row.get("deploy_failed") == "True":
         return "deploy failed"
@@ -61,6 +90,7 @@ def main():
     p.add_argument("--out", type=Path, default=Path("results"))
     p.add_argument("--run", help="SREGym results/<run> directory name (default: latest result per problem)")
     p.add_argument("--readme", type=Path, help="README whose RESULTS block is replaced with the summary")
+    p.add_argument("--root-readme", type=Path, help="ai_sre README whose SCORECARD block covers all experiments")
     args = p.parse_args()
 
     raw = args.out / "raw"
@@ -86,7 +116,7 @@ def main():
             evaluated += 1
             passed += st == "✅ pass"
         notes = (row.get("Diagnosis.reasoning") or row.get("Diagnosis.judgment") or "").replace("\n", " ").replace("|", "/")
-        score = row.get("Diagnosis.composite_score") or row.get("Diagnosis.accuracy") or ""
+        score = row.get("Diagnosis.accuracy") or ""
         secs = row.get("phase.stage:diagnosis.duration_s") or ""
         took = f"{float(secs) / 60:.1f} min" if secs else ""
         table.append(f"| {i} | `{pid}` | {st} | {score} | {took} | {notes[:220]} |")
@@ -109,10 +139,33 @@ def main():
     )
     summary = header + "\n\n" + "\n".join(table)
     (args.out / "summary.md").write_text(summary + "\n")
+    sc = scorecard(rows, args.run)
+    pct = f"{100 * sc['passed'] / (sc['passed'] + sc['failed']):.0f}%" if sc["passed"] + sc["failed"] else "—"
+    avg_score = f"{sc['avg_score']:.0f}/100" if sc["avg_score"] is not None else "—"
+    avg_min = f"{sc['avg_min']:.1f} min" if sc["avg_min"] is not None else "—"
+    card = "\n".join([
+        "| Problems run | ✅ Passed | ❌ Failed | ⚠️ Not graded | Pass rate | Avg judge score | Avg investigation |",
+        "|---:|---:|---:|---:|---:|---:|---:|",
+        f"| {sc['run']}/{len(LITE)} | {sc['passed']} | {sc['failed']} | {sc['not_graded']} | {pct} | {avg_score} | {avg_min} |",
+    ])
     if args.readme:
-        text = args.readme.read_text()
-        block = f"<!-- RESULTS:START -->\n{summary}\n<!-- RESULTS:END -->"
-        args.readme.write_text(re.sub(r"<!-- RESULTS:START -->.*?<!-- RESULTS:END -->", lambda _: block, text, flags=re.S))
+        replace_block(args.readme, "SCORECARD", f"### Scorecard\n\n{card}")
+        replace_block(args.readme, "RESULTS", summary)
+    if args.root_readme:
+        lines = [
+            "Updated automatically after every SREGym-Lite problem. Experiments 1–4 are hand-picked scenarios;",
+            "experiment 5 is graded by SREGym's LLM judge against the known root cause.",
+            "",
+            "| # | Experiment | Test set | Correct RCA | Avg judge score | Verdict |",
+            "|---|------------|----------|-------------|----------------:|---------|",
+            *[f"| {' | '.join(r)} |" for r in PRIOR_EXPERIMENTS],
+            f"| 5 | [HolmesGPT v0.45 on SREGym-Lite](holmes-gpt-sregym-lite/README.md) | SREGym-Lite, "
+            f"{sc['run']}/{len(LITE)} problems run | {sc['passed']}/{sc['passed'] + sc['failed']} ({pct}) | {avg_score} | "
+            f"{'In progress' if sc['run'] < len(LITE) else 'See README'} |",
+            "",
+            f"_Last updated {datetime.now():%Y-%m-%d %H:%M}._",
+        ]
+        replace_block(args.root_readme, "SCORECARD", "\n".join(lines))
     print(summary)
 
 

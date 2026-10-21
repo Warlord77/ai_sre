@@ -18,7 +18,25 @@ Each experiment is an independent silo. HolmesGPT and K8sGPT were run against [i
 | 2 | `k8sgpt/` | 0.4.33 | 2026-05-18 | iximiuz Labs (K8s challenge) | [README](k8sgpt/README.md) |
 | 3 | `opensre/` | 0.1 | 2026-05-24 | Local `observability-stack` sandbox | [README](opensre/README.md) |
 | 4 | `holmes-gpt-sre-gym/` | 0.45.0 | 2026-10-20 | Local `observability-stack` sandbox (kind + Prometheus + Loki + Tempo) | [README](holmes-gpt-sre-gym/README.md) |
+| 5 | `holmes-gpt-sregym-lite/` | 0.45.0 | 2026-10-21 | [SREGym-Lite](https://github.com/SREGym/SREGym/blob/main/docs/SREGym-Lite.md) benchmark, 17 graded problems (kind, `svelte` profile, 8 GB) | [README](holmes-gpt-sregym-lite/README.md) |
 
+
+## Scorecard
+
+<!-- SCORECARD:START -->
+Updated automatically after every SREGym-Lite problem. Experiments 1–4 are hand-picked scenarios;
+experiment 5 is graded by SREGym's LLM judge against the known root cause.
+
+| # | Experiment | Test set | Correct RCA | Avg judge score | Verdict |
+|---|------------|----------|-------------|----------------:|---------|
+| 1 | [HolmesGPT v0.30](holmes-gpt/README.md) | iximiuz Labs, 3 scenarios | 2/3 (+1 partial) | — | Defer |
+| 2 | [K8sGPT 0.4.33](k8sgpt/README.md) | iximiuz Labs, 2 scenarios | 0/2 (CLI) | — | Reject |
+| 3 | [OpenSRE 0.1](opensre/README.md) | observability-stack, 3 scenarios | 0/3 | — | Defer |
+| 4 | [HolmesGPT v0.45](holmes-gpt-sre-gym/README.md) | observability-stack, 3 scenarios | 2/3 (+1 partial) | — | Pilot |
+| 5 | [HolmesGPT v0.45 on SREGym-Lite](holmes-gpt-sregym-lite/README.md) | SREGym-Lite, 1/17 problems run | 0/1 (0%) | 0/100 | In progress |
+
+_Last updated 2026-10-21 12:08._
+<!-- SCORECARD:END -->
 
 ## Test environments
 

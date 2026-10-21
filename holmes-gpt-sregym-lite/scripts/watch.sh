@@ -11,12 +11,12 @@ HERE=$(cd "$(dirname "$0")/.." && pwd)
 echo "watching $SREGYM/results/$RUN"
 
 update() {
-  python3 "$HERE/scripts/summarize.py" --sregym "$SREGYM" --run "$RUN" --out "$HERE/results" --readme "$HERE/README.md" >/dev/null
-  git -C "$HERE" add README.md Makefile .gitignore .env.example client scripts results
-  if ! git -C "$HERE" diff --cached --quiet -- .; then
+  python3 "$HERE/scripts/summarize.py" --sregym "$SREGYM" --run "$RUN" --out "$HERE/results" --readme "$HERE/README.md" --root-readme "$HERE/../README.md" >/dev/null
+  git -C "$HERE" add README.md Makefile .gitignore .env.example client scripts results ../README.md
+  if ! git -C "$HERE" diff --cached --quiet -- . ../README.md; then
     latest=$(ls -t "$SREGYM/results/$RUN/holmesgpt" 2>/dev/null | head -1)
     git -C "$HERE" commit -q -m "holmesgpt sregym-lite: results after $1/17 problems${latest:+ ($latest)}" \
-      -m "Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>" -- .
+      -m "Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>" -- . ../README.md
   fi
   echo "$(date '+%H:%M') updated README ($1 problems done)"
 }

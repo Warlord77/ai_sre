@@ -103,8 +103,16 @@ SREGym-Lite asks for 16 GB. To fit a 16 GB Mac with 8 GB given to Docker:
 
 ## 4. Results
 
+<!-- SCORECARD:START -->
+### Scorecard
+
+| Problems run | ✅ Passed | ❌ Failed | ⚠️ Not graded | Pass rate | Avg judge score | Avg investigation |
+|---:|---:|---:|---:|---:|---:|---:|
+| 1/17 | 0 | 1 | 0 | 0% | 0/100 | 2.8 min |
+<!-- SCORECARD:END -->
+
 <!-- RESULTS:START -->
-**Diagnosis pass rate: 0/1 evaluated** · 1/17 problems run · run `1021_1159` · updated 2026-10-21 12:07
+**Diagnosis pass rate: 0/1 evaluated** · 1/17 problems run · run `1021_1159` · updated 2026-10-21 12:08
 
 | # | Problem | Diagnosis | Score | Investigation | Judge notes |
 |---|---------|-----------|------:|--------------:|-------------|
