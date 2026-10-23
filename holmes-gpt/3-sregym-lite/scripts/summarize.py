@@ -54,6 +54,11 @@ PRIOR_EXPERIMENTS = [
     ("4", "[HolmesGPT v0.45](holmes-gpt/2-sre-gym-sandbox/README.md)", "observability-stack, 3 scenarios", "2/3 (+1 partial)", "—", "Pilot"),
 ]
 
+# Later experiments, kept by hand from their READMEs so this block doesn't drop them.
+LATER_EXPERIMENTS = [
+    ("6", "[HolmesGPT v0.45 + gpt-oss-120b (VM)](holmes-gpt/vm-test/README.md)", "SREGym-Lite `full`, 8/17 problems run", "0/6 (0%)", "8/100", "In progress"),
+]
+
 
 def scorecard(rows: dict, run: str | None) -> dict:
     graded = [r for _, r in rows.values() if r.get("Diagnosis.success") in ("True", "False")]
@@ -172,7 +177,7 @@ def main():
     if args.root_readme:
         lines = [
             "Updated automatically after every SREGym-Lite problem. Experiments 1–4 are hand-picked scenarios;",
-            "experiment 5 is graded by SREGym's LLM judge against the known root cause.",
+            "experiments 5 and 6 are graded by SREGym's LLM judge against the known root cause.",
             "",
             "| # | Experiment | Test set | Correct RCA | Avg judge score | Verdict |",
             "|---|------------|----------|-------------|----------------:|---------|",
@@ -180,6 +185,7 @@ def main():
             f"| 5 | [HolmesGPT v0.45 on SREGym-Lite](holmes-gpt/3-sregym-lite/README.md) | SREGym-Lite, "
             f"{sc['run']}/{len(LITE)} problems run | {sc['passed']}/{sc['passed'] + sc['failed']} ({pct}) | {avg_score} | "
             f"{'In progress' if sc['run'] < len(LITE) else 'See README'} |",
+            *[f"| {' | '.join(r)} |" for r in LATER_EXPERIMENTS],
             "",
             f"_Last updated {datetime.now():%Y-%m-%d %H:%M}._",
         ]
