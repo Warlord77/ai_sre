@@ -40,26 +40,50 @@ Only the **diagnosis** stage is run: HolmesGPT is read-only, so mitigation would
 ### Environment and testing
 
 The VM has no desktop, so these are terminal recordings
-([`scripts/record.sh`](scripts/record.sh), asciinema): each image is the last frame. The full sessions
-are in [`recordings/`](recordings/) as `.cast` files (replay with `asciinema play recordings/<name>.cast`)
-and animated `.gif` files.
+([`scripts/record.sh`](scripts/record.sh), asciinema): each screenshot is the last frame, and each
+recording is the whole session as a GIF. The `.cast` files in [`recordings/`](recordings/) replay at full
+speed (`asciinema play recordings/<name>.cast`).
 
 **Cluster:** SREGym's upstream kind setup, 4 nodes at 4 GiB each, Calico on every node
 
 ![kind cluster](docs/img/cluster.png)
 
+<details><summary>Recording (GIF)</summary>
+
+![kind cluster recording](recordings/cluster.gif)
+
+</details>
+
 **Preflight:** everything a benchmark run needs
 
 ![make preflight](docs/img/preflight.png)
+
+<details><summary>Recording (GIF)</summary>
+
+![make preflight recording](recordings/preflight.gif)
+
+</details>
 
 **Model check:** GPUStack through the SSH tunnel, `gpt-oss-120b` returns a parsed tool call
 
 ![make check-model](docs/img/check-model.png)
 
+<details><summary>Recording (GIF)</summary>
+
+![make check-model recording](recordings/check-model.gif)
+
+</details>
+
 **HolmesGPT smoke test:** `holmes ask` against the cluster. The first tool call failed with "out of
 memory" on a ~30K-character output; HolmesGPT switched to a narrower `jq` query and answered correctly.
 
 ![make smoke](docs/img/smoke.png)
+
+<details><summary>Recording (GIF)</summary>
+
+![make smoke recording](recordings/smoke.gif)
+
+</details>
 
 ---
 
@@ -72,7 +96,7 @@ Fresh run of all 17 problems, started 2026-10-23. An earlier partial attempt is 
 
 | Problems run | ✅ Passed | ❌ Failed | ⚠️ Not graded | Pass rate | Avg judge score | Avg investigation |
 |---:|---:|---:|---:|---:|---:|---:|
-| 7/17 | 0 | 5 | 2 | 0% | 9/100 | 4.0 min |
+| 8/17 | 0 | 6 | 2 | 0% | 8/100 | 4.9 min |
 
 ### Per problem
 
@@ -85,7 +109,7 @@ Fresh run of all 17 problems, started 2026-10-23. An earlier partial attempt is 
 | 5 | `mutating_webhook_resource_limits_social_network` | ⚠️ invalid: model stalled (run note 4); rerun queued | | | Attempt 1 timed out after 17 tool calls; attempts 2–3 got `InternalServerError`; [logs](results/mutating_webhook_resource_limits_social_network--invalid-model-stall/) |
 | 6 | `finalizer_deadlock_controller_hotel_reservation` | ❌ fail | 0 | 3.6 min | Verdict False (composite 0.00). D1 0.00, D2 0.00, D3 0.00. 15 tool calls, 16 LLM calls, 710K tokens; 0 observability calls |
 | 7 | `kafka_poison_pill_hol_block` | ❌ fail | 0 | 3.8 min | Verdict False (composite 0.00). D1 0.00, D2 0.00, D3 0.00. 11 tool calls, 12 LLM calls, 452K tokens; 0 observability calls |
-| 8 | `internal_traffic_policy_local_astronomy_shop` | pending | | | |
+| 8 | `internal_traffic_policy_local_astronomy_shop` | ❌ fail | 0 | 9.6 min | Verdict False (composite 0.00). D1 0.00, D2 0.00, D3 0.00. 27 tool calls, 28 LLM calls, 1.57M tokens; 1 Prometheus (alerts). Needed a second attempt (attempt 1 ended `rc=1`) |
 | 9 | `service_dns_resolution_failure_social_network` | pending | | | |
 | 10 | `service_wrong_pod_selection_hotel_reservation` | pending | | | |
 | 11 | `namespace_memory_limit` | pending | | | |
@@ -109,70 +133,109 @@ Ground truth, what HolmesGPT concluded, and how it got there. Added after each p
 | 4 | `env_variable_shadowing_astronomy_shop` | `frontend-proxy` defines `FRONTEND_HOST` twice; the later `localhost` shadows `frontend`, so it routes to the wrong upstream | `frontend-proxy` is OOMKilled at its 65Mi limit (restartCount 4, exit 137) and crash-loops, so the UI can't reach any service; raise its memory to 128Mi/256Mi | **Right component, wrong mechanism** (same answer as attempt 1, now 45/100). The OOMs are real and follow the fault: with `FRONTEND_HOST=localhost` the proxy most likely routes to itself until Envoy runs out of memory. HolmesGPT read `kubectl describe`, which lists the container's env and shows `FRONTEND_HOST` twice, but it stopped at the termination reason and the 65Mi limit. Prometheus' `KubePodNotReady` alert seemed to confirm it. A short, focused investigation (2.6 min) that committed to the first concrete error. |
 | 6 | `finalizer_deadlock_controller_hotel_reservation` | A ConfigMap stuck Terminating behind a finalizer: ClusterRole `configmap-cleanup-controller` was made read-only, so the cleanup controller logs 403s and can't remove the finalizer | `reservation` crashed at startup (`panic: no reachable servers`, restartCount 2) because `mongodb-reservation` became ready 4 seconds after it; add an init container or retry logic | **Back on the startup decoy.** The `reservation` restarts at 10:06:21 come from the deploy itself, about 4 seconds before `mongodb-reservation` was ready, and had cleared before the fault was injected. HolmesGPT spent all 15 tool calls on `reservation` and its database (pods, logs, events, endpoints, probes) and never looked at ConfigMaps, finalizers, ClusterRoles or the controller's 403s. It made no Prometheus, Loki or Jaeger calls; the controller's 403s would have shown in Loki. Experiment 3 (Sonnet 4.5) also scored 0 here, inventing a QPS limit. |
 | 7 | `kafka_poison_pill_hol_block` | Poison-pill record on topic `orders-fulfillment`: the consumer group can't deserialize it, never commits, and lag grows while every pod stays Ready | `grafana` restarts because it binds `0.0.0.0:8080`, which is "already in use by other services" (`checkout`, `cart`, ...); move Grafana to port 3000 | **Deploy noise plus a fabricated mechanism.** Grafana's restarts (restartCount 3) date from the slow astronomy-shop deploy, when it waited on OpenSearch (run note 1), not from the fault. HolmesGPT then explained them with a port conflict against other services' port 8080, which can't happen: each pod has its own network namespace. It never looked at Kafka, the `orders-validator` consumer's logs, or consumer lag (11 tool calls, 0 Prometheus/Loki). **This is the one problem Experiment 3 passed** (Sonnet 4.5, 78/100, from the consumer's parse error at offset 20), so on the same problem the model, not the harness, made the difference. |
+| 8 | `internal_traffic_policy_local_astronomy_shop` | `recommendation` Service set to `internalTrafficPolicy: Local`, with its caller and backend pinned to different worker nodes, so in-cluster calls from the caller's node find no local endpoint | The OpenTelemetry Collector's `kubeletstatsreceiver` can't scrape kubelet metrics: the kubelet certificates have no IP SANs (`tls: failed to verify certificate … does not contain any IP SANs`); regenerate them or set `insecure_skip_verify` | **Closest yet, then pulled away by a kind quirk.** HolmesGPT was on the right path: Prometheus' `ServiceEndpointDown` alert for `recommendation`, then `recommendation`'s endpoints, pod IPs and host IPs (the node placement that is the heart of the fault). It never read the Service's spec (`internalTrafficPolicy`), and settled on the collector's TLS errors instead. Those are real but present on every kind cluster (kind's self-signed kubelet certs have no IP SANs), so they are environment noise unrelated to the fault. Experiment 3 couldn't run this problem (single node). |
 
 ### Execution
 
-Each problem's logs are in `results/<problem>/`: `sregym.log` (conductor), `holmes.log` (HolmesGPT
-transcript), `holmes.json` (every tool call, tokens, answer), `judge.csv` (verdict, checklist, timings),
-`run.log` (`make run-one` output) and `answer.md`. Every run is recorded: a GIF of the whole run at 20×
-speed and an asciinema cast for full-speed replay (`asciinema play recordings/run-<problem>.cast`).
-Below: HolmesGPT's root cause with the judge's verdict, and the end of each run.
+Each graded problem shows HolmesGPT's root cause with the judge's verdict, a GIF of the whole run (20×
+speed: deploy, fault injection, HolmesGPT's investigation, judging, cleanup) and the run's last frame.
+Logs are in `results/<problem>/`: `sregym.log` (conductor), `holmes.log` (HolmesGPT transcript),
+`holmes.json` (every tool call, tokens, answer), `judge.csv` (verdict, checklist, timings), `run.log`
+(`make run-one` output) and `answer.md`. The asciinema casts replay a run at full speed
+(`asciinema play recordings/run-<problem>.cast`).
 
-**1. `cronjob_sidecar_blocks_completion_hotel_reservation`**: ❌ fail · score 0/100 · [logs](results/cronjob_sidecar_blocks_completion_hotel_reservation/) ·
-▶ [run video (GIF, 20× speed)](recordings/run-cronjob_sidecar_blocks_completion_hotel_reservation.gif) · [asciinema cast](recordings/run-cronjob_sidecar_blocks_completion_hotel_reservation.cast)
+**1. `cronjob_sidecar_blocks_completion_hotel_reservation`**: ❌ fail · score 0/100 · [logs](results/cronjob_sidecar_blocks_completion_hotel_reservation/) · [asciinema cast](recordings/run-cronjob_sidecar_blocks_completion_hotel_reservation.cast)
 
 ![problem 1: HolmesGPT answer and judge verdict](docs/img/answer-cronjob_sidecar_blocks_completion_hotel_reservation.png)
 
-<details><summary>End of the run (last frame of the recording)</summary>
+*Run video (20× speed):*
+
+![problem 1: run video](recordings/run-cronjob_sidecar_blocks_completion_hotel_reservation.gif)
+
+<details><summary>End of the run (last frame)</summary>
 
 ![problem 1: end of run](docs/img/run-cronjob_sidecar_blocks_completion_hotel_reservation.png)
 
 </details>
 
-**2. `edge_request_filter_cpu_saturation`**: ❌ fail · score 0/100 · [logs](results/edge_request_filter_cpu_saturation/) ·
-▶ [run video (GIF, 20× speed)](recordings/run-edge_request_filter_cpu_saturation.gif) · [asciinema cast](recordings/run-edge_request_filter_cpu_saturation.cast)
+**2. `edge_request_filter_cpu_saturation`**: ❌ fail · score 0/100 · [logs](results/edge_request_filter_cpu_saturation/) · [asciinema cast](recordings/run-edge_request_filter_cpu_saturation.cast)
 
 ![problem 2: HolmesGPT answer and judge verdict](docs/img/answer-edge_request_filter_cpu_saturation.png)
 
-<details><summary>End of the run (last frame of the recording)</summary>
+*Run video (20× speed):*
+
+![problem 2: run video](recordings/run-edge_request_filter_cpu_saturation.gif)
+
+<details><summary>End of the run (last frame)</summary>
 
 ![problem 2: end of run](docs/img/run-edge_request_filter_cpu_saturation.png)
 
 </details>
 
-**4. `env_variable_shadowing_astronomy_shop`**: ❌ fail · score 45/100 · [logs](results/env_variable_shadowing_astronomy_shop/) ·
-▶ [run video (GIF, 20× speed)](recordings/run-env_variable_shadowing_astronomy_shop.gif) · [asciinema cast](recordings/run-env_variable_shadowing_astronomy_shop.cast)
+**3. `network_policy_block`**: ⚠️ invalid: model stalled (run note 3); rerun queued · [logs](results/network_policy_block--invalid-model-stall/)
+
+![problem 3: why the run is invalid](docs/img/invalid-network_policy_block.png)
+
+**4. `env_variable_shadowing_astronomy_shop`**: ❌ fail · score 45/100 · [logs](results/env_variable_shadowing_astronomy_shop/) · [asciinema cast](recordings/run-env_variable_shadowing_astronomy_shop.cast)
 
 ![problem 4: HolmesGPT answer and judge verdict](docs/img/answer-env_variable_shadowing_astronomy_shop.png)
 
-<details><summary>End of the run (last frame of the recording)</summary>
+*Run video (20× speed):*
+
+![problem 4: run video](recordings/run-env_variable_shadowing_astronomy_shop.gif)
+
+<details><summary>End of the run (last frame)</summary>
 
 ![problem 4: end of run](docs/img/run-env_variable_shadowing_astronomy_shop.png)
 
 </details>
 
-    **6. `finalizer_deadlock_controller_hotel_reservation`**: ❌ fail · score 0/100 · [logs](results/finalizer_deadlock_controller_hotel_reservation/) ·
-    ▶ [run video (GIF, 20× speed)](recordings/run-finalizer_deadlock_controller_hotel_reservation.gif) · [asciinema cast](recordings/run-finalizer_deadlock_controller_hotel_reservation.cast)
+**5. `mutating_webhook_resource_limits_social_network`**: ⚠️ invalid: model stalled (run note 4); rerun queued · [logs](results/mutating_webhook_resource_limits_social_network--invalid-model-stall/)
 
-    ![problem 6: HolmesGPT answer and judge verdict](docs/img/answer-finalizer_deadlock_controller_hotel_reservation.png)
+![problem 5: why the run is invalid](docs/img/invalid-mutating_webhook_resource_limits_social_network.png)
 
-    <details><summary>End of the run (last frame of the recording)</summary>
+**6. `finalizer_deadlock_controller_hotel_reservation`**: ❌ fail · score 0/100 · [logs](results/finalizer_deadlock_controller_hotel_reservation/) · [asciinema cast](recordings/run-finalizer_deadlock_controller_hotel_reservation.cast)
 
-    ![problem 6: end of run](docs/img/run-finalizer_deadlock_controller_hotel_reservation.png)
+![problem 6: HolmesGPT answer and judge verdict](docs/img/answer-finalizer_deadlock_controller_hotel_reservation.png)
 
-    </details>
-    
-    **7. `kafka_poison_pill_hol_block`**: ❌ fail · score 0/100 · [logs](results/kafka_poison_pill_hol_block/) ·
-    ▶ [run video (GIF, 20× speed)](recordings/run-kafka_poison_pill_hol_block.gif) · [asciinema cast](recordings/run-kafka_poison_pill_hol_block.cast)
+*Run video (20× speed):*
 
-    ![problem 7: HolmesGPT answer and judge verdict](docs/img/answer-kafka_poison_pill_hol_block.png)
+![problem 6: run video](recordings/run-finalizer_deadlock_controller_hotel_reservation.gif)
 
-    <details><summary>End of the run (last frame of the recording)</summary>
+<details><summary>End of the run (last frame)</summary>
 
-    ![problem 7: end of run](docs/img/run-kafka_poison_pill_hol_block.png)
+![problem 6: end of run](docs/img/run-finalizer_deadlock_controller_hotel_reservation.png)
 
-    </details>
-    
+</details>
+
+**7. `kafka_poison_pill_hol_block`**: ❌ fail · score 0/100 · [logs](results/kafka_poison_pill_hol_block/) · [asciinema cast](recordings/run-kafka_poison_pill_hol_block.cast)
+
+![problem 7: HolmesGPT answer and judge verdict](docs/img/answer-kafka_poison_pill_hol_block.png)
+
+*Run video (20× speed):*
+
+![problem 7: run video](recordings/run-kafka_poison_pill_hol_block.gif)
+
+<details><summary>End of the run (last frame)</summary>
+
+![problem 7: end of run](docs/img/run-kafka_poison_pill_hol_block.png)
+
+</details>
+
+**8. `internal_traffic_policy_local_astronomy_shop`**: ❌ fail · score 0/100 · [logs](results/internal_traffic_policy_local_astronomy_shop/) · [asciinema cast](recordings/run-internal_traffic_policy_local_astronomy_shop.cast)
+
+![problem 8: HolmesGPT answer and judge verdict](docs/img/answer-internal_traffic_policy_local_astronomy_shop.png)
+
+*Run video (20× speed):*
+
+![problem 8: run video](recordings/run-internal_traffic_policy_local_astronomy_shop.gif)
+
+<details><summary>End of the run (last frame)</summary>
+
+![problem 8: end of run](docs/img/run-internal_traffic_policy_local_astronomy_shop.png)
+
+</details>
+
 ---
 
 ## 5. Run notes

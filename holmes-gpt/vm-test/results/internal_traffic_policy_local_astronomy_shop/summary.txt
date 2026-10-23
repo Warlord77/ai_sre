@@ -1,0 +1,19 @@
+$ problem: internal_traffic_policy_local_astronomy_shop
+$ holmesgpt: 27 tool calls, 28 LLM calls, 1,570,677 tokens, 9.6 min
+
+Root cause:** kubelet TLS certificates lack the node IP in the SAN field, causing TLS verification to fail for the collector’s HTTPS …
+* **Evidence:** Repeated error log lines (see collector logs) showing `tls: failed to verify certificate … does not contain any IP …
+
+**Remediation**
+
+1. **Regenerate kubelet certificates** to include the node’s IP address as an IP SAN (or use a SAN‑compatible wildcard DNS name).
+2. **Alternatively**, adjust the OpenTelemetry Collector configuration for `kubeletstatsreceiver` to skip TLS verification …
+3. After fixing the certificate or collector config, verify that the collector logs no longer contain the TLS error and that the …
+
+All other application pods and services are healthy; the incident is isolated to the collector’s inability to scrape kubelet metrics …
+
+$ judge: success=False  score=0.0/100
+Verdict: False (composite=0.00). D1 Fault Localization: 0.00 | D2 Fault Characterization: 0.00 | D3 Scope Precision: 0.00. Weakest
+dimension: Fault Localization (0.00). Checklist details: [{"id": "D1-Q1", "answer": "No", "evidence": "Diagnosis names
+'kubeletstatsreceiver in the OpenTelemetry Collector agents' as the faulty component.", "confidence": "High"}, {"id": "D1-Q2",
+"answer": "No", "eviden

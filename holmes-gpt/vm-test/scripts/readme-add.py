@@ -1,4 +1,5 @@
-"""Fill a finished problem into README.md: per-problem row, observation row, execution block, scorecard.
+"""Fill a finished problem into README.md: per-problem row, observation row, scorecard; then rebuild
+the Execution section (scripts/readme-exec.py).
 Usage: python3 scripts/readme-add.py <problem> <status> "<notes>" "<ground truth>" "<concluded>" "<why>"
        python3 scripts/readme-add.py --scorecard   (recompute the scorecard only)
 """
@@ -32,22 +33,6 @@ if not SCORECARD_ONLY:
     rows.sort(key=lambda r: int(r.split("|")[1]))
     s = s[:i] + "\n".join(rows) + s[j:]
 
-    # Execution block, before the run notes
-    block = f"""
-    **{num}. `{p}`**: {status} · score {score:.0f}/100 · [logs](results/{p}/) ·
-    ▶ [run video (GIF, 20× speed)](recordings/run-{p}.gif) · [asciinema cast](recordings/run-{p}.cast)
-
-    ![problem {num}: HolmesGPT answer and judge verdict](docs/img/answer-{p}.png)
-
-    <details><summary>End of the run (last frame of the recording)</summary>
-
-    ![problem {num}: end of run](docs/img/run-{p}.png)
-
-    </details>
-    """
-    s = re.sub(rf"\n\*\*{num}\. `{re.escape(p)}`\*\*:.*?</details>\n", "\n", s, flags=re.S)
-    k = s.index("\n---\n\n## 5. Run notes")
-    s = s[:k] + block + s[k:]
 
 # Scorecard from the per-problem table
 graded, passed, failed, invalid, scores, times = 0, 0, 0, 0, [], []
@@ -66,3 +51,6 @@ avgt = f"{sum(times) / len(times):.1f} min" if times else "—"
 s = re.sub(r"^\| \d+/17 \| .*$", f"| {run}/17 | {passed} | {failed} | {invalid} | {rate} | {avg} | {avgt} |", s, count=1, flags=re.M)
 readme.write_text(s)
 print(f"README: {'scorecard' if SCORECARD_ONLY else p + ' → ' + status + f', {score:.0f}/100'}; scorecard {run}/17, {passed} passed, avg {avg}")
+
+import subprocess
+subprocess.run([sys.executable, str(here / "scripts/readme-exec.py")], check=True)

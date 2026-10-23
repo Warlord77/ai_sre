@@ -15,3 +15,5 @@
 10:14:18 START kafka_poison_pill_hol_block
 10:40:14 DONE kafka_poison_pill_hol_block exit=0
 10:40:17 START internal_traffic_policy_local_astronomy_shop
+11:08:47 DONE internal_traffic_policy_local_astronomy_shop exit=0
+11:08:51 START service_dns_resolution_failure_social_network

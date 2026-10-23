@@ -1,0 +1,24 @@
+$ problem: mutating_webhook_resource_limits_social_network   (INVALID: the model stopped answering mid-run)
+
+[10/23/26 09:38:23] INFO all.sregym.conductor - [ENV] Injected fault 
+ INFO all.holmesgpt.driver - Running HolmesGPT (docker run ... holmes ask)
+[10/23/26 09:53:23] WARNING all.holmesgpt.driver - HolmesGPT attempt 1/3 produced no result (rc=124); retrying 
+ INFO all.holmesgpt.driver - Running HolmesGPT (docker run ... holmes ask)
+[10/23/26 09:57:50] WARNING all.holmesgpt.driver - HolmesGPT attempt 2/3 produced no result (rc=1); retrying 
+[10/23/26 09:57:51] INFO all.holmesgpt.driver - Running HolmesGPT (docker run ... holmes ask)
+[10/23/26 09:58:36] WARNING all.holmesgpt.driver - HolmesGPT attempt 3/3 produced no result (rc=1); retrying 
+
+$ holmes_mutating_webhook_resource_limits_social_network_20261023_095323.log: 17 tool calls, then:
+         1 timeout
+         1 Retrying request to /chat/completions in 0.490897 seconds                       
+         1 Retrying request to /chat/completions in 0.455901 seconds                       
+$ holmes_mutating_webhook_resource_limits_social_network_20261023_095750.log: 0 tool calls, then:
+         2 ConnectError: [Errno 104] Connection reset by peer
+         1 Retrying request to /chat/completions in 0.835776 seconds                       
+         1 Retrying request to /chat/completions in 0.493654 seconds                       
+$ holmes_mutating_webhook_resource_limits_social_network_20261023_095836.log: 0 tool calls, then:
+         2 ConnectError: [Errno 104] Connection reset by peer
+         1 Retrying request to /chat/completions in 0.878766 seconds                       
+         1 Retrying request to /chat/completions in 0.416122 seconds                       
+
+$ judge: judgment=Error, submission: HolmesGPT failed to produce a diagnosis after retries: OpenAIException - Connect
