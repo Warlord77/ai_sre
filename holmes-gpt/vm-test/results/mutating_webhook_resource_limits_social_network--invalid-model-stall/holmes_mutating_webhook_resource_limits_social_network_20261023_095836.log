@@ -1,0 +1,776 @@
+$ rc=1
+--- stdout ---
+Model 'openai/gpt-oss-120b' has no entry in litellm's cost map and no           
+input/output_cost_per_token configured. Usage event costs for this model will be
+0. Add input_cost_per_token and output_cost_per_token to its model_list.yaml    
+entry to enable cost tracking.                                                  
+Loaded models: ['openai/gpt-oss-120b']                                          
+Loaded prompt from file /work/prompt.txt
+User: You are an SRE investigating an incident in a Kubernetes application.
+
+Application: Social Network
+Namespace(s): social-network
+
+A social network with unidirectional follow relationships, implemented with 
+loosely-coupled microservices, communicating with each other via Thrift RPCs.
+
+Something in this application is currently broken. Investigate using Kubernetes 
+resources,
+events, pod logs, metrics (Prometheus), logs (Loki) and traces (Jaeger).
+
+Work autonomously; there is no human to answer questions.
+
+Finish with a section titled "ROOT CAUSE" stating:
+- the faulty component(s) (exact Kubernetes resource kinds and names)
+- the root cause (what is misconfigured or failing, and why it breaks the 
+application)
+- the evidence you found
+
+Using selected model: openai/gpt-oss-120b                                       
+Couldn't find model openai/gpt-oss-120b in litellm's model list (tried:         
+openai/gpt-oss-120b, gpt-oss-120b), using default 200000 tokens for             
+max_input_tokens. To override, set OVERRIDE_MAX_CONTENT_SIZE environment        
+variable to the correct value for your model.                                   
+Couldn't find model openai/gpt-oss-120b in litellm's model list (tried:         
+openai/gpt-oss-120b, gpt-oss-120b), using 64000 tokens for max_output_tokens. To
+override, set OVERRIDE_MAX_OUTPUT_TOKEN environment variable to the correct     
+value for your model.                                                           
+Model: openai/gpt-oss-120b, 200K context, 64K max response (default, change with
+--model, for all options see https://holmesgpt.dev/ai-providers)                
+Config hash changed for datasource: /work/holmes-config.yaml                    
+Datasource config file(s) changed, refreshing toolsets                          
+Refreshing available datasources (toolsets)                                     
+❌ Toolset inspektor-gadget/node: Environment variable ENABLE_INSPEKTOR_GADGET  
+was not set                                                                     
+❌ Toolset inspektor-gadget/tcpdump: Environment variable                       
+ENABLE_INSPEKTOR_GADGET was not set                                             
+❌ Toolset kubevela/core: `vela version` failed with exit code 127: /bin/sh:    
+vela: not found                                                                 
+❌ Toolset aks/node-health: `az account show` failed with exit code 127:        
+/bin/sh: az: not found                                                          
+❌ Toolset cilium/core: `cilium status` failed with exit code 127: /bin/sh:     
+cilium: not found                                                               
+❌ Toolset hubble/observability: `hubble version` failed with exit code 127:    
+/bin/sh: hubble: not found                                                      
+❌ Toolset docker/core: `docker version` failed with exit code 127: /bin/sh:    
+docker: not found                                                               
+❌ Toolset argocd/core: Environment variable ARGOCD_AUTH_TOKEN was not set      
+❌ Toolset slab: Environment variable SLAB_API_KEY was not set                  
+❌ Toolset openshift/live-metrics: `oc adm top nodes` failed with exit code 127:
+/bin/sh: oc: not found                                                          
+❌ Toolset aks/core: `az account show` failed with exit code 127: /bin/sh: az:  
+not found                                                                       
+✅ Toolset kubernetes/kube-prometheus-stack                                     
+✅ Toolset core_investigation                                                   
+✅ Toolset internet                                                             
+✅ Toolset connectivity_check                                                   
+❌ Toolset openshift/security: `oc version --client` failed with exit code 127: 
+/bin/sh: oc: not found                                                          
+❌ Toolset openshift/core: `oc version --client` failed with exit code 127:     
+/bin/sh: oc: not found                                                          
+❌ Toolset robusta: Integration with Robusta cloud is disabled                  
+❌ Toolset openshift/logs: `oc version --client` failed with exit code 127:     
+/bin/sh: oc: not found                                                          
+❌ Toolset notion: Notion toolset is misconfigured. Authorization header is     
+required.                                                                       
+❌ Toolset opensearch/query_assist: Environment variable OPENSEARCH_URL was not 
+set                                                                             
+✅ Toolset skills                                                               
+✅ Toolset kubernetes/logs                                                      
+✅ Toolset bash                                                                 
+✅ Toolset helm/core                                                            
+✅ Toolset kubernetes/core                                                      
+✅ Toolset sregym-loki                                                          
+✅ Toolset sregym-prometheus                                                    
+✅ Toolset sregym-jaeger                                                        
+✅ Toolset kubernetes/live-metrics                                              
+❌ Toolset crossplane/core: `kubectl api-resources --api-group=pkg.crossplane.io
+--no-headers 2>/dev/null | grep -q providers` failed with exit code 1           
+Toolset statuses are cached to /root/.holmes/toolsets_status.json               
+✅ Toolset kubernetes/kube-prometheus-stack                                     
+✅ Toolset core_investigation                                                   
+✅ Toolset internet                                                             
+✅ Toolset connectivity_check                                                   
+✅ Toolset skills                                                               
+✅ Toolset kubernetes/logs                                                      
+✅ Toolset bash                                                                 
+✅ Toolset kubernetes/core                                                      
+✅ Toolset helm/core                                                            
+✅ Toolset sregym-prometheus                                                    
+✅ Toolset sregym-jaeger                                                        
+✅ Toolset sregym-loki                                                          
+✅ Toolset kubernetes/live-metrics                                              
+Retrying request to /chat/completions in 0.416122 seconds                       
+Retrying request to /chat/completions in 0.878766 seconds                       
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mProvider List: https://docs.litellm.ai/docs/providers[0m
+
+LLM call failed on model=openai/gpt-oss-120b (streaming iteration 1):           
+InternalServerError: litellm.InternalServerError: InternalServerError:          
+OpenAIException - Connection error.                                             
+Traceback (most recent call last):                                              
+  File "/venv/lib/python3.11/site-packages/httpx/_transports/default.py", line  
+101, in map_httpcore_exceptions                                                 
+    yield                                                                       
+  File "/venv/lib/python3.11/site-packages/httpx/_transports/default.py", line  
+250, in handle_request                                                          
+    resp = self._pool.handle_request(req)                                       
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^                                       
+  File "/venv/lib/python3.11/site-packages/httpcore/_sync/connection_pool.py",  
+line 256, in handle_request                                                     
+    raise exc from None                                                         
+  File "/venv/lib/python3.11/site-packages/httpcore/_sync/connection_pool.py",  
+line 236, in handle_request                                                     
+    response = connection.handle_request(                                       
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^                                       
+  File "/venv/lib/python3.11/site-packages/httpcore/_sync/connection.py", line  
+101, in handle_request                                                          
+    raise exc                                                                   
+  File "/venv/lib/python3.11/site-packages/httpcore/_sync/connection.py", line  
+78, in handle_request                                                           
+    stream = self._connect(request)                                             
+             ^^^^^^^^^^^^^^^^^^^^^^                                             
+  File "/venv/lib/python3.11/site-packages/httpcore/_sync/connection.py", line  
+156, in _connect                                                                
+    stream = stream.start_tls(**kwargs)                                         
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^                                         
+  File "/venv/lib/python3.11/site-packages/httpcore/_backends/sync.py", line    
+154, in start_tls                                                               
+    with map_exceptions(exc_map):                                               
+  File "/usr/local/lib/python3.11/contextlib.py", line 158, in __exit__         
+    self.gen.throw(typ, value, traceback)                                       
+  File "/venv/lib/python3.11/site-packages/httpcore/_exceptions.py", line 14, in
+map_exceptions                                                                  
+    raise to_exc(exc) from exc                                                  
+httpcore.ConnectError: [Errno 104] Connection reset by peer                     
+                                                                                
+The above exception was the direct cause of the following exception:            
+                                                                                
+Traceback (most recent call last):                                              
+  File "/venv/lib/python3.11/site-packages/openai/_base_client.py", line 1037,  
+in request                                                                      
+    response = self._send_request(                                              
+               ^^^^^^^^^^^^^^^^^^^                                              
+  File "/venv/lib/python3.11/site-packages/openai/_client.py", line 478, in     
+_send_request                                                                   
+    response = self._send_with_auth_retry(request, stream=stream, **kwargs)     
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^     
+  File "/venv/lib/python3.11/site-packages/openai/_client.py", line 456, in     
+_send_with_auth_retry                                                           
+    response = super()._send_request(request, stream=stream, **kwargs)          
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^          
+  File "/venv/lib/python3.11/site-packages/openai/_base_client.py", line 964, in
+_send_request                                                                   
+    return self._client.send(request, stream=stream, **kwargs)                  
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^                  
+  File "/venv/lib/python3.11/site-packages/httpx/_client.py", line 914, in send 
+    response = self._send_handling_auth(                                        
+               ^^^^^^^^^^^^^^^^^^^^^^^^^                                        
+  File "/venv/lib/python3.11/site-packages/httpx/_client.py", line 942, in      
+_send_handling_auth                                                             
+    response = self._send_handling_redirects(                                   
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^                                   
+  File "/venv/lib/python3.11/site-packages/httpx/_client.py", line 979, in      
+_send_handling_redirects                                                        
+    response = self._send_single_request(request)                               
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^                               
+  File "/venv/lib/python3.11/site-packages/httpx/_client.py", line 1014, in     
+_send_single_request                                                            
+    response = transport.handle_request(request)                                
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^                                
+  File "/venv/lib/python3.11/site-packages/httpx/_transports/default.py", line  
+249, in handle_request                                                          
+    with map_httpcore_exceptions():                                             
+  File "/usr/local/lib/python3.11/contextlib.py", line 158, in __exit__         
+    self.gen.throw(typ, value, traceback)                                       
+  File "/venv/lib/python3.11/site-packages/httpx/_transports/default.py", line  
+118, in map_httpcore_exceptions                                                 
+    raise mapped_exc(message) from exc                                          
+httpx.ConnectError: [Errno 104] Connection reset by peer                        
+                                                                                
+The above exception was the direct cause of the following exception:            
+                                                                                
+Traceback (most recent call last):                                              
+  File "/venv/lib/python3.11/site-packages/litellm/llms/openai/openai.py", line 
+852, in completion                                                              
+    raise e                                                                     
+  File "/venv/lib/python3.11/site-packages/litellm/llms/openai/openai.py", line 
+780, in completion                                                              
+    ) = self.make_sync_openai_chat_completion_request(                          
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^                          
+  File                                                                          
+"/venv/lib/python3.11/site-packages/litellm/litellm_core_utils/logging_utils.py"
+, line 344, in sync_wrapper                                                     
+    result = func(*args, **kwargs)                                              
+             ^^^^^^^^^^^^^^^^^^^^^                                              
+  File "/venv/lib/python3.11/site-packages/litellm/llms/openai/openai.py", line 
+503, in make_sync_openai_chat_completion_request                                
+    raise e                                                                     
+  File "/venv/lib/python3.11/site-packages/litellm/llms/openai/openai.py", line 
+478, in make_sync_openai_chat_completion_request                                
+    raw_response = openai_client.chat.completions.with_raw_response.create(     
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^     
+  File "/venv/lib/python3.11/site-packages/openai/_legacy_response.py", line    
+367, in wrapped                                                                 
+    return cast(LegacyAPIResponse[R], func(*args, **kwargs))                    
+                                      ^^^^^^^^^^^^^^^^^^^^^                     
+  File "/venv/lib/python3.11/site-packages/openai/_utils/_utils.py", line 298,  
+in wrapper                                                                      
+    return func(*args, **kwargs)                                                
+           ^^^^^^^^^^^^^^^^^^^^^                                                
+  File                                                                          
+"/venv/lib/python3.11/site-packages/openai/resources/chat/completions/completion
+s.py", line 1251, in create                                                     
+    return self._post(                                                          
+           ^^^^^^^^^^^                                                          
+  File "/venv/lib/python3.11/site-packages/openai/_base_client.py", line 1332,  
+in post                                                                         
+    return cast(ResponseT, self.request(cast_to, opts, stream=stream,           
+stream_cls=stream_cls))                                                         
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^                                                                    
+  File "/venv/lib/python3.11/site-packages/openai/_base_client.py", line 1072,  
+in request                                                                      
+    raise APIConnectionError(request=request) from err                          
+openai.APIConnectionError: Connection error.                                    
+                                                                                
+During handling of the above exception, another exception occurred:             
+                                                                                
+Traceback (most recent call last):                                              
+  File "/venv/lib/python3.11/site-packages/litellm/main.py", line 2781, in      
+completion                                                                      
+    raise e                                                                     
+  File "/venv/lib/python3.11/site-packages/litellm/main.py", line 2753, in      
+completion                                                                      
+    response = openai_chat_completions.completion(                              
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^                              
+  File "/venv/lib/python3.11/site-packages/litellm/llms/openai/openai.py", line 
+863, in completion                                                              
+    raise OpenAIError(                                                          
+litellm.llms.openai.common_utils.OpenAIError: Connection error.                 
+                                                                                
+During handling of the above exception, another exception occurred:             
+                                                                                
+Traceback (most recent call last):                                              
+  File "/app/holmes/core/tool_calling_llm.py", line 1299, in call_stream        
+    full_response = self.llm.completion(                                        
+                    ^^^^^^^^^^^^^^^^^^^^                                        
+  File "/app/holmes/core/llm.py", line 821, in completion                       
+    result = litellm_to_use.completion(                                         
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^                                         
+  File "/venv/lib/python3.11/site-packages/litellm/utils.py", line 1775, in     
+wrapper                                                                         
+    raise e                                                                     
+  File "/venv/lib/python3.11/site-packages/litellm/utils.py", line 1596, in     
+wrapper                                                                         
+    result = original_function(*args, **kwargs)                                 
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^                                 
+  File "/venv/lib/python3.11/site-packages/litellm/main.py", line 4614, in      
+completion                                                                      
+    raise exception_type(                                                       
+          ^^^^^^^^^^^^^^^                                                       
+  File                                                                          
+"/venv/lib/python3.11/site-packages/litellm/litellm_core_utils/exception_mapping
+_utils.py", line 2473, in exception_type                                        
+    raise e                                                                     
+  File                                                                          
+"/venv/lib/python3.11/site-packages/litellm/litellm_core_utils/exception_mapping
+_utils.py", line 598, in exception_type                                         
+    raise InternalServerError(                                                  
+litellm.exceptions.InternalServerError: litellm.InternalServerError:            
+InternalServerError: OpenAIException - Connection error.                        
+
+--- stderr ---
+╭───────────────────── Traceback (most recent call last) ──────────────────────╮
+│ /venv/lib/python3.11/site-packages/httpx/_transports/default.py:101 in       │
+│ map_httpcore_exceptions                                                      │
+│                                                                              │
+│    98 │   if len(HTTPCORE_EXC_MAP) == 0:                                     │
+│    99 │   │   HTTPCORE_EXC_MAP = _load_httpcore_exceptions()                 │
+│   100 │   try:                                                               │
+│ ❱ 101 │   │   yield                                                          │
+│   102 │   except Exception as exc:                                           │
+│   103 │   │   mapped_exc = None                                              │
+│   104                                                                        │
+│                                                                              │
+│ /venv/lib/python3.11/site-packages/httpx/_transports/default.py:250 in       │
+│ handle_request                                                               │
+│                                                                              │
+│   247 │   │   │   extensions=request.extensions,                             │
+│   248 │   │   )                                                              │
+│   249 │   │   with map_httpcore_exceptions():                                │
+│ ❱ 250 │   │   │   resp = self._pool.handle_request(req)                      │
+│   251 │   │                                                                  │
+│   252 │   │   assert isinstance(resp.stream, typing.Iterable)                │
+│   253                                                                        │
+│                                                                              │
+│ /venv/lib/python3.11/site-packages/httpcore/_sync/connection_pool.py:256 in  │
+│ handle_request                                                               │
+│                                                                              │
+│   253 │   │   │   │   closing = self._assign_requests_to_connections()       │
+│   254 │   │   │                                                              │
+│   255 │   │   │   self._close_connections(closing)                           │
+│ ❱ 256 │   │   │   raise exc from None                                        │
+│   257 │   │                                                                  │
+│   258 │   │   # Return the response. Note that in this case we still have to │
+│   259 │   │   # the point at which the response is closed.                   │
+│                                                                              │
+│ /venv/lib/python3.11/site-packages/httpcore/_sync/connection_pool.py:236 in  │
+│ handle_request                                                               │
+│                                                                              │
+│   233 │   │   │   │                                                          │
+│   234 │   │   │   │   try:                                                   │
+│   235 │   │   │   │   │   # Send the request on the assigned connection.     │
+│ ❱ 236 │   │   │   │   │   response = connection.handle_request(              │
+│   237 │   │   │   │   │   │   pool_request.request                           │
+│   238 │   │   │   │   │   )                                                  │
+│   239 │   │   │   │   except ConnectionNotAvailable:                         │
+│                                                                              │
+│ /venv/lib/python3.11/site-packages/httpcore/_sync/connection.py:101 in       │
+│ handle_request                                                               │
+│                                                                              │
+│    98 │   │   │   │   │   │   )                                              │
+│    99 │   │   except BaseException as exc:                                   │
+│   100 │   │   │   self._connect_failed = True                                │
+│ ❱ 101 │   │   │   raise exc                                                  │
+│   102 │   │                                                                  │
+│   103 │   │   return self._connection.handle_request(request)                │
+│   104                                                                        │
+│                                                                              │
+│ /venv/lib/python3.11/site-packages/httpcore/_sync/connection.py:78 in        │
+│ handle_request                                                               │
+│                                                                              │
+│    75 │   │   try:                                                           │
+│    76 │   │   │   with self._request_lock:                                   │
+│    77 │   │   │   │   if self._connection is None:                           │
+│ ❱  78 │   │   │   │   │   stream = self._connect(request)                    │
+│    79 │   │   │   │   │                                                      │
+│    80 │   │   │   │   │   ssl_object = stream.get_extra_info("ssl_object")   │
+│    81 │   │   │   │   │   http2_negotiated = (                               │
+│                                                                              │
+│ /venv/lib/python3.11/site-packages/httpcore/_sync/connection.py:156 in       │
+│ _connect                                                                     │
+│                                                                              │
+│   153 │   │   │   │   │   │   "timeout": timeout,                            │
+│   154 │   │   │   │   │   }                                                  │
+│   155 │   │   │   │   │   with Trace("start_tls", logger, request, kwargs) a │
+│ ❱ 156 │   │   │   │   │   │   stream = stream.start_tls(**kwargs)            │
+│   157 │   │   │   │   │   │   trace.return_value = stream                    │
+│   158 │   │   │   │   return stream                                          │
+│   159 │   │   │   except (ConnectError, ConnectTimeout):                     │
+│                                                                              │
+│ /venv/lib/python3.11/site-packages/httpcore/_backends/sync.py:154 in         │
+│ start_tls                                                                    │
+│                                                                              │
+│   151 │   │   │   socket.timeout: ConnectTimeout,                            │
+│   152 │   │   │   OSError: ConnectError,                                     │
+│   153 │   │   }                                                              │
+│ ❱ 154 │   │   with map_exceptions(exc_map):                                  │
+│   155 │   │   │   try:                                                       │
+│   156 │   │   │   │   if isinstance(self._sock, ssl.SSLSocket):  # pragma: n │
+│   157 │   │   │   │   │   # If the underlying socket has already been upgrad │
+│                                                                              │
+│ /usr/local/lib/python3.11/contextlib.py:158 in __exit__                      │
+│                                                                              │
+│   155 │   │   │   │   # tell if we get the same exception back               │
+│   156 │   │   │   │   value = typ()                                          │
+│   157 │   │   │   try:                                                       │
+│ ❱ 158 │   │   │   │   self.gen.throw(typ, value, traceback)                  │
+│   159 │   │   │   except StopIteration as exc:                               │
+│   160 │   │   │   │   # Suppress StopIteration *unless* it's the same except │
+│   161 │   │   │   │   # was passed to throw().  This prevents a StopIteratio │
+│                                                                              │
+│ /venv/lib/python3.11/site-packages/httpcore/_exceptions.py:14 in             │
+│ map_exceptions                                                               │
+│                                                                              │
+│   11 │   except Exception as exc:  # noqa: PIE786                            │
+│   12 │   │   for from_exc, to_exc in map.items():                            │
+│   13 │   │   │   if isinstance(exc, from_exc):                               │
+│ ❱ 14 │   │   │   │   raise to_exc(exc) from exc                              │
+│   15 │   │   raise  # pragma: nocover                                        │
+│   16                                                                         │
+│   17                                                                         │
+╰──────────────────────────────────────────────────────────────────────────────╯
+ConnectError: [Errno 104] Connection reset by peer
+
+The above exception was the direct cause of the following exception:
+
+╭───────────────────── Traceback (most recent call last) ──────────────────────╮
+│ /venv/lib/python3.11/site-packages/openai/_base_client.py:1037 in request    │
+│                                                                              │
+│   1034 │   │   │                                                             │
+│   1035 │   │   │   response = None                                           │
+│   1036 │   │   │   try:                                                      │
+│ ❱ 1037 │   │   │   │   response = self._send_request(                        │
+│   1038 │   │   │   │   │   request,                                          │
+│   1039 │   │   │   │   │   stream=stream or self._should_stream_response_bod │
+│   1040 │   │   │   │   │   **kwargs,                                         │
+│                                                                              │
+│ /venv/lib/python3.11/site-packages/openai/_client.py:478 in _send_request    │
+│                                                                              │
+│    475 │   │   stream: bool,                                                 │
+│    476 │   │   **kwargs: Unpack[HttpxSendArgs],                              │
+│    477 │   ) -> httpx.Response:                                              │
+│ ❱  478 │   │   response = self._send_with_auth_retry(request, stream=stream, │
+│    479 │   │   if self._provider_runtime is not None and self._provider_runt │
+│    480 │   │   │   response = self._provider_runtime.normalize_response(resp │
+│    481 │   │   return response                                               │
+│                                                                              │
+│ /venv/lib/python3.11/site-packages/openai/_client.py:456 in                  │
+│ _send_with_auth_retry                                                        │
+│                                                                              │
+│    453 │   │   │   │   request.headers["Authorization"] = f"Bearer {self._wo │
+│    454 │   │   │   │   used_workload_identity_auth = True                    │
+│    455 │   │                                                                 │
+│ ❱  456 │   │   response = super()._send_request(request, stream=stream, **kw │
+│    457 │   │   if (                                                          │
+│    458 │   │   │   response.status_code == 401                               │
+│    459 │   │   │   and self._workload_identity_auth is not None              │
+│                                                                              │
+│ /venv/lib/python3.11/site-packages/openai/_base_client.py:964 in             │
+│ _send_request                                                                │
+│                                                                              │
+│    961 │   │   stream: bool,                                                 │
+│    962 │   │   **kwargs: Unpack[HttpxSendArgs],                              │
+│    963 │   ) -> httpx.Response:                                              │
+│ ❱  964 │   │   return self._client.send(request, stream=stream, **kwargs)    │
+│    965 │                                                                     │
+│    966 │   @overload                                                         │
+│    967 │   def request(                                                      │
+│                                                                              │
+│ /venv/lib/python3.11/site-packages/httpx/_client.py:914 in send              │
+│                                                                              │
+│    911 │   │                                                                 │
+│    912 │   │   auth = self._build_request_auth(request, auth)                │
+│    913 │   │                                                                 │
+│ ❱  914 │   │   response = self._send_handling_auth(                          │
+│    915 │   │   │   request,                                                  │
+│    916 │   │   │   auth=auth,                                                │
+│    917 │   │   │   follow_redirects=follow_redirects,                        │
+│                                                                              │
+│ /venv/lib/python3.11/site-packages/httpx/_client.py:942 in                   │
+│ _send_handling_auth                                                          │
+│                                                                              │
+│    939 │   │   │   request = next(auth_flow)                                 │
+│    940 │   │   │                                                             │
+│    941 │   │   │   while True:                                               │
+│ ❱  942 │   │   │   │   response = self._send_handling_redirects(             │
+│    943 │   │   │   │   │   request,                                          │
+│    944 │   │   │   │   │   follow_redirects=follow_redirects,                │
+│    945 │   │   │   │   │   history=history,                                  │
+│                                                                              │
+│ /venv/lib/python3.11/site-packages/httpx/_client.py:979 in                   │
+│ _send_handling_redirects                                                     │
+│                                                                              │
+│    976 │   │   │   for hook in self._event_hooks["request"]:                 │
+│    977 │   │   │   │   hook(request)                                         │
+│    978 │   │   │                                                             │
+│ ❱  979 │   │   │   response = self._send_single_request(request)             │
+│    980 │   │   │   try:                                                      │
+│    981 │   │   │   │   for hook in self._event_hooks["response"]:            │
+│    982 │   │   │   │   │   hook(response)                                    │
+│                                                                              │
+│ /venv/lib/python3.11/site-packages/httpx/_client.py:1014 in                  │
+│ _send_single_request                                                         │
+│                                                                              │
+│   1011 │   │   │   )                                                         │
+│   1012 │   │                                                                 │
+│   1013 │   │   with request_context(request=request):                        │
+│ ❱ 1014 │   │   │   response = transport.handle_request(request)              │
+│   1015 │   │                                                                 │
+│   1016 │   │   assert isinstance(response.stream, SyncByteStream)            │
+│   1017                                                                       │
+│                                                                              │
+│ /venv/lib/python3.11/site-packages/httpx/_transports/default.py:249 in       │
+│ handle_request                                                               │
+│                                                                              │
+│   246 │   │   │   content=request.stream,                                    │
+│   247 │   │   │   extensions=request.extensions,                             │
+│   248 │   │   )                                                              │
+│ ❱ 249 │   │   with map_httpcore_exceptions():                                │
+│   250 │   │   │   resp = self._pool.handle_request(req)                      │
+│   251 │   │                                                                  │
+│   252 │   │   assert isinstance(resp.stream, typing.Iterable)                │
+│                                                                              │
+│ /usr/local/lib/python3.11/contextlib.py:158 in __exit__                      │
+│                                                                              │
+│   155 │   │   │   │   # tell if we get the same exception back               │
+│   156 │   │   │   │   value = typ()                                          │
+│   157 │   │   │   try:                                                       │
+│ ❱ 158 │   │   │   │   self.gen.throw(typ, value, traceback)                  │
+│   159 │   │   │   except StopIteration as exc:                               │
+│   160 │   │   │   │   # Suppress StopIteration *unless* it's the same except │
+│   161 │   │   │   │   # was passed to throw().  This prevents a StopIteratio │
+│                                                                              │
+│ /venv/lib/python3.11/site-packages/httpx/_transports/default.py:118 in       │
+│ map_httpcore_exceptions                                                      │
+│                                                                              │
+│   115 │   │   │   raise                                                      │
+│   116 │   │                                                                  │
+│   117 │   │   message = str(exc)                                             │
+│ ❱ 118 │   │   raise mapped_exc(message) from exc                             │
+│   119                                                                        │
+│   120                                                                        │
+│   121 class ResponseStream(SyncByteStream):                                  │
+╰──────────────────────────────────────────────────────────────────────────────╯
+ConnectError: [Errno 104] Connection reset by peer
+
+The above exception was the direct cause of the following exception:
+
+╭───────────────────── Traceback (most recent call last) ──────────────────────╮
+│ /venv/lib/python3.11/site-packages/litellm/llms/openai/openai.py:852 in      │
+│ completion                                                                   │
+│                                                                              │
+│    849 │   │   │   │   │   ):                                                │
+│    850 │   │   │   │   │   │   litellm.remove_index_from_tool_calls(messages │
+│    851 │   │   │   │   │   else:                                             │
+│ ❱  852 │   │   │   │   │   │   raise e                                       │
+│    853 │   │   except OpenAIError as e:                                      │
+│    854 │   │   │   raise e                                                   │
+│    855 │   │   except Exception as e:                                        │
+│                                                                              │
+│ /venv/lib/python3.11/site-packages/litellm/llms/openai/openai.py:780 in      │
+│ completion                                                                   │
+│                                                                              │
+│    777 │   │   │   │   │   │   (                                             │
+│    778 │   │   │   │   │   │   │   headers,                                  │
+│    779 │   │   │   │   │   │   │   response,                                 │
+│ ❱  780 │   │   │   │   │   │   ) = self.make_sync_openai_chat_completion_req │
+│    781 │   │   │   │   │   │   │   openai_client=openai_client,              │
+│    782 │   │   │   │   │   │   │   data=data,                                │
+│    783 │   │   │   │   │   │   │   timeout=timeout,                          │
+│                                                                              │
+│ /venv/lib/python3.11/site-packages/litellm/litellm_core_utils/logging_utils. │
+│ py:344 in sync_wrapper                                                       │
+│                                                                              │
+│   341 │   │   │   parent_otel_span = _get_parent_otel_span_from_logging_obj( │
+│   342 │   │   │                                                              │
+│   343 │   │   │   try:                                                       │
+│ ❱ 344 │   │   │   │   result = func(*args, **kwargs)                         │
+│   345 │   │   │   │   return result                                          │
+│   346 │   │   │   finally:                                                   │
+│   347 │   │   │   │   end_time = datetime.now()                              │
+│                                                                              │
+│ /venv/lib/python3.11/site-packages/litellm/llms/openai/openai.py:503 in      │
+│ make_sync_openai_chat_completion_request                                     │
+│                                                                              │
+│    500 │   │   │   │   │   )                                                 │
+│    501 │   │   │   │   )                                                     │
+│    502 │   │   │   else:                                                     │
+│ ❱  503 │   │   │   │   raise e                                               │
+│    504 │                                                                     │
+│    505 │   async def _call_agentic_completion_hooks_openai(                  │
+│    506 │   │   self,                                                         │
+│                                                                              │
+│ /venv/lib/python3.11/site-packages/litellm/llms/openai/openai.py:478 in      │
+│ make_sync_openai_chat_completion_request                                     │
+│                                                                              │
+│    475 │   │   """                                                           │
+│    476 │   │   raw_response = None                                           │
+│    477 │   │   try:                                                          │
+│ ❱  478 │   │   │   raw_response = openai_client.chat.completions.with_raw_re │
+│    479 │   │   │   │   **data, timeout=timeout                               │
+│    480 │   │   │   )                                                         │
+│    481                                                                       │
+│                                                                              │
+│ /venv/lib/python3.11/site-packages/openai/_legacy_response.py:367 in wrapped │
+│                                                                              │
+│   364 │   │                                                                  │
+│   365 │   │   kwargs["extra_headers"] = extra_headers                        │
+│   366 │   │                                                                  │
+│ ❱ 367 │   │   return cast(LegacyAPIResponse[R], func(*args, **kwargs))       │
+│   368 │                                                                      │
+│   369 │   return wrapped                                                     │
+│   370                                                                        │
+│                                                                              │
+│ /venv/lib/python3.11/site-packages/openai/_utils/_utils.py:298 in wrapper    │
+│                                                                              │
+│   295 │   │   │   │   │   else:                                              │
+│   296 │   │   │   │   │   │   msg = f"Missing required argument: {quote(miss │
+│   297 │   │   │   │   raise TypeError(msg)                                   │
+│ ❱ 298 │   │   │   return func(*args, **kwargs)                               │
+│   299 │   │                                                                  │
+│   300 │   │   return wrapper  # type: ignore                                 │
+│   301                                                                        │
+│                                                                              │
+│ /venv/lib/python3.11/site-packages/openai/resources/chat/completions/complet │
+│ ions.py:1251 in create                                                       │
+│                                                                              │
+│   1248 │   │   timeout: float | httpx.Timeout | None | NotGiven = not_given, │
+│   1249 │   ) -> ChatCompletion | Stream[ChatCompletionChunk]:                │
+│   1250 │   │   validate_response_format(response_format)                     │
+│ ❱ 1251 │   │   return self._post(                                            │
+│   1252 │   │   │   "/chat/completions",                                      │
+│   1253 │   │   │   body=maybe_transform(                                     │
+│   1254 │   │   │   │   {                                                     │
+│                                                                              │
+│ /venv/lib/python3.11/site-packages/openai/_base_client.py:1332 in post       │
+│                                                                              │
+│   1329 │   │   opts = FinalRequestOptions.construct(                         │
+│   1330 │   │   │   method="post", url=path, json_data=body, content=content, │
+│   1331 │   │   )                                                             │
+│ ❱ 1332 │   │   return cast(ResponseT, self.request(cast_to, opts, stream=str │
+│   1333 │                                                                     │
+│   1334 │   def patch(                                                        │
+│   1335 │   │   self,                                                         │
+│                                                                              │
+│ /venv/lib/python3.11/site-packages/openai/_base_client.py:1072 in request    │
+│                                                                              │
+│   1069 │   │   │   │   │   continue                                          │
+│   1070 │   │   │   │                                                         │
+│   1071 │   │   │   │   log.debug("Raising connection error")                 │
+│ ❱ 1072 │   │   │   │   raise APIConnectionError(request=request) from err    │
+│   1073 │   │   │                                                             │
+│   1074 │   │   │   log.debug(                                                │
+│   1075 │   │   │   │   'HTTP Response: %s %s "%i %s" %s',                    │
+╰──────────────────────────────────────────────────────────────────────────────╯
+APIConnectionError: Connection error.
+
+During handling of the above exception, another exception occurred:
+
+╭───────────────────── Traceback (most recent call last) ──────────────────────╮
+│ /venv/lib/python3.11/site-packages/litellm/main.py:2781 in completion        │
+│                                                                              │
+│   2778 │   │   │   │   │   original_response=str(e),                         │
+│   2779 │   │   │   │   │   additional_args={"headers": headers},             │
+│   2780 │   │   │   │   )                                                     │
+│ ❱ 2781 │   │   │   │   raise e                                               │
+│   2782 │   │   │                                                             │
+│   2783 │   │   │   if optional_params.get("stream", False):                  │
+│   2784 │   │   │   │   ## LOGGING                                            │
+│                                                                              │
+│ /venv/lib/python3.11/site-packages/litellm/main.py:2753 in completion        │
+│                                                                              │
+│   2750 │   │   │   │   │   │   provider_config=provider_config,              │
+│   2751 │   │   │   │   │   )                                                 │
+│   2752 │   │   │   │   else:                                                 │
+│ ❱ 2753 │   │   │   │   │   response = openai_chat_completions.completion(    │
+│   2754 │   │   │   │   │   │   model=model,                                  │
+│   2755 │   │   │   │   │   │   messages=messages,                            │
+│   2756 │   │   │   │   │   │   headers=headers,                              │
+│                                                                              │
+│ /venv/lib/python3.11/site-packages/litellm/llms/openai/openai.py:863 in      │
+│ completion                                                                   │
+│                                                                              │
+│    860 │   │   │   error_body = getattr(e, "body", None)                     │
+│    861 │   │   │   if error_headers is None and error_response:              │
+│    862 │   │   │   │   error_headers = getattr(error_response, "headers", No │
+│ ❱  863 │   │   │   raise OpenAIError(                                        │
+│    864 │   │   │   │   status_code=status_code,                              │
+│    865 │   │   │   │   message=error_text,                                   │
+│    866 │   │   │   │   headers=error_headers,                                │
+╰──────────────────────────────────────────────────────────────────────────────╯
+OpenAIError: Connection error.
+
+During handling of the above exception, another exception occurred:
+
+╭───────────────────── Traceback (most recent call last) ──────────────────────╮
+│ /app/holmes/main.py:422 in ask                                               │
+│                                                                              │
+│    419 │   │   │   f'holmes ask "{prompt}"', span_type=SpanType.TASK         │
+│    420 │   │   ) as trace_span:                                              │
+│    421 │   │   │   trace_span.log(input=prompt, metadata={"type": "user_ques │
+│ ❱  422 │   │   │   response = ai.call(messages, trace_span=trace_span, reque │
+│    423 │   │   │   trace_span.log(                                           │
+│    424 │   │   │   │   output=response.result,                               │
+│    425 │   │   │   )                                                         │
+│                                                                              │
+│ /venv/lib/python3.11/site-packages/sentry_sdk/tracing_utils.py:1044 in       │
+│ sync_wrapper                                                                 │
+│                                                                              │
+│   1041 │   │   │   │   │   "Please start a Sentry transaction before calling │
+│   1042 │   │   │   │   │   qualname_from_function(f),                        │
+│   1043 │   │   │   │   )                                                     │
+│ ❱ 1044 │   │   │   │   return f(*args, **kwargs)                             │
+│   1045 │   │   │                                                             │
+│   1046 │   │   │   if isinstance(current_span, StreamedSpan):                │
+│   1047 │   │   │   │   warnings.warn(                                        │
+│                                                                              │
+│ /app/holmes/core/tool_calling_llm.py:733 in call                             │
+│                                                                              │
+│    730 │   │   │   start_tool_count = 0                                      │
+│    731 │   │   │   saw_tool_results = False                                  │
+│    732 │   │   │                                                             │
+│ ❱  733 │   │   │   for event in stream:                                      │
+│    734 │   │   │   │   # Log blank line when a tool batch ends (transition a │
+│    735 │   │   │   │   if saw_tool_results and event.event != StreamEvents.T │
+│    736 │   │   │   │   │   display_logger.info("")                           │
+│                                                                              │
+│ /app/holmes/core/tool_calling_llm.py:1299 in call_stream                     │
+│                                                                              │
+│   1296 │   │   │   with trace_span.start_span(name="gen_ai.chat") as llm_spa │
+│   1297 │   │   │     try:                                                    │
+│   1298 │   │   │   │   _llm_call_start = time.time()                         │
+│ ❱ 1299 │   │   │   │   full_response = self.llm.completion(                  │
+│   1300 │   │   │   │   │   messages=parse_messages_tags(messages),  # type:  │
+│   1301 │   │   │   │   │   tools=tools,                                      │
+│   1302 │   │   │   │   │   tool_choice=tool_choice,                          │
+│                                                                              │
+│ /app/holmes/core/llm.py:821 in completion                                    │
+│                                                                              │
+│    818 │   │   │   │   }                                                     │
+│    819 │   │   │   ]                                                         │
+│    820 │   │                                                                 │
+│ ❱  821 │   │   result = litellm_to_use.completion(                           │
+│    822 │   │   │   model=litellm_model_name,                                 │
+│    823 │   │   │   api_key=self.api_key,                                     │
+│    824 │   │   │   base_url=self.api_base,                                   │
+│                                                                              │
+│ /venv/lib/python3.11/site-packages/litellm/utils.py:1775 in wrapper          │
+│                                                                              │
+│   1772 │   │   │   │   logging_obj.failure_handler(                          │
+│   1773 │   │   │   │   │   e, traceback_exception, start_time, end_time      │
+│   1774 │   │   │   │   )  # DO NOT MAKE THREADED - router retry fallback rel │
+│ ❱ 1775 │   │   │   raise e                                                   │
+│   1776 │                                                                     │
+│   1777 │   @wraps(original_function)                                         │
+│   1778 │   async def wrapper_async(*args, **kwargs):  # noqa: PLR0915        │
+│                                                                              │
+│ /venv/lib/python3.11/site-packages/litellm/utils.py:1596 in wrapper          │
+│                                                                              │
+│   1593 │   │   │   │   except Exception as e:                                │
+│   1594 │   │   │   │   │   print_verbose(f"Error while checking max token li │
+│   1595 │   │   │   # MODEL CALL                                              │
+│ ❱ 1596 │   │   │   result = original_function(*args, **kwargs)               │
+│   1597 │   │   │   end_time = datetime.datetime.now()                        │
+│   1598 │   │   │   if _is_streaming_request(                                 │
+│   1599 │   │   │   │   kwargs=kwargs,                                        │
+│                                                                              │
+│ /venv/lib/python3.11/site-packages/litellm/main.py:4614 in completion        │
+│                                                                              │
+│   4611 │   │   return response                                               │
+│   4612 │   except Exception as e:                                            │
+│   4613 │   │   ## Map to OpenAI Exception                                    │
+│ ❱ 4614 │   │   raise exception_type(                                         │
+│   4615 │   │   │   model=model,                                              │
+│   4616 │   │   │   custom_llm_provider=custom_llm_provider,                  │
+│   4617 │   │   │   original_exception=e,                                     │
+│                                                                              │
+│ /venv/lib/python3.11/site-packages/litellm/litellm_core_utils/exception_mapp │
+│ ing_utils.py:2473 in exception_type                                          │
+│                                                                              │
+│   2470 │   │   # don't let an error with mapping interrupt the user from rec │
+│   2471 │   │   if exception_mapping_worked:                                  │
+│   2472 │   │   │   setattr(e, "litellm_response_headers", litellm_response_h │
+│ ❱ 2473 │   │   │   raise e                                                   │
+│   2474 │   │   else:                                                         │
+│   2475 │   │   │   for error_type in litellm.LITELLM_EXCEPTION_TYPES:        │
+│   2476 │   │   │   │   if isinstance(e, error_type):                         │
+│                                                                              │
+│ /venv/lib/python3.11/site-packages/litellm/litellm_core_utils/exception_mapp │
+│ ing_utils.py:598 in exception_type                                           │
+│                                                                              │
+│    595 │   │   │   │   │   │   )                                             │
+│    596 │   │   │   │   │   elif original_exception.status_code == 500:       │
+│    597 │   │   │   │   │   │   exception_mapping_worked = True               │
+│ ❱  598 │   │   │   │   │   │   raise InternalServerError(                    │
+│    599 │   │   │   │   │   │   │   message=f"InternalServerError: {exception │
+│    600 │   │   │   │   │   │   │   model=model,                              │
+│    601 │   │   │   │   │   │   │   llm_provider=custom_llm_provider,         │
+╰──────────────────────────────────────────────────────────────────────────────╯
+InternalServerError: litellm.InternalServerError: InternalServerError: 
+OpenAIException - Connection error.

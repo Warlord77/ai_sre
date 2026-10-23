@@ -1,3 +1,17 @@
 07:09:30 START cronjob_sidecar_blocks_completion_hotel_reservation
 07:23:28 DONE cronjob_sidecar_blocks_completion_hotel_reservation exit=0
 07:23:30 START edge_request_filter_cpu_saturation
+07:54:33 DONE edge_request_filter_cpu_saturation exit=0
+07:55:03 WAIT model unreachable before network_policy_block
+08:03:50 START network_policy_block
+08:40:33 DONE network_policy_block exit=2
+08:41:03 WAIT model unreachable before env_variable_shadowing_astronomy_shop
+09:04:43 START env_variable_shadowing_astronomy_shop
+09:27:33 DONE env_variable_shadowing_astronomy_shop exit=0
+09:27:35 START mutating_webhook_resource_limits_social_network
+10:02:19 DONE mutating_webhook_resource_limits_social_network exit=2
+10:02:22 START finalizer_deadlock_controller_hotel_reservation
+10:14:15 DONE finalizer_deadlock_controller_hotel_reservation exit=0
+10:14:18 START kafka_poison_pill_hol_block
+10:40:14 DONE kafka_poison_pill_hol_block exit=0
+10:40:17 START internal_traffic_policy_local_astronomy_shop

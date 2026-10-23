@@ -1,0 +1,82 @@
+2026-10-23 09:38:23 - INFO - all.holmesgpt.driver - Problem ID (harness): anon_179970ed7334dcc40602df087177595c; app: {'app_name': 'Social Network', 'namespace': 'social-network', 'namespaces': ['social-network'], 'descriptions': 'A social network with unidirectional follow relationships, implemented with loosely-coupled microservices, communicating with each other via Thrift RPCs.', 'stages': ['diagnosis']} - driver.py:main:267
+2026-10-23 09:38:23 - INFO - all.holmesgpt.driver - Running HolmesGPT: docker run --rm --memory 1g --network host --add-host host.docker.internal:127.0.0.1 --add-host gpustack.apps.one2n.io:127.0.0.1 -e OPENAI_API_KEY -e OPENAI_API_BASE -e KUBECONFIG=/work/kubeconfig.yaml -v /tmp/holmes-sregym-5llorhws:/work us-central1-docker.pkg.dev/genuine-flight-317411/devel/holmes:latest ask --prompt-file /work/prompt.txt --model openai/gpt-oss-120b --config /work/holmes-config.yaml --no-interactive --json-output-file /work/output.json --max-steps 60 --log-costs - driver.py:run_holmes:224
+2026-10-23 09:38:23 - INFO - all.holmesgpt.driver - Holmes config:
+toolsets:
+  kubernetes/core:
+    enabled: true
+  kubernetes/logs:
+    enabled: true
+mcp_servers:
+  sregym-prometheus:
+    description: PromQL queries against the cluster Prometheus (metrics)
+    config:
+      url: http://host.docker.internal:9954/prometheus/sse
+      mode: sse
+  sregym-loki:
+    description: LogQL queries against the cluster Loki (pod logs, including from
+      deleted pods)
+    config:
+      url: http://host.docker.internal:9954/loki/sse
+      mode: sse
+  sregym-jaeger:
+    description: Distributed traces from Jaeger (service call graph, latency, errors)
+    config:
+      url: http://host.docker.internal:9954/jaeger/sse
+      mode: sse
+ - driver.py:run_holmes:225
+2026-10-23 09:53:23 - WARNING - all.holmesgpt.driver - HolmesGPT attempt 1/3 produced no result (rc=124); retrying - driver.py:main:284
+2026-10-23 09:53:23 - INFO - all.holmesgpt.driver - Running HolmesGPT: docker run --rm --memory 1g --network host --add-host host.docker.internal:127.0.0.1 --add-host gpustack.apps.one2n.io:127.0.0.1 -e OPENAI_API_KEY -e OPENAI_API_BASE -e KUBECONFIG=/work/kubeconfig.yaml -v /tmp/holmes-sregym-ws8_9rd0:/work us-central1-docker.pkg.dev/genuine-flight-317411/devel/holmes:latest ask --prompt-file /work/prompt.txt --model openai/gpt-oss-120b --config /work/holmes-config.yaml --no-interactive --json-output-file /work/output.json --max-steps 60 --log-costs - driver.py:run_holmes:224
+2026-10-23 09:53:23 - INFO - all.holmesgpt.driver - Holmes config:
+toolsets:
+  kubernetes/core:
+    enabled: true
+  kubernetes/logs:
+    enabled: true
+mcp_servers:
+  sregym-prometheus:
+    description: PromQL queries against the cluster Prometheus (metrics)
+    config:
+      url: http://host.docker.internal:9954/prometheus/sse
+      mode: sse
+  sregym-loki:
+    description: LogQL queries against the cluster Loki (pod logs, including from
+      deleted pods)
+    config:
+      url: http://host.docker.internal:9954/loki/sse
+      mode: sse
+  sregym-jaeger:
+    description: Distributed traces from Jaeger (service call graph, latency, errors)
+    config:
+      url: http://host.docker.internal:9954/jaeger/sse
+      mode: sse
+ - driver.py:run_holmes:225
+2026-10-23 09:57:50 - WARNING - all.holmesgpt.driver - HolmesGPT attempt 2/3 produced no result (rc=1); retrying - driver.py:main:284
+2026-10-23 09:57:51 - INFO - all.holmesgpt.driver - Running HolmesGPT: docker run --rm --memory 1g --network host --add-host host.docker.internal:127.0.0.1 --add-host gpustack.apps.one2n.io:127.0.0.1 -e OPENAI_API_KEY -e OPENAI_API_BASE -e KUBECONFIG=/work/kubeconfig.yaml -v /tmp/holmes-sregym-a8egwvby:/work us-central1-docker.pkg.dev/genuine-flight-317411/devel/holmes:latest ask --prompt-file /work/prompt.txt --model openai/gpt-oss-120b --config /work/holmes-config.yaml --no-interactive --json-output-file /work/output.json --max-steps 60 --log-costs - driver.py:run_holmes:224
+2026-10-23 09:57:51 - INFO - all.holmesgpt.driver - Holmes config:
+toolsets:
+  kubernetes/core:
+    enabled: true
+  kubernetes/logs:
+    enabled: true
+mcp_servers:
+  sregym-prometheus:
+    description: PromQL queries against the cluster Prometheus (metrics)
+    config:
+      url: http://host.docker.internal:9954/prometheus/sse
+      mode: sse
+  sregym-loki:
+    description: LogQL queries against the cluster Loki (pod logs, including from
+      deleted pods)
+    config:
+      url: http://host.docker.internal:9954/loki/sse
+      mode: sse
+  sregym-jaeger:
+    description: Distributed traces from Jaeger (service call graph, latency, errors)
+    config:
+      url: http://host.docker.internal:9954/jaeger/sse
+      mode: sse
+ - driver.py:run_holmes:225
+2026-10-23 09:58:36 - WARNING - all.holmesgpt.driver - HolmesGPT attempt 3/3 produced no result (rc=1); retrying - driver.py:main:284
+2026-10-23 09:58:36 - INFO - all.holmesgpt.driver - HolmesGPT answer:
+HolmesGPT failed to produce a diagnosis after retries: OpenAIException - Connection error. - driver.py:main:287
+2026-10-23 09:58:36 - INFO - all.holmesgpt.driver - Submit -> 200: {"status":"200","message":"Submission received","stage":"diagnosis"} - driver.py:submit:131

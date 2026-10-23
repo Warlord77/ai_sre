@@ -1,0 +1,37 @@
+$ problem: env_variable_shadowing_astronomy_shop
+$ holmesgpt: 12 tool calls, 13 LLM calls, 316,738 tokens, 2.6 min
+
+Root Cause**
+
+- **Faulty component:** `frontend-proxy-7b7cd5fb4-jsr6n` (container **frontend‑proxy**)
+- **Misconfiguration:** Memory limit set to **65 MiB** (`Limits: memory: 65Mi`). The proxy process exceeds this limit, causing the …
+- **Why it breaks the app:** The frontend‑proxy routes traffic to all other services. When it is OOM‑killed and not ready, the UI …
+
+**Evidence**
+
+1. `kubectl describe pod` – shows `State: Terminated – Reason: OOMKilled`, `Exit Code: 137`, `Restart Count: 4`, `Limits: memory: …
+2. Pod events include `Warning BackOff` for the container.
+3. Prometheus alert `KubePodNotReady` firing for this pod.
+4. All other pods are running and ready, confirming the issue is isolated to the frontend‑proxy.
+
+**Remediation**
+
+1. **Increase memory resources** for the `frontend-proxy` container (e.g., `requests: 128Mi`, `limits: 256Mi`).
+2. Apply the change via the Helm chart (or Deployment manifest) and roll out the update:
+```bash
+helm upgrade astronomy-shop ./chart \
+--set frontendProxy.resources.limits.memory=256Mi \
+--set frontendProxy.resources.requests.memory=128Mi \
+-n astronomy-shop
+```
+3. Verify the pod becomes Ready and the alert clears:
+```bash
+kubectl wait --for=condition=Ready pod -l app.kubernetes.io/name=frontend-proxy -n astronomy-shop --timeout=2m
+```
+4. Monitor the pod’s memory usage (`kubectl top pod frontend-proxy-…`) to ensure the new limits are sufficient.
+
+$ judge: success=False  score=45.0/100
+Verdict: False (composite=0.45). D1 Fault Localization: 0.67 | D2 Fault Characterization: 0.00 | D3 Scope Precision: 0.67. Weakest
+dimension: Fault Characterization (0.00). Checklist details: [{"id": "D1-Q1", "answer": "Yes", "evidence": "Faulty component:
+`frontend-proxy-7b7cd5fb4-jsr6n` (container **frontend\u2011proxy**)", "confidence": "High"}, {"id": "D1-Q2", "answer": "No",
+"evidence": "Diag

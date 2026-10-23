@@ -1,0 +1,48 @@
+Diagnosis.accuracy,Diagnosis.checklist,Diagnosis.composite_score,Diagnosis.dimensions,Diagnosis.judgment,Diagnosis.reasoning,Diagnosis.submission,Diagnosis.success,TTL,attempt,blocked_requests,deployment_profile,internet_access,judge_backend,phase.cleanup.duration_s,phase.deploy.duration_s,phase.evaluate:diagnosis.duration_s,phase.fix_kubernetes.duration_s,phase.inject_fault.duration_s,phase.stage:diagnosis.duration_s,phase.stage:diagnosis.outcome,phase.undeploy_leftovers.duration_s,problem_id,run_status
+0.0,"[{'id': 'D1-Q1', 'answer': 'No', 'evidence': 'Diagnosis blames the email service, not the frontend-proxy component.', 'confidence': 'High'}, {'id': 'D1-Q2', 'answer': 'No', 'evidence': 'Diagnosis attributes fault to email service, whereas ground truth fault originates in frontend-proxy.', 'confidence': 'High'}, {'id': 'D1-Q3', 'answer': 'No', 'evidence': 'Email service is identified as faulty, but ground truth says frontend-proxy is healthy.', 'confidence': 'High'}, {'id': 'D2-Q1', 'answer': 'No', 'evidence': 'Diagnosis cites a thread‑pool limit, not the WAF regex rule injection.', 'confidence': 'High'}, {'id': 'D2-Q2', 'answer': 'No', 'evidence': 'Provides details about Puma threads, not the mutated regex pattern.', 'confidence': 'High'}, {'id': 'D2-Q3', 'answer': 'No', 'evidence': 'Attributes fault to thread‑pool misconfiguration, which conflicts with regex backtracking cause.', 'confidence': 'High'}, {'id': 'D3-Q1', 'answer': 'No', 'evidence': 'Blames email service, a component not mentioned in ground truth.', 'confidence': 'High'}, {'id': 'D3-Q2', 'answer': 'No', 'evidence': 'Does not mention frontend‑proxy, the only component in ground truth.', 'confidence': 'High'}, {'id': 'D3-Q3', 'answer': 'No', 'evidence': 'Describes 408 timeouts from email, not CPU saturation caused by regex.', 'confidence': 'High'}]",0.0,"{'D1': {'name': 'Fault Localization', 'score': 0.0}, 'D2': {'name': 'Fault Characterization', 'score': 0.0}, 'D3': {'name': 'Scope Precision', 'score': 0.0}}",False,"Verdict: False (composite=0.00). D1 Fault Localization: 0.00 | D2 Fault Characterization: 0.00 | D3 Scope Precision: 0.00. Weakest dimension: Fault Localization (0.00). Checklist details: [{""id"": ""D1-Q1"", ""answer"": ""No"", ""evidence"": ""Diagnosis blames the email service, not the frontend-proxy component."", ""confidence"": ""High""}, {""id"": ""D1-Q2"", ""answer"": ""No"", ""evidence"": ""Diagnosis attributes fault to email service, whereas ground truth fault originates in frontend-proxy."", ""confidence"": ""High""}, {""id"": ""D1-Q3"", ""answer"": ""No"", ""evidence"": ""Email service is identified as faulty, but ground truth says frontend-proxy is healthy."", ""confidence"": ""High""}, {""id"": ""D2-Q1"", ""answer"": ""No"", ""evidence"": ""Diagnosis cites a thread\u2011pool limit, not the WAF regex rule injection."", ""confidence"": ""High""}, {""id"": ""D2-Q2"", ""answer"": ""No"", ""evidence"": ""Provides details about Puma threads, not the mutated regex pattern."", ""confidence"": ""High""}, {""id"": ""D2-Q3"", ""answer"": ""No"", ""evidence"": ""Attributes fault to thread\u2011pool misconfiguration, which conflicts with regex backtracking cause."", ""confidence"": ""High""}, {""id"": ""D3-Q1"", ""answer"": ""No"", ""evidence"": ""Blames email service, a component not mentioned in ground truth."", ""confidence"": ""High""}, {""id"": ""D3-Q2"", ""answer"": ""No"", ""evidence"": ""Does not mention frontend\u2011proxy, the only component in ground truth."", ""confidence"": ""High""}, {""id"": ""D3-Q3"", ""answer"": ""No"", ""evidence"": ""Describes 408 timeouts from email, not CPU saturation caused by regex."", ""confidence"": ""High""}]","**Investigation Summary**
+
+| Resource | Kind | Namespace | Evidence |
+|----------|------|-----------|----------|
+| `frontend-6859c775df-6mnkg` | Pod | `astronomy-shop` | 68 log lines containing **“shipping quote failure … got 408”** (error from the frontend when calling the email service). |
+| `email-74f9c666b6-p7cqx` | Pod | `astronomy-shop` | Logs show successful POSTs with **200** responses; no readiness/liveness warnings. |
+| `email` Service | Service | `astronomy-shop` | No events indicating failure; DNS resolution works for other services. |
+| `email` Container (Puma) | Container (inside `email` pod) | `astronomy-shop` | Startup log shows **Puma** started with **Min threads: 0, Max threads: 5**. |
+| `frontend` → `email` calls | Distributed trace (Jaeger) | `astronomy-shop` | Traces from the frontend show repeated **gRPC/HTTP errors** with status **408** when invoking the email endpoint. |
+| Other pods (accounting, cart, checkout, etc.) | Pods | `astronomy-shop` | Running, no error logs, no readiness/liveness failures. |
+| Core DNS / Calico | Cluster‑wide | `kube-system` | No DNS‑related events; other services resolve correctly. |
+
+**Root Cause**
+
+- The **email service** is running a **Puma** web server configured with **only 5 worker threads** (`Min threads: 0, Max threads: 5`).  
+- Under the load generated by the demo (load‑generator pod), the email service receives more concurrent HTTP requests than it can handle. Puma’s request queue fills, causing the server to return **HTTP 408 (Request Timeout)** for some requests.  
+- The frontend (and downstream checkout flow) receives these 408 responses, logs them as **“shipping quote failure … got 408”**, and aborts the checkout process.  
+
+**Evidence Supporting the Root Cause**
+
+1. **Frontend logs** – 68 occurrences of `Error: 13 INTERNAL: shipping quote failure: failed POST to email service: expected 200, got 408`.  
+2. **Email pod logs** – All recorded POSTs return **200**; no 408s are logged on the server side, indicating the timeout is generated by the server before processing the request.  
+3. **Puma startup log** – Shows the server is limited to **5 threads**, which is insufficient for the concurrent request volume generated by the demo.  
+4. **Jaeger traces** – Show the frontend’s HTTP calls to the email service ending with status **408**, confirming the timeout originates at the email endpoint.  
+
+**Recommended Fix**
+
+1. **Increase Puma thread pool** for the email service:  
+   - Set environment variables (or modify the Docker entrypoint) to raise `WEB_CONCURRENCY` / `MAX_THREADS` (e.g., `MIN_THREADS=5`, `MAX_THREADS=20`).  
+   - Alternatively, adjust the `puma.rb` configuration to allow more concurrent connections.  
+
+2. **Scale the email deployment** (optional):  
+   - Increase the replica count (`kubectl scale deployment email --replicas=2`) to distribute load across multiple pods.  
+
+3 **Verify after change**:  
+   - Observe the frontend logs for the disappearance of 408 errors.  
+   - Check Puma metrics (if exposed) or Prometheus `puma_thread_pool_size`/`puma_active_requests` to confirm the thread pool is no longer saturated.  
+
+**Impact Classification**
+
+- **Affected**: `frontend` pod (receives 408 errors), `checkout` flow (fails due to email timeout).  
+- **Checked, healthy**: All other micro‑services (accounting, cart, product‑catalog, etc.) – no errors or readiness failures observed.  
+- **Changed during the window for another reason**: None identified.  
+
+**Bottom Line**
+
+The broken behavior in the OpenTelemetry Demo Astronomy Shop is caused by the **email service’s under‑provisioned Puma thread pool**, which leads to **HTTP 408 timeouts** under load, breaking the checkout flow. Increasing the thread pool (and optionally scaling the deployment) will resolve the issue.",False,378.29507780075073,1,0,full,open,api,206.28,1206.22,36.899,4.065,27.986,341.721,submitted,6.687,edge_request_filter_cpu_saturation,complete

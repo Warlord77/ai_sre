@@ -1,0 +1,37 @@
+$ problem: edge_request_filter_cpu_saturation
+$ holmesgpt: 27 tool calls, 28 LLM calls, 942,834 tokens, 5.7 min
+
+Root Cause**
+
+1. **Frontend logs** – 68 occurrences of `Error: 13 INTERNAL: shipping quote failure: failed POST to email service: expected 200, got …
+2. **Email pod logs** – All recorded POSTs return **200**; no 408s are logged on the server side, indicating the timeout is generated …
+3. **Puma startup log** – Shows the server is limited to **5 threads**, which is insufficient for the concurrent request volume …
+4. **Jaeger traces** – Show the frontend’s HTTP calls to the email service ending with status **408**, confirming the timeout …
+
+**Recommended Fix**
+
+1. **Increase Puma thread pool** for the email service:
+- Set environment variables (or modify the Docker entrypoint) to raise `WEB_CONCURRENCY` / `MAX_THREADS` (e.g., `MIN_THREADS=5`, …
+- Alternatively, adjust the `puma.rb` configuration to allow more concurrent connections.
+
+2. **Scale the email deployment** (optional):
+- Increase the replica count (`kubectl scale deployment email --replicas=2`) to distribute load across multiple pods.
+
+3 **Verify after change**:
+- Observe the frontend logs for the disappearance of 408 errors.
+- Check Puma metrics (if exposed) or Prometheus `puma_thread_pool_size`/`puma_active_requests` to confirm the thread pool is no …
+
+**Impact Classification**
+
+- **Affected**: `frontend` pod (receives 408 errors), `checkout` flow (fails due to email timeout).
+- **Checked, healthy**: All other micro‑services (accounting, cart, product‑catalog, etc.) – no errors or readiness failures observed.
+- **Changed during the window for another reason**: None identified.
+
+**Bottom Line**
+
+
+$ judge: success=False  score=0.0/100
+Verdict: False (composite=0.00). D1 Fault Localization: 0.00 | D2 Fault Characterization: 0.00 | D3 Scope Precision: 0.00. Weakest
+dimension: Fault Localization (0.00). Checklist details: [{"id": "D1-Q1", "answer": "No", "evidence": "Diagnosis blames the email
+service, not the frontend-proxy component.", "confidence": "High"}, {"id": "D1-Q2", "answer": "No", "evidence": "Diagnosis attributes
+fault

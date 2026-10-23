@@ -83,6 +83,10 @@ Runs `SREGym/kind/setup_kind_cluster.sh` unchanged, then caps memory:
 | CNI | default disabled; Calico v3.29.3 |
 | Memory | `docker update --memory 4g --memory-swap 4g` per node = **16 GB** |
 
+For the benchmark run the workers were later uncapped (see README run notes): Docker can't clear a limit,
+so raise it to the host's RAM instead, e.g.
+`docker update --memory=$(awk '/MemTotal/{print $2*1024}' /proc/meminfo) --memory-swap=<same> kind-worker`.
+
 kind has no memory setting, so the cap is applied to each node container. It survives restarts but not
 a recreated cluster; rerun `make cluster` after recreating. Change it with `NODE_MEMORY=6g make cluster`.
 

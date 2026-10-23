@@ -1,0 +1,24 @@
+$ problem: kafka_poison_pill_hol_block
+$ holmesgpt: 11 tool calls, 12 LLM calls, 451,699 tokens, 3.8 min
+
+ROOT CAUSE**
+
+- **Faulty component:** `Pod grafana-7b9cbf56f5-qd4qp` (part of the `grafana` Deployment) in namespace **astronomy‑shop**
+- **Why it fails:** The Grafana container attempts to bind to `0.0.0.0:8080`. Port 8080 is already in use by multiple other services …
+- **Evidence:**
+- Grafana pod status: `restartCount: 3`, `ready: true` (still running but repeatedly restarted).
+- Logs (last hour, error‑filtered) contain:
+```
+[Errno 98] error while attempting to bind on address ('0.0.0.0', 8080): address in use
+Retry... connection refused to http://localhost:3000/api/admin/provisioning/...
+```
+- Other services (checkout, cart, etc.) all expose `containerPort: 8080`, confirming the port conflict.
+
+**FIX**
+Change Grafana’s HTTP port to a free value (e.g., the default `3000`) by updating its Deployment/ConfigMap (or Helm values) to set …
+
+$ judge: success=False  score=0.0/100
+Verdict: False (composite=0.00). D1 Fault Localization: 0.00 | D2 Fault Characterization: 0.00 | D3 Scope Precision: 0.00. Weakest
+dimension: Fault Localization (0.00). Checklist details: [{"id": "D1-Q1", "answer": "No", "evidence": "Diagnosis names Pod
+grafana-7b9c... as faulty component, not the Kafka topic/orders-fulfillment.", "confidence": "High"}, {"id": "D1-Q2", "answer": "No",
+"evidence":

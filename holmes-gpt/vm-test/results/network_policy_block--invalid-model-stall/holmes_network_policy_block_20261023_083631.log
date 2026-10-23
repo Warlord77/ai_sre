@@ -1,0 +1,107 @@
+$ rc=124
+--- stdout ---
+Model 'openai/gpt-oss-120b' has no entry in litellm's cost map and no           
+input/output_cost_per_token configured. Usage event costs for this model will be
+0. Add input_cost_per_token and output_cost_per_token to its model_list.yaml    
+entry to enable cost tracking.                                                  
+Loaded models: ['openai/gpt-oss-120b']                                          
+Loaded prompt from file /work/prompt.txt
+User: You are an SRE investigating an incident in a Kubernetes application.
+
+Application: Hotel Reservation
+Namespace(s): hotel-reservation
+
+A hotel reservation application built with Go and gRPC, providing backend 
+in-memory and persistent databases, a recommender system for hotel 
+recommendations, and a functionality to place reservations.
+
+Something in this application is currently broken. Investigate using Kubernetes 
+resources,
+events, pod logs, metrics (Prometheus), logs (Loki) and traces (Jaeger).
+
+Work autonomously; there is no human to answer questions.
+
+Finish with a section titled "ROOT CAUSE" stating:
+- the faulty component(s) (exact Kubernetes resource kinds and names)
+- the root cause (what is misconfigured or failing, and why it breaks the 
+application)
+- the evidence you found
+
+Using selected model: openai/gpt-oss-120b                                       
+Couldn't find model openai/gpt-oss-120b in litellm's model list (tried:         
+openai/gpt-oss-120b, gpt-oss-120b), using default 200000 tokens for             
+max_input_tokens. To override, set OVERRIDE_MAX_CONTENT_SIZE environment        
+variable to the correct value for your model.                                   
+Couldn't find model openai/gpt-oss-120b in litellm's model list (tried:         
+openai/gpt-oss-120b, gpt-oss-120b), using 64000 tokens for max_output_tokens. To
+override, set OVERRIDE_MAX_OUTPUT_TOKEN environment variable to the correct     
+value for your model.                                                           
+Model: openai/gpt-oss-120b, 200K context, 64K max response (default, change with
+--model, for all options see https://holmesgpt.dev/ai-providers)                
+Config hash changed for datasource: /work/holmes-config.yaml                    
+Datasource config file(s) changed, refreshing toolsets                          
+Refreshing available datasources (toolsets)                                     
+❌ Toolset hubble/observability: `hubble version` failed with exit code 127:    
+/bin/sh: hubble: not found                                                      
+❌ Toolset inspektor-gadget/node: Environment variable ENABLE_INSPEKTOR_GADGET  
+was not set                                                                     
+❌ Toolset inspektor-gadget/tcpdump: Environment variable                       
+ENABLE_INSPEKTOR_GADGET was not set                                             
+❌ Toolset cilium/core: `cilium status` failed with exit code 127: /bin/sh:     
+cilium: not found                                                               
+❌ Toolset aks/core: `az account show` failed with exit code 127: /bin/sh: az:  
+not found                                                                       
+❌ Toolset argocd/core: Environment variable ARGOCD_AUTH_TOKEN was not set      
+❌ Toolset aks/node-health: `az account show` failed with exit code 127:        
+/bin/sh: az: not found                                                          
+❌ Toolset docker/core: `docker version` failed with exit code 127: /bin/sh:    
+docker: not found                                                               
+❌ Toolset slab: Environment variable SLAB_API_KEY was not set                  
+✅ Toolset kubernetes/kube-prometheus-stack                                     
+✅ Toolset core_investigation                                                   
+✅ Toolset internet                                                             
+❌ Toolset openshift/security: `oc version --client` failed with exit code 127: 
+/bin/sh: oc: not found                                                          
+❌ Toolset openshift/logs: `oc version --client` failed with exit code 127:     
+/bin/sh: oc: not found                                                          
+❌ Toolset kubevela/core: `vela version` failed with exit code 127: /bin/sh:    
+vela: not found                                                                 
+❌ Toolset openshift/live-metrics: `oc adm top nodes` failed with exit code 127:
+/bin/sh: oc: not found                                                          
+✅ Toolset connectivity_check                                                   
+❌ Toolset robusta: Integration with Robusta cloud is disabled                  
+❌ Toolset openshift/core: `oc version --client` failed with exit code 127:     
+/bin/sh: oc: not found                                                          
+❌ Toolset notion: Notion toolset is misconfigured. Authorization header is     
+required.                                                                       
+❌ Toolset opensearch/query_assist: Environment variable OPENSEARCH_URL was not 
+set                                                                             
+✅ Toolset skills                                                               
+✅ Toolset kubernetes/logs                                                      
+✅ Toolset bash                                                                 
+✅ Toolset kubernetes/core                                                      
+✅ Toolset helm/core                                                            
+✅ Toolset sregym-loki                                                          
+✅ Toolset sregym-jaeger                                                        
+✅ Toolset sregym-prometheus                                                    
+✅ Toolset kubernetes/live-metrics                                              
+❌ Toolset crossplane/core: `kubectl api-resources --api-group=pkg.crossplane.io
+--no-headers 2>/dev/null | grep -q providers` failed with exit code 1           
+Toolset statuses are cached to /root/.holmes/toolsets_status.json               
+✅ Toolset kubernetes/kube-prometheus-stack                                     
+✅ Toolset core_investigation                                                   
+✅ Toolset internet                                                             
+✅ Toolset connectivity_check                                                   
+✅ Toolset skills                                                               
+✅ Toolset kubernetes/logs                                                      
+✅ Toolset bash                                                                 
+✅ Toolset kubernetes/core                                                      
+✅ Toolset helm/core                                                            
+✅ Toolset sregym-jaeger                                                        
+✅ Toolset sregym-prometheus                                                    
+✅ Toolset sregym-loki                                                          
+✅ Toolset kubernetes/live-metrics                                              
+Retrying request to /chat/completions in 0.381195 seconds                       
+
+--- stderr ---
+timeout

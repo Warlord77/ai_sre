@@ -1,0 +1,46 @@
+Diagnosis.accuracy,Diagnosis.checklist,Diagnosis.composite_score,Diagnosis.dimensions,Diagnosis.judgment,Diagnosis.reasoning,Diagnosis.submission,Diagnosis.success,TTL,attempt,blocked_requests,deployment_profile,internet_access,judge_backend,phase.cleanup.duration_s,phase.deploy.duration_s,phase.evaluate:diagnosis.duration_s,phase.fix_kubernetes.duration_s,phase.inject_fault.duration_s,phase.stage:diagnosis.duration_s,phase.stage:diagnosis.outcome,phase.undeploy_leftovers.duration_s,problem_id,run_status
+45.0,"[{'id': 'D1-Q1', 'answer': 'Yes', 'evidence': 'Faulty component: `frontend-proxy-7b7cd5fb4-jsr6n` (container **frontend‑proxy**)', 'confidence': 'High'}, {'id': 'D1-Q2', 'answer': 'No', 'evidence': 'Diagnosis cites memory‑limit OOM as cause, while ground‑truth cites duplicate `FRONTEND_HOST` env var', 'confidence': 'High'}, {'id': 'D1-Q3', 'answer': 'Yes', 'evidence': 'Diagnosis identifies `frontend-proxy` as the faulty component, matching ground‑truth component', 'confidence': 'High'}, {'id': 'D2-Q1', 'answer': 'No', 'evidence': 'Diagnosis mentions memory limit OOM, not the duplicate env‑var mechanism', 'confidence': 'High'}, {'id': 'D2-Q2', 'answer': 'No', 'evidence': 'No mention of `FRONTEND_HOST` env var or its duplicated values', 'confidence': 'High'}, {'id': 'D2-Q3', 'answer': 'No', 'evidence': 'Diagnosis attributes fault to memory limit, an unrelated fault type', 'confidence': 'High'}, {'id': 'D3-Q1', 'answer': 'Yes', 'evidence': 'Only `frontend-proxy` is blamed; other pods are listed as healthy', 'confidence': 'High'}, {'id': 'D3-Q2', 'answer': 'Yes', 'evidence': 'Diagnosis includes the `frontend-proxy` component, the sole component in ground‑truth', 'confidence': 'High'}, {'id': 'D3-Q3', 'answer': 'No', 'evidence': 'Diagnosis describes OOM‑kill outage, whereas ground‑truth describes wrong upstream routing while pod stays Ready', 'confidence': 'High'}]",0.45,"{'D1': {'name': 'Fault Localization', 'score': 0.67}, 'D2': {'name': 'Fault Characterization', 'score': 0.0}, 'D3': {'name': 'Scope Precision', 'score': 0.67}}",False,"Verdict: False (composite=0.45). D1 Fault Localization: 0.67 | D2 Fault Characterization: 0.00 | D3 Scope Precision: 0.67. Weakest dimension: Fault Characterization (0.00). Checklist details: [{""id"": ""D1-Q1"", ""answer"": ""Yes"", ""evidence"": ""Faulty component: `frontend-proxy-7b7cd5fb4-jsr6n` (container **frontend\u2011proxy**)"", ""confidence"": ""High""}, {""id"": ""D1-Q2"", ""answer"": ""No"", ""evidence"": ""Diagnosis cites memory\u2011limit OOM as cause, while ground\u2011truth cites duplicate `FRONTEND_HOST` env var"", ""confidence"": ""High""}, {""id"": ""D1-Q3"", ""answer"": ""Yes"", ""evidence"": ""Diagnosis identifies `frontend-proxy` as the faulty component, matching ground\u2011truth component"", ""confidence"": ""High""}, {""id"": ""D2-Q1"", ""answer"": ""No"", ""evidence"": ""Diagnosis mentions memory limit OOM, not the duplicate env\u2011var mechanism"", ""confidence"": ""High""}, {""id"": ""D2-Q2"", ""answer"": ""No"", ""evidence"": ""No mention of `FRONTEND_HOST` env var or its duplicated values"", ""confidence"": ""High""}, {""id"": ""D2-Q3"", ""answer"": ""No"", ""evidence"": ""Diagnosis attributes fault to memory limit, an unrelated fault type"", ""confidence"": ""High""}, {""id"": ""D3-Q1"", ""answer"": ""Yes"", ""evidence"": ""Only `frontend-proxy` is blamed; other pods are listed as healthy"", ""confidence"": ""High""}, {""id"": ""D3-Q2"", ""answer"": ""Yes"", ""evidence"": ""Diagnosis includes the `frontend-proxy` component, the sole component in ground\u2011truth"", ""confidence"": ""High""}, {""id"": ""D3-Q3"", ""answer"": ""No"", ""evidence"": ""Diagnosis describes OOM\u2011kill outage, whereas ground\u2011truth describes wrong upstream routing while pod stays Ready"", ""confidence"": ""High""}]","**Investigation Summary**
+
+| Entity | Kind | Namespace | Status / Reason | Evidence |
+|--------|------|------------|-----------------|----------|
+| `frontend‑proxy-7b7cd5fb4-jsr6n` | Pod | astronomy‑shop | **Running** but **Ready = false**; container terminated with **OOMKilled** (exit code 137) – 4 restarts | `kubectl describe pod …` shows `State: Terminated – Reason: OOMKilled`, `Restart Count: 4`, `Limits: memory 65Mi` |
+| All other pods (27 total) | Pod | astronomy‑shop | **Running / Ready = true** | `kubectl_tabular_query` shows `READY: true` for every pod except the frontend‑proxy |
+| Alert `KubePodNotReady` | Prometheus alert | astronomy‑shop | **Firing** – pod not ready > 1 min | `get_alerts` returned alert with `pod: frontend-proxy-7b7cd5fb4-jsr6n` |
+| Node `kind‑worker3` | Node | – | **Healthy** (CPU ≈ 1 %, Memory ≈ 9 %) | `kubectl_top_nodes` |
+
+**Root Cause**
+
+- **Faulty component:** `frontend-proxy-7b7cd5fb4-jsr6n` (container **frontend‑proxy**)  
+- **Misconfiguration:** Memory limit set to **65 MiB** (`Limits: memory: 65Mi`). The proxy process exceeds this limit, causing the container to be **OOMKilled** repeatedly (restart count = 4) and entering a back‑off state.  
+- **Why it breaks the app:** The frontend‑proxy routes traffic to all other services. When it is OOM‑killed and not ready, the UI cannot reach downstream services, resulting in a complete outage for the shop front‑end.  
+
+**Evidence**
+
+1. `kubectl describe pod` – shows `State: Terminated – Reason: OOMKilled`, `Exit Code: 137`, `Restart Count: 4`, `Limits: memory: 65Mi`.  
+2. Pod events include `Warning BackOff` for the container.  
+3. Prometheus alert `KubePodNotReady` firing for this pod.  
+4. All other pods are running and ready, confirming the issue is isolated to the frontend‑proxy.  
+
+**Remediation**
+
+1. **Increase memory resources** for the `frontend-proxy` container (e.g., `requests: 128Mi`, `limits: 256Mi`).  
+2. Apply the change via the Helm chart (or Deployment manifest) and roll out the update:  
+   ```bash
+   helm upgrade astronomy-shop ./chart \
+     --set frontendProxy.resources.limits.memory=256Mi \
+     --set frontendProxy.resources.requests.memory=128Mi \
+     -n astronomy-shop
+   ```
+3. Verify the pod becomes Ready and the alert clears:  
+   ```bash
+   kubectl wait --for=condition=Ready pod -l app.kubernetes.io/name=frontend-proxy -n astronomy-shop --timeout=2m
+   ```
+4. Monitor the pod’s memory usage (`kubectl top pod frontend-proxy-…`) to ensure the new limits are sufficient.  
+
+**Impact**
+
+- **Affected:** `frontend-proxy-7b7cd5fb4-jsr6n` (OOMKilled, not ready).  
+- **Checked, healthy:** All other 26 pods in the `astronomy-shop` namespace.  
+- **Changed for another reason:** None observed.  
+
+After increasing the memory limits and confirming the pod stabilises, the OpenTelemetry Demo Astronomy Shop should resume normal operation.",False,200.83027529716492,1,0,full,open,api,147.545,615.77,43.654,3.438,9.28,156.718,submitted,6.168,env_variable_shadowing_astronomy_shop,complete
