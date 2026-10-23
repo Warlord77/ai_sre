@@ -1,0 +1,511 @@
+$ rc=0
+--- stdout ---
+Model 'openai/gpt-oss-120b' has no entry in litellm's cost map and no           
+input/output_cost_per_token configured. Usage event costs for this model will be
+0. Add input_cost_per_token and output_cost_per_token to its model_list.yaml    
+entry to enable cost tracking.                                                  
+Loaded models: ['openai/gpt-oss-120b']                                          
+Loaded prompt from file /work/prompt.txt
+User: You are an SRE investigating an incident in a Kubernetes application.
+
+Application: Hotel Reservation
+Namespace(s): hotel-reservation
+
+A hotel reservation application built with Go and gRPC, providing backend 
+in-memory and persistent databases, a recommender system for hotel 
+recommendations, and a functionality to place reservations.
+
+Something in this application is currently broken. Investigate using Kubernetes 
+resources,
+events, pod logs, metrics (Prometheus), logs (Loki) and traces (Jaeger).
+
+Work autonomously; there is no human to answer questions.
+
+Finish with a section titled "ROOT CAUSE" stating:
+- the faulty component(s) (exact Kubernetes resource kinds and names)
+- the root cause (what is misconfigured or failing, and why it breaks the 
+application)
+- the evidence you found
+
+Using selected model: openai/gpt-oss-120b                                       
+Couldn't find model openai/gpt-oss-120b in litellm's model list (tried:         
+openai/gpt-oss-120b, gpt-oss-120b), using default 200000 tokens for             
+max_input_tokens. To override, set OVERRIDE_MAX_CONTENT_SIZE environment        
+variable to the correct value for your model.                                   
+Couldn't find model openai/gpt-oss-120b in litellm's model list (tried:         
+openai/gpt-oss-120b, gpt-oss-120b), using 64000 tokens for max_output_tokens. To
+override, set OVERRIDE_MAX_OUTPUT_TOKEN environment variable to the correct     
+value for your model.                                                           
+Model: openai/gpt-oss-120b, 200K context, 64K max response (default, change with
+--model, for all options see https://holmesgpt.dev/ai-providers)                
+Config hash changed for datasource: /work/holmes-config.yaml                    
+Datasource config file(s) changed, refreshing toolsets                          
+Refreshing available datasources (toolsets)                                     
+❌ Toolset inspektor-gadget/node: Environment variable ENABLE_INSPEKTOR_GADGET  
+was not set                                                                     
+❌ Toolset kubevela/core: `vela version` failed with exit code 127: /bin/sh:    
+vela: not found                                                                 
+❌ Toolset inspektor-gadget/tcpdump: Environment variable                       
+ENABLE_INSPEKTOR_GADGET was not set                                             
+❌ Toolset docker/core: `docker version` failed with exit code 127: /bin/sh:    
+docker: not found                                                               
+❌ Toolset hubble/observability: `hubble version` failed with exit code 127:    
+/bin/sh: hubble: not found                                                      
+❌ Toolset openshift/logs: `oc version --client` failed with exit code 127:     
+/bin/sh: oc: not found                                                          
+❌ Toolset cilium/core: `cilium status` failed with exit code 127: /bin/sh:     
+cilium: not found                                                               
+❌ Toolset argocd/core: Environment variable ARGOCD_AUTH_TOKEN was not set      
+❌ Toolset slab: Environment variable SLAB_API_KEY was not set                  
+✅ Toolset kubernetes/kube-prometheus-stack                                     
+✅ Toolset core_investigation                                                   
+✅ Toolset internet                                                             
+✅ Toolset connectivity_check                                                   
+❌ Toolset robusta: Integration with Robusta cloud is disabled                  
+❌ Toolset aks/node-health: `az account show` failed with exit code 127:        
+/bin/sh: az: not found                                                          
+❌ Toolset openshift/core: `oc version --client` failed with exit code 127:     
+/bin/sh: oc: not found                                                          
+❌ Toolset notion: Notion toolset is misconfigured. Authorization header is     
+required.                                                                       
+❌ Toolset openshift/live-metrics: `oc adm top nodes` failed with exit code 127:
+/bin/sh: oc: not found                                                          
+❌ Toolset opensearch/query_assist: Environment variable OPENSEARCH_URL was not 
+set                                                                             
+❌ Toolset aks/core: `az account show` failed with exit code 127: /bin/sh: az:  
+not found                                                                       
+✅ Toolset skills                                                               
+✅ Toolset kubernetes/logs                                                      
+❌ Toolset openshift/security: `oc version --client` failed with exit code 127: 
+/bin/sh: oc: not found                                                          
+✅ Toolset bash                                                                 
+✅ Toolset helm/core                                                            
+✅ Toolset kubernetes/core                                                      
+✅ Toolset sregym-loki                                                          
+✅ Toolset sregym-jaeger                                                        
+✅ Toolset sregym-prometheus                                                    
+✅ Toolset kubernetes/live-metrics                                              
+❌ Toolset crossplane/core: `kubectl api-resources --api-group=pkg.crossplane.io
+--no-headers 2>/dev/null | grep -q providers` failed with exit code 1           
+Toolset statuses are cached to /root/.holmes/toolsets_status.json               
+✅ Toolset kubernetes/kube-prometheus-stack                                     
+✅ Toolset core_investigation                                                   
+✅ Toolset internet                                                             
+✅ Toolset connectivity_check                                                   
+✅ Toolset skills                                                               
+✅ Toolset kubernetes/logs                                                      
+✅ Toolset bash                                                                 
+✅ Toolset helm/core                                                            
+✅ Toolset kubernetes/core                                                      
+✅ Toolset sregym-loki                                                          
+✅ Toolset sregym-jaeger                                                        
+✅ Toolset sregym-prometheus                                                    
+✅ Toolset kubernetes/live-metrics                                              
+LLM iteration cost: $0.000000 | Tokens: 8191 prompt + 147 completion = 8338     
+total                                                                           
+AI reasoning:                                                                   
+                                                                                
+We need to investigate incident. Need to query Kubernetes resources in namespace
+hotel-reservation. Find pods, deployments, events, logs, metrics, etc. Use      
+tools: kubernetes_jq_query, kubernetes_tabular_query, fetch_pod_logs,           
+get_alerts, get_metrics, get_logs (Loki), get_dependency_graph, get_traces.     
+                                                                                
+First, list deployments in namespace.                                           
+                                                                                
+Running tool #1 kubernetes_tabular_query: filter: kubectl get deployments       
+columns='NAME:.metadata.name,READY:.status.readyReplicas,REPLICAS:.status.replic
+as' (namespace=hotel-reservation, label_selector=, field_selector=, filter=)    
+  Finished #1 in 2.57s, output length: 1,032 characters (32 lines) - /show 1 to 
+view contents                                                                   
+The AI requested 1 tool call(s).                                                
+                                                                                
+LLM iteration cost: $0.000000 | Tokens: 8721 prompt + 93 completion = 8814 total
+AI reasoning:                                                                   
+                                                                                
+All deployments ready. Need to check pods status and events.                    
+Get pods list with status.                                                      
+                                                                                
+Running tool #2 kubernetes_tabular_query: filter: kubectl get pods              
+columns=''NAME:.metadata.name,PHASE:.status.phase,RESTARTS:.status.containerStat
+uses[0].restartCount,READY:.status.containerStatuses[0].ready''                 
+(namespace=hotel-reservation, label_selector=, field_selector=, filter=)        
+  Finished #2 in 1.82s, output length: 1,838 characters (34 lines) - /show 2 to 
+view contents                                                                   
+The AI requested 1 tool call(s).                                                
+                                                                                
+LLM iteration cost: $0.000000 | Tokens: 9490 prompt + 116 completion = 9606     
+total                                                                           
+AI reasoning:                                                                   
+                                                                                
+All pods Running, but some have restarts (geo 3, profile 4, rate 3,             
+recommendation 3, reservation 2, user 2). Need to check events for failures.    
+Get events in namespace.                                                        
+                                                                                
+Running tool #3 kubernetes_tabular_query: filter: kubectl get events            
+columns='TYPE:.type,REASON:.reason,MESSAGE:.message,OBJECT:.involvedObject.name,
+TIME:.lastTimestamp' (namespace=hotel-reservation, label_selector=,             
+field_selector=, filter=)                                                       
+  Finished #3 in 5.43s, output length: 64,570 characters (203 lines) - /show 3  
+to view contents                                                                
+The AI requested 1 tool call(s).                                                
+                                                                                
+LLM iteration cost: $0.000000 | Tokens: 20028 prompt + 158 completion = 20186   
+total                                                                           
+AI reasoning:                                                                   
+                                                                                
+We see many BackOff warnings for geo, profile, rate, recommendation,            
+reservation, user. So those components failing to start. Need logs for one of   
+each to see error. Let's fetch logs for geo pod.                                
+Fetch logs for geo-766c64f6b4-whxvp.                                            
+                                                                                
+Running tool #4 fetch_pod_logs: Fetch Logs (pod=geo-766c64f6b4-whxvp,           
+namespace=hotel-reservation)                                                    
+  Finished #4 in 0.26s, output length: 806 characters (24 lines) - /show 4 to   
+view contents                                                                   
+The AI requested 1 tool call(s).                                                
+                                                                                
+LLM iteration cost: $0.000000 | Tokens: 20480 prompt + 102 completion = 20582   
+total                                                                           
+AI reasoning:                                                                   
+                                                                                
+Geo pod panic: "no reachable servers". Likely cannot connect to its dependent   
+service (maybe consul or mongodb). Let's fetch logs for profile pod.            
+                                                                                
+Running tool #5 fetch_pod_logs: Fetch Logs (pod=profile-85c6f67954-msz8s,       
+namespace=hotel-reservation)                                                    
+  Finished #5 in 0.28s, output length: 810 characters (24 lines) - /show 5 to   
+view contents                                                                   
+The AI requested 1 tool call(s).                                                
+                                                                                
+LLM iteration cost: $0.000000 | Tokens: 20891 prompt + 71 completion = 20962    
+total                                                                           
+AI reasoning:                                                                   
+                                                                                
+Same panic.                                                                     
+                                                                                
+Now rate pod logs.                                                              
+                                                                                
+Running tool #6 fetch_pod_logs: Fetch Logs (pod=rate-b6dc6465f-422jh,           
+namespace=hotel-reservation)                                                    
+  Finished #6 in 0.26s, output length: 806 characters (24 lines) - /show 6 to   
+view contents                                                                   
+The AI requested 1 tool call(s).                                                
+                                                                                
+LLM iteration cost: $0.000000 | Tokens: 21269 prompt + 80 completion = 21349    
+total                                                                           
+AI reasoning:                                                                   
+                                                                                
+Same panic.                                                                     
+                                                                                
+Recommendation pod logs.                                                        
+                                                                                
+Running tool #7 fetch_pod_logs: Fetch Logs (pod=recommendation-6bf7689fdb-29hz4,
+namespace=hotel-reservation)                                                    
+  Finished #7 in 0.27s, output length: 817 characters (24 lines) - /show 7 to   
+view contents                                                                   
+The AI requested 1 tool call(s).                                                
+                                                                                
+LLM iteration cost: $0.000000 | Tokens: 21650 prompt + 60 completion = 21710    
+total                                                                           
+AI reasoning:                                                                   
+                                                                                
+Reservation pod logs.                                                           
+                                                                                
+Running tool #8 fetch_pod_logs: Fetch Logs (pod=reservation-57b8ccd5dc-lhz68,   
+namespace=hotel-reservation)                                                    
+  Finished #8 in 0.30s, output length: 814 characters (24 lines) - /show 8 to   
+view contents                                                                   
+The AI requested 1 tool call(s).                                                
+                                                                                
+LLM iteration cost: $0.000000 | Tokens: 22018 prompt + 62 completion = 22080    
+total                                                                           
+AI reasoning:                                                                   
+                                                                                
+User pod logs.                                                                  
+                                                                                
+Running tool #9 fetch_pod_logs: Fetch Logs (pod=user-5c4d969c85-gm8pg,          
+namespace=hotel-reservation)                                                    
+  Finished #9 in 0.26s, output length: 807 characters (24 lines) - /show 9 to   
+view contents                                                                   
+The AI requested 1 tool call(s).                                                
+                                                                                
+LLM iteration cost: $0.000000 | Tokens: 22395 prompt + 134 completion = 22529   
+total                                                                           
+AI reasoning:                                                                   
+                                                                                
+All failing pods show same panic: "no reachable servers". Likely they cannot    
+reach a dependent service, maybe Consul for service discovery, or MongoDB for   
+DB. Check connectivity to Consul service from pods? Could be that Consul is not 
+reachable due to network or service not exposing. Let's check Consul pod logs.  
+Fetch consul logs.                                                              
+                                                                                
+Running tool #10 fetch_pod_logs: Fetch Logs (pod=consul-5c767d7459-jmv6g,       
+namespace=hotel-reservation)                                                    
+  Finished #10 in 0.31s, output length: 836 characters (23 lines) - /show 10 to 
+view contents                                                                   
+The AI requested 1 tool call(s).                                                
+                                                                                
+LLM iteration cost: $0.000000 | Tokens: 22838 prompt + 91 completion = 22929    
+total                                                                           
+AI reasoning:                                                                   
+                                                                                
+Consul logs show no error.                                                      
+                                                                                
+Maybe the pods cannot resolve DNS for Consul service name. Check service        
+definitions.                                                                    
+List services.                                                                  
+                                                                                
+Running tool #11 kubernetes_tabular_query: filter: kubectl get services         
+columns='NAME:.metadata.name,TYPE:.spec.type,CLUSTERIP:.spec.clusterIP,PORTS:.sp
+ec.ports' (namespace=hotel-reservation, label_selector=, field_selector=,       
+filter=)                                                                        
+  Finished #11 in 0.49s, output length: 3,197 characters (36 lines) - /show 11  
+to view contents                                                                
+The AI requested 1 tool call(s).                                                
+                                                                                
+LLM iteration cost: $0.000000 | Tokens: 23978 prompt + 117 completion = 24095   
+total                                                                           
+AI reasoning:                                                                   
+                                                                                
+All services exist. The panic "no reachable servers" likely from gRPC client    
+trying to connect to other services via service discovery (Consul). Maybe Consul
+agent not reachable due to network policy? Check endpoints for consul.          
+List endpoints.                                                                 
+                                                                                
+Running tool #12 kubernetes_tabular_query: filter: kubectl get endpoints        
+columns=''NAME:.metadata.name,ADDRESSES:.subsets[0].addresses[0].ip,PORTS:.subse
+ts[0].ports'' (namespace=hotel-reservation, label_selector=, field_selector=,   
+filter=)                                                                        
+  Finished #12 in 2.54s, output length: 2,228 characters (32 lines) - /show 12  
+to view contents                                                                
+The AI requested 1 tool call(s).                                                
+                                                                                
+LLM iteration cost: $0.000000 | Tokens: 24902 prompt + 78 completion = 24980    
+total                                                                           
+AI reasoning:                                                                   
+                                                                                
+Endpoints exist.                                                                
+                                                                                
+Maybe the pods cannot reach Consul because of network policy? Check network     
+policies.                                                                       
+Search for networkpolicy.                                                       
+                                                                                
+Running tool #13 kubernetes_tabular_query: filter: kubectl get networkpolicies  
+columns='NAME:.metadata.name' (namespace=hotel-reservation, label_selector=,    
+field_selector=, filter=)                                                       
+  Finished #13 in 2.70s, output length: 194 characters (12 lines) - /show 13 to 
+view contents                                                                   
+The AI requested 1 tool call(s).                                                
+                                                                                
+LLM iteration cost: $0.000000 | Tokens: 25129 prompt + 101 completion = 25230   
+total                                                                           
+AI reasoning:                                                                   
+                                                                                
+No network policies.                                                            
+                                                                                
+Maybe the issue is that the pods cannot resolve DNS for service names due to    
+CoreDNS failure. Check CoreDNS pods.                                            
+We need to query kube-system namespace pods.                                    
+                                                                                
+could not find tool kubernetes_tabular_query<|channel|>commentary. skipping     
+could not find tool kubernetes_tabular_query<|channel|>commentary. skipping     
+Skipping tool execution for kubernetes_tabular_query<|channel|>commentary: args:
+{'namespace': 'kube-system', 'kind': 'pods', 'columns':                         
+'NAME:.metadata.name,PHASE:.status.phase,READY:.status.containerStatuses[0].read
+y'}                                                                             
+The AI requested 1 tool call(s).                                                
+                                                                                
+LLM iteration cost: $0.000000 | Tokens: 25372 prompt + 68 completion = 25440    
+total                                                                           
+AI reasoning:                                                                   
+                                                                                
+Oops syntax. Use correct.                                                       
+                                                                                
+Running tool #15 kubernetes_tabular_query: filter: kubectl get pods             
+columns=''NAME:.metadata.name,PHASE:.status.phase,READY:.status.containerStatuse
+s[0].ready'' (namespace=kube-system, label_selector=, field_selector=, filter=) 
+  Finished #15 in 1.83s, output length: 1,319 characters (29 lines) - /show 15  
+to view contents                                                                
+The AI requested 1 tool call(s).                                                
+                                                                                
+LLM iteration cost: $0.000000 | Tokens: 25870 prompt + 96 completion = 25966    
+total                                                                           
+AI reasoning:                                                                   
+                                                                                
+CoreDNS pods are running. Check logs for coredns for errors.                    
+Fetch coredns logs.                                                             
+                                                                                
+Running tool #16 fetch_pod_logs: Fetch Logs (pod=coredns-668d6bf9bc-hg7b7,      
+namespace=kube-system)                                                          
+  Finished #16 in 0.33s, output length: 914 characters (29 lines) - /show 16 to 
+view contents                                                                   
+The AI requested 1 tool call(s).                                                
+                                                                                
+LLM iteration cost: $0.000000 | Tokens: 26294 prompt + 228 completion = 26522   
+total                                                                           
+AI reasoning:                                                                   
+                                                                                
+No errors.                                                                      
+                                                                                
+Maybe the pods cannot reach Consul because Consul's DNS port 53 UDP is not      
+reachable due to firewall? Check if Consul service includes UDP port 8600 (DNS).
+Yes. Pods may use Consul for service discovery via DNS. Check if pods have DNS  
+config to use Consul? Not sure.                                                 
+                                                                                
+But the panic "no reachable servers" could be from gRPC client trying to connect
+to other services via address from environment variable (e.g., "profile:8081")  
+but maybe those services not reachable due to missing PVC causing pods not      
+ready? However services are up.                                                 
+                                                                                
+Check if the failing pods have readiness probes failing? But they are restarting
+due to BackOff, meaning container crashes.                                      
+                                                                                
+Let's fetch full logs (without filter) for one pod to see more context.         
+Fetch geo pod logs without filter.                                              
+                                                                                
+Running tool #17 fetch_pod_logs: Fetch Logs (pod=geo-766c64f6b4-whxvp,          
+namespace=hotel-reservation)                                                    
+  Finished #17 in 0.30s, output length: 4,232 characters (58 lines) - /show 17  
+to view contents                                                                
+The AI requested 1 tool call(s).                                                
+                                                                                
+LLM iteration cost: $0.000000 | Tokens: 28556 prompt + 133 completion = 28689   
+total                                                                           
+AI reasoning:                                                                   
+                                                                                
+The logs show initial failure due to DB connection, then after some time        
+succeeded. So the pod restarted, then succeeded. But later maybe still failing? 
+However the pod is currently Running and Ready true. So maybe the incident is   
+resolved? But other services still have BackOff. Let's fetch profile pod logs   
+full.                                                                           
+                                                                                
+Fetch profile logs full.                                                        
+                                                                                
+Running tool #18 fetch_pod_logs: Fetch Logs (pod=profile-85c6f67954-msz8s,      
+namespace=hotel-reservation)                                                    
+  Finished #18 in 0.29s, output length: 4,794 characters (62 lines) - /show 18  
+to view contents                                                                
+The AI requested 1 tool call(s).                                                
+                                                                                
+LLM iteration cost: $0.000000 | Tokens: 30947 prompt + 158 completion = 31105   
+total                                                                           
+AI reasoning:                                                                   
+                                                                                
+Now profile succeeded after initial DB connection failure. So the pods are now  
+healthy. The earlier BackOff warnings were due to initial startup failures but  
+they recovered. Check current pod status Ready true for all. So maybe the       
+incident is resolved? But the user said something broken. Perhaps the issue is  
+that the DB pods (MongoDB) have PersistentVolumeClaims not found earlier but    
+later succeeded. However they are running.                                      
+                                                                                
+Maybe the issue is that the reservation service still failing? Let's fetch      
+reservation logs full.                                                          
+                                                                                
+Running tool #19 fetch_pod_logs: Fetch Logs (pod=reservation-57b8ccd5dc-lhz68,  
+namespace=hotel-reservation)                                                    
+  Finished #19 in 0.28s, output length: 4,799 characters (61 lines) - /show 19  
+to view contents                                                                
+The AI requested 1 tool call(s).                                                
+                                                                                
+LLM iteration cost: $0.000000 | Tokens: 33329 prompt + 78 completion = 33407    
+total                                                                           
+AI reasoning:                                                                   
+                                                                                
+Now reservation succeeded after initial DB failure.                             
+                                                                                
+User pod logs?                                                                  
+Fetch user logs full.                                                           
+                                                                                
+Running tool #20 fetch_pod_logs: Fetch Logs (pod=user-5c4d969c85-gm8pg,         
+namespace=hotel-reservation)                                                    
+  Finished #20 in 0.27s, output length: 4,256 characters (58 lines) - /show 20  
+to view contents                                                                
+The AI requested 1 tool call(s).                                                
+                                                                                
+LLM iteration cost: $0.000000 | Tokens: 35416 prompt + 151 completion = 35567   
+total                                                                           
+AI reasoning:                                                                   
+                                                                                
+All services now started successfully after initial DB connection failures. The 
+root cause appears to be that the MongoDB pods were not ready when the services 
+attempted to connect, causing "no reachable servers" panic. The PVC provisioning
+delays caused MongoDB pods to start later. The services had restart loops until 
+DB became reachable.                                                            
+                                                                                
+Thus incident: services crashed due to DB unavailability at startup.            
+                                                                                
+We should verify MongoDB pods start times. Check creation timestamps.           
+We can fetch pod details for mongodb-geo.                                       
+                                                                                
+Running tool #21 kubernetes_tabular_query: filter: kubectl get pods             
+columns='NAME:.metadata.name,STARTTIME:.metadata.creationTimestamp'             
+(namespace=hotel-reservation, label_selector=, field_selector=, filter=)        
+  Finished #21 in 0.48s, output length: 1,854 characters (36 lines) - /show 21  
+to view contents                                                                
+The AI requested 1 tool call(s).                                                
+                                                                                
+LLM iteration cost: $0.000000 | Tokens: 36442 prompt + 992 completion = 37434   
+total                                                                           
+AI: Investigation summary                                                           
+
+                                                                                
+  Kind         Name             Evidence of failure     Current status          
+ ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 
+  Deployment   geo              Event BackOff           Pod                     
+                                (05:12:33) → pod logs   geo‑766c64f6b4‑whxvp    
+                                panic: no reachable     now Running, Ready      
+                                servers (DB init)       true                    
+  Deployment   profile          Event BackOff           Pod                     
+                                (05:13:34) → pod logs   profile‑85c6f67954‑ms…  
+                                panic: no reachable     now Running, Ready      
+                                servers (DB init)       true                    
+  Deployment   rate             Event BackOff           Pod                     
+                                (05:12:49) → pod logs   rate‑b6dc6465f‑422jh    
+                                panic: no reachable     now Running, Ready      
+                                servers (DB init)       true                    
+  Deployment   recommendation   Event BackOff           Pod                     
+                                (05:13:03) → pod logs   recommendation‑6bf768…  
+                                panic: no reachable     now Running, Ready      
+                                servers (DB init)       true                    
+  Deployment   reservation      Event BackOff           Pod                     
+                                (05:12:27) → pod logs   reservation‑57b8ccd5d…  
+                                panic: no reachable     now Running, Ready      
+                                servers (DB init)       true                    
+  Deployment   user             Event BackOff           Pod                     
+                                (05:12:45) → pod logs   user‑5c4d969c85‑gm8pg   
+                                panic: no reachable     now Running, Ready      
+                                servers (DB init)       true                    
+                                                                                
+
+All other components (frontend, consul, jaeger, memcached‑*, mongodb‑*, search) 
+are Running and Ready with no error events.                                     
+
+Root cause                                                                      
+
+ • The six micro‑services above all attempt to open a MongoDB connection at     
+   start‑up (Read database URL: mongodb‑<service>:27017).                       
+ • Their logs show a panic: no reachable servers caused by the DB client failing
+   to find a reachable MongoDB instance.                                        
+ • The MongoDB pods for the corresponding databases were created after the      
+   dependent services (see creation timestamps: e.g., mongodb‑geo 05:12:39 vs.  
+   geo 05:11:10).                                                               
+ • Because the services have no start‑up delay or readiness check for the DB,   
+   they crash, trigger a BackOff restart loop, and only recover once the DB pod 
+   becomes ready (as shown by the second successful start in each log).         
+
+Fix recommendation                                                              
+
+ 1 Add a start‑up dependency check – use an init‑container or a startup probe   
+   that waits for the corresponding MongoDB service to be reachable (e.g., nc -z
+   mongodb‑geo 27017 with retries).                                             
+ 2 Expose MongoDB readiness – ensure each MongoDB pod has a proper readiness    
+   probe so other pods can reliably wait for it.                                
+ 3 Adjust deployment ordering – if using Helm, add helm.sh/hook: pre-install    
+   hooks or dependsOn annotations to start DB pods before the micro‑services.   
+ 4 Increase restart back‑off limits (optional) to avoid rapid crash loops while 
+   the DB is still provisioning.                                                
+
+Implementing any of the above will prevent the “no reachable servers” panic and 
+eliminate the BackOff restarts observed.                                        
+
+--- stderr ---

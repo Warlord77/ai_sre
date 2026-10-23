@@ -1,0 +1,5 @@
+{"version": 2, "width": 140, "height": 10, "timestamp": 1792734798, "env": {"SHELL": "/bin/bash", "TERM": "xterm-256color"}}
+[0.025474, "o", "Endpoint https://gpustack.apps.one2n.io:8443/v1, model gpt-oss-120b\r\n"]
+[0.04483, "o", "  ✅ tunnel listening on 127.0.0.1:8443\r\n"]
+[0.229589, "o", "  ✅ model listed (gpt-oss-120b)\r\n"]
+[2.25368, "o", "  ✅ tool call parsed: kubectl_get({\"kind\": \"pods\", \"namespace\": \"default\"})\r\n"]

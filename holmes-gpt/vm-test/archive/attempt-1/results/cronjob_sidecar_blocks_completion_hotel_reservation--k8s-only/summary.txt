@@ -1,0 +1,23 @@
+$ problem: cronjob_sidecar_blocks_completion_hotel_reservation
+$ holmesgpt: 21 tool calls, 22 LLM calls, 517,520 tokens, 3.4 min
+
+Root cause**
+
+- The six micro‑services above all attempt to open a MongoDB connection at start‑up (`Read database URL: mongodb‑<service>:27017`).
+- Their logs show a panic: **`no reachable servers`** caused by the DB client failing to find a reachable MongoDB instance.
+- The MongoDB pods for the corresponding databases were created **after** the dependent services (see creation timestamps: e.g., …
+- Because the services have no start‑up delay or readiness check for the DB, they crash, trigger a `BackOff` restart loop, and only …
+
+**Fix recommendation**
+
+1. **Add a start‑up dependency check** – use an init‑container or a startup probe that waits for the corresponding MongoDB service to …
+2. **Expose MongoDB readiness** – ensure each MongoDB pod has a proper readiness probe so other pods can reliably wait for it.
+3. **Adjust deployment ordering** – if using Helm, add `helm.sh/hook: pre-install` hooks or `dependsOn` annotations to start DB pods …
+4. **Increase restart back‑off limits** (optional) to avoid rapid crash loops while the DB is still provisioning.
+
+Implementing any of the above will prevent the “no reachable servers” panic and eliminate the BackOff restarts observed.
+
+$ judge: success=False  score=0.0/100
+Verdict: False (composite=0.00). D1 Fault Localization: 0.00 | D2 Fault Characterization: 0.00 | D3 Scope Precision: 0.00. Weakest
+dimension: Fault Localization (0.00). Checklist details: [{"id": "D1-Q1", "answer": "No", "evidence": "Diagnosis lists Deployments geo,
+profile, rate, recommendation, reservation, user\u2014not the audit-log-archiver CronJob.", "confidence": "High"}, {"id": "D1-Q2", "a

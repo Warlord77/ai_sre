@@ -98,3 +98,7 @@ run-lite: preflight install ## Run all 17 SREGym-Lite problems.
 	$(RUN) --suite sregym-lite
 run-list: ## Run problems one at a time (PROBLEMS="<id> <id>...").
 	@scripts/run-list.sh $(PROBLEMS)
+record-run: ## run-one under a terminal recording, then collect logs into results/ (PROBLEM=<id>).
+	@mkdir -p logs
+	-@GIF_SPEED=20 ROWS=40 scripts/record.sh run-$(PROBLEM) bash -c 'make run-one PROBLEM=$(PROBLEM) 2>&1 | tee logs/run-$(PROBLEM).log'
+	@scripts/collect-results.sh $(PROBLEM)

@@ -1,0 +1,25 @@
+$ problem: network_policy_block
+$ holmesgpt: 17 tool calls, 18 LLM calls, 459,342 tokens, 6.3 min
+
+Root cause**
+
+- **Faulty component(s):** The **application pods** (`reservation`, `geo`, `rate`, `profile`, `user`, `recommendation`) repeatedly …
+- **Why it breaks the application:** Each service reads its database URL from the environment (e.g., `mongodb-reservation:27017`). …
+- **Evidence:**
+1. `reservation` pod JSON shows `lastState.terminated.reason: "Error"` and `exitCode: 2` with logs `panic: no reachable servers`.
+2. Event list contains `Back-off restarting failed container` for each affected pod.
+3. PVC provisioning events (`ProvisioningSucceeded`) occur **after** the initial start of the dependent pods (≈04:56 UTC), while the …
+
+**Remediation suggestions**
+
+1. **Add a readiness probe** (or init container) to each service that waits for its MongoDB endpoint to become reachable before …
+2. **Ensure PVCs are pre‑provisioned** (or use a storage class that provisions instantly) so MongoDB pods start before dependent …
+3. **Adjust deployment ordering**: set `dependsOn` via Helm hooks or use `postStart` scripts to retry DB connections with exponential …
+
+Implementing one or more of these changes will prevent the services from crashing on startup and eliminate the BackOff cycles.
+
+$ judge: success=False  score=11.0/100
+Verdict: False (composite=0.11). D1 Fault Localization: 0.00 | D2 Fault Characterization: 0.00 | D3 Scope Precision: 0.33. Weakest
+dimension: Fault Localization (0.00). Checklist details: [{"id": "D1-Q1", "answer": "No", "evidence": "Diagnosis blames MongoDB
+connection timing, never mentions recommendation component or NetworkPolicy as origin.", "confidence": "High"}, {"id": "D1-Q2",
+"answer": "No

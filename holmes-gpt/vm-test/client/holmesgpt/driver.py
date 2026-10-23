@@ -57,9 +57,51 @@ def api_base() -> str:
     )
 
 
+MCP_FALLBACK_PORT = int(os.environ.get("HOLMES_MCP_FALLBACK_PORT", "19954"))
+_mcp_port: int | None = None
+_mcp_forward: subprocess.Popen | None = None
+
+
+def mcp_healthy(port: int) -> bool:
+    try:
+        with requests.get(f"http://127.0.0.1:{port}/prometheus/sse", stream=True, timeout=5) as r:
+            return r.status_code == 200
+    except requests.RequestException:
+        return False
+
+
+def ensure_mcp() -> int:
+    """Return a host port serving SREGym's MCP server.
+
+    SREGym port-forwards it to MCP_SERVER_PORT when it deploys, but on a long deploy the
+    forward can be gone by the time the agent starts, and HolmesGPT then silently runs
+    without Prometheus/Loki/Jaeger. Fall back to our own forward with the host kubeconfig.
+    """
+    global _mcp_port, _mcp_forward
+    sregym_port = int(os.getenv("MCP_SERVER_PORT", "9954"))
+    for port in (sregym_port, _mcp_port):
+        if port and mcp_healthy(port):
+            return port
+    if _mcp_forward and _mcp_forward.poll() is None:
+        _mcp_forward.terminate()
+    logger.warning(f"MCP server not reachable on {sregym_port}; port-forwarding it to {MCP_FALLBACK_PORT}")
+    address = "127.0.0.1" if HOLMES_NETWORK == "host" else "0.0.0.0"
+    _mcp_forward = subprocess.Popen(
+        ["kubectl", "--kubeconfig", str(Path.home() / ".kube" / "config"), "-n", "sregym",
+         "port-forward", "--address", address, "svc/mcp-server", f"{MCP_FALLBACK_PORT}:9954"],
+        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+    )  # fmt: skip
+    for _ in range(30):
+        if mcp_healthy(MCP_FALLBACK_PORT):
+            _mcp_port = MCP_FALLBACK_PORT
+            return _mcp_port
+        time.sleep(1)
+    logger.error("MCP fallback port-forward failed; HolmesGPT will run without Prometheus/Loki/Jaeger")
+    return sregym_port
+
+
 def mcp_base_for_container() -> str:
-    port = os.getenv("MCP_SERVER_PORT", "9954")
-    return f"http://{DOCKER_HOST_ALIAS}:{port}"
+    return f"http://{DOCKER_HOST_ALIAS}:{ensure_mcp()}"
 
 
 def get_stage() -> str | None:
@@ -251,6 +293,8 @@ def main():
         logger.info("Mitigation stage: HolmesGPT does not remediate; submitting empty mitigation")
         submit("")
 
+    if _mcp_forward and _mcp_forward.poll() is None:
+        _mcp_forward.terminate()
     sys.exit(0 if rc in (0, None) else rc)
 
 

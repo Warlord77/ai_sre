@@ -1,0 +1,56 @@
+2026-10-23 06:10:40 - INFO - all.holmesgpt.driver - Problem ID (harness): anon_aec5957c9b1513b829d93b8d56140c92; app: {'app_name': 'OpenTelemetry Demo Astronomy Shop', 'namespace': 'astronomy-shop', 'namespaces': ['astronomy-shop'], 'descriptions': 'An online shopping platform built with a microservices architecture, showcasing OpenTelemetry instrumentation for distributed tracing across services.', 'stages': ['diagnosis']} - driver.py:main:267
+2026-10-23 06:10:40 - INFO - all.holmesgpt.driver - Running HolmesGPT: docker run --rm --memory 1g --network host --add-host host.docker.internal:127.0.0.1 --add-host gpustack.apps.one2n.io:127.0.0.1 -e OPENAI_API_KEY -e OPENAI_API_BASE -e KUBECONFIG=/work/kubeconfig.yaml -v /tmp/holmes-sregym-dad9jf8f:/work us-central1-docker.pkg.dev/genuine-flight-317411/devel/holmes:latest ask --prompt-file /work/prompt.txt --model openai/gpt-oss-120b --config /work/holmes-config.yaml --no-interactive --json-output-file /work/output.json --max-steps 60 --log-costs - driver.py:run_holmes:224
+2026-10-23 06:10:40 - INFO - all.holmesgpt.driver - Holmes config:
+toolsets:
+  kubernetes/core:
+    enabled: true
+  kubernetes/logs:
+    enabled: true
+mcp_servers:
+  sregym-prometheus:
+    description: PromQL queries against the cluster Prometheus (metrics)
+    config:
+      url: http://host.docker.internal:9954/prometheus/sse
+      mode: sse
+  sregym-loki:
+    description: LogQL queries against the cluster Loki (pod logs, including from
+      deleted pods)
+    config:
+      url: http://host.docker.internal:9954/loki/sse
+      mode: sse
+  sregym-jaeger:
+    description: Distributed traces from Jaeger (service call graph, latency, errors)
+    config:
+      url: http://host.docker.internal:9954/jaeger/sse
+      mode: sse
+ - driver.py:run_holmes:225
+2026-10-23 06:19:50 - INFO - all.holmesgpt.driver - HolmesGPT answer:
+**ROOT CAUSE**
+
+- **Faulty component:** `Pod frontend-proxy-7b7cd5fb4-lqwtd (Deployment frontend‑proxy)`.  
+- **Failure:** The container was terminated with **OOMKilled** (`exitCode 137`) and entered a **CrashLoopBackOff**.  
+- **Why it breaks the application:** The frontend‑proxy is the entry point for all user traffic. When it is repeatedly killed for out‑of‑memory, the proxy cannot forward requests to the downstream services (e.g., checkout, recommendation). This produced the flood of “connection refused” errors seen in the frontend logs and caused downstream failures such as the “shipping quote failure” and overall unavailability of the OpenTelemetry Demo Astronomy Shop.
+
+**Evidence**
+
+| Resource | Evidence |
+|----------|----------|
+| Pod status (frontend‑proxy) | `state.waiting.reason: CrashLoopBackOff` and `lastState.terminated.reason: OOMKilled` (restartCount 4) – observed via `kubernetes_jq_query` on the pod. |
+| Container logs (frontend‑proxy) | Warnings about missing OTEL env vars, but no other errors; the OOM kill is reflected in the pod status rather than explicit log messages. |
+| Deployment spec (frontend‑proxy) | Memory limit set to **65 Mi** (`.spec.template.spec.containers[0].resources.limits.memory: "65Mi"`). |
+| Application logs (frontend) | Numerous `connection refused` messages to service IPs (e.g., `10.96.208.125:8080`, `10.96.178.214:8080`), indicating the proxy could not reach downstream services. |
+| Events (frontend‑proxy) | `Warning BackOff` event confirming the container restart loop. |
+
+**Fix**
+
+Increase the memory limit for the `frontend-proxy` deployment to a value that comfortably fits its runtime needs (e.g., `256Mi` or higher) and redeploy:
+
+```yaml
+# Patch example (apply with kubectl)
+kubectl -n astronomy-shop set resources deployment/frontend-proxy \
+  --limits=memory=256Mi \
+  --requests=memory=128Mi
+```
+
+After applying the new limits, the pod should start without OOM kills, the CrashLoopBackOff will resolve, and the frontend will be able to route traffic to the microservices, restoring normal operation of the OpenTelemetry Demo Astronomy Shop. - driver.py:main:287
+2026-10-23 06:19:50 - INFO - all.holmesgpt.driver - Submit -> 200: {"status":"200","message":"Submission received","stage":"diagnosis"} - driver.py:submit:131

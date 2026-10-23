@@ -1,0 +1,9 @@
+{"version": 2, "width": 140, "height": 16, "timestamp": 1792734795, "env": {"SHELL": "/bin/bash", "TERM": "xterm-256color"}}
+[0.207904, "o", "  docker      ok\r\n"]
+[0.277814, "o", "  context     ok (kind-kind)\r\n"]
+[0.373327, "o", "  cluster     ok\r\n"]
+[0.376667, "o", "  uv          ok\r\n"]
+[0.379347, "o", "  api key     ok\r\n"]
+[2.630132, "o", "  model       ok (openai/gpt-oss-120b, tool calls)\r\n"]
+[2.635793, "o", "  judge host  ok\r\n"]
+[2.823794, "o", "  holmes img  ok\r\n"]

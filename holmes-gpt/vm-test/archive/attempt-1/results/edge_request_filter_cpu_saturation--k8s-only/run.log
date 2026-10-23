@@ -1,0 +1,1185 @@
+  docker      ok
+  context     ok (kind-kind)
+  cluster     ok
+  uv          ok
+  api key     ok
+  model       ok (openai/gpt-oss-120b, tool calls)
+  judge host  ok
+  holmes img  ok
+Linked /home/w77/SREGym/clients/holmesgpt and registered agent 'holmesgpt'
+cd /home/w77/SREGym && uv run main.py --agent holmesgpt --model openai/gpt-oss-120b --judge-model openai/gpt-oss-120b --stages diagnosis --internet-access open --profile full --problem edge_request_filter_cpu_saturation
+[10/23/26 05:22:34] INFO     all.sregym.profile - Deployment profile: full      
+[10/23/26 05:22:34] INFO     __main__ - 🔧 Config — agent: holmesgpt,           
+                             agent_model: openai/gpt-oss-120b, judge_backend:   
+                             api, judge_model: openai/gpt-oss-120b,             
+                             reasoning_effort: agent default, jev_model:        
+                             disabled, deployment_profile: full,                
+                             internet_access: open, container_hardening: on,    
+                             agent_api_base: unset, judge_api_base: unset       
+╭───────────────────────────── SREGym API Server ──────────────────────────────╮
+│  ____  ____  _____ ____                                                      │
+│ / ___||  _ \| ____/ ___|_   _ _ __ ___                                       │
+│ \___ \| |_) |  _|| |  _| | | | '_ ` _ \                                      │
+│  ___) |  _ <| |__| |_| | |_| | | | | | |                                     │
+│ |____/|_| \_\_____\____|\__, |_| |_| |_|                                     │
+│                         |___/                                                │
+│                                                                              │
+╰──────────────────────────── http://0.0.0.0:8000 ─────────────────────────────╯
+Available Endpoints                                                             
+
+ • POST /submit: { "stage": "diagnosis", "solution": "<your-solution>" } →      
+   grades the named stage                                                       
+ • GET /status: returns { "stage": "setup" | "diagnosis" | "mitigation" |       
+   "tearing_down" | "done" }                                                    
+/home/w77/SREGym/.venv/lib/python3.12/site-packages/websockets/legacy/__init__.py:6: DeprecationWarning: websockets.legacy is deprecated; see https://websockets.readthedocs.io/en/stable/howto/upgrade.html for upgrade instructions
+  warnings.warn(  # deprecated in 14.0 - 2024-11-09
+/home/w77/SREGym/.venv/lib/python3.12/site-packages/uvicorn/protocols/websockets/websockets_impl.py:17: DeprecationWarning: websockets.server.WebSocketServerProtocol is deprecated
+  from websockets.server import WebSocketServerProtocol
+                    INFO     uvicorn.error - Started server process [377842]    
+                    INFO     uvicorn.error - Waiting for application startup.   
+                    INFO     uvicorn.error - Application startup complete.      
+                    INFO     uvicorn.error - Uvicorn running on                 
+                             http://0.0.0.0:8000 (Press CTRL+C to quit)         
+[05:22:35] Starting agent now: holmesgpt                             main.py:266
+           🔒 Starting Kubernetes API proxy to hide chaos            main.py:270
+           namespaces...                                                        
+[10/23/26 05:22:35] INFO     all.sregym.conductor - Starting Kubernetes API     
+                             filtering proxy...                                 
+                    INFO     all.infra.k8s_proxy - Kubernetes API filtering     
+                             proxy started on 127.0.0.1:16443                   
+                    INFO     all.infra.k8s_proxy - Hidden namespaces: {'khaos', 
+                             'chaos-mesh'}                                      
+                    INFO     all.infra.k8s_proxy - Hidden labels: {'app':       
+                             {'load-generator', 'locust-fetcher'}, 'job':       
+                             {'workload'}, 'network-access': {'restricted'},    
+                             'opentelemetry.io/name': {'load-generator'}}       
+                    INFO     all.infra.k8s_proxy - Generated agent kubeconfig at
+                             /tmp/sregym-agent-kubeconfig-di_2bl14.yaml         
+                    INFO     all.sregym.conductor - Agent kubeconfig generated  
+                             at: /tmp/sregym-agent-kubeconfig-di_2bl14.yaml     
+           🎯 Running single problem:                                main.py:311
+           edge_request_filter_cpu_saturation                                   
+                                                                     main.py:390
+           🔍 Starting problem: edge_request_filter_cpu_saturation              
+           (Attempt 1 of 1)                                                     
+                    INFO     all.application - Namespace astronomy-shop not     
+                             found. Creating namespace.                         
+                    INFO     all.application - Namespace astronomy-shop created 
+                             successfully: namespace/astronomy-shop created     
+                                                                                
+                    INFO     all.sregym.conductor - [Session Start] Problem ID: 
+                             edge_request_filter_cpu_saturation                 
+                    INFO     all.sregym.conductor - [STAGE] Start testing on    
+                             problem: edge_request_filter_cpu_saturation        
+                    INFO     all.sregym.conductor - Stages requested for this   
+                             run: ['diagnosis']                                 
+[10/23/26 05:22:35] INFO     __main__ - 🔍 Running pre-flight check for judge   
+                             model...                                           
+🔧 Initializing LLM backend — model: openai/gpt-oss-120b, api_base: unset
+[10/23/26 05:22:37] INFO     __main__ - ✅ Judge pre-flight check passed        
+[10/23/26 05:22:37] INFO     all.sregym.conductor - Fixing Kubernetes... to     
+                             normal state.                                      
+                    INFO     all.sregym.conductor - [FIX] Imbalance leftover if 
+                             any                                                
+                    INFO     all.sregym.conductor - [FIX] KubeletCrash leftover 
+                             if any                                             
+Starting kubelet in kind-worker...
+Kubelet started in kind-worker
+Starting kubelet in kind-worker2...
+Kubelet started in kind-worker2
+Starting kubelet in kind-worker3...
+Kubelet started in kind-worker3
+Waiting for worker nodes {'kind-worker2', 'kind-worker', 'kind-worker3'} to become Ready...
+All worker nodes are Ready.
+[10/23/26 05:22:38] INFO     all.sregym.conductor - [FIX]                       
+                             KubeletEvictionThresholdMisconfig leftover if any  
+Recovering disk pressure in kind-worker...
+Waiting for node kind-worker to become Ready...
+Node kind-worker is Ready.
+Recovering disk pressure in kind-worker2...
+Waiting for node kind-worker2 to become Ready...
+Node kind-worker2 is Ready.
+Recovering disk pressure in kind-worker3...
+Waiting for node kind-worker3 to become Ready...
+Node kind-worker3 is Ready.
+[10/23/26 05:22:39] INFO     all.sregym.conductor - [FIX] Calico                
+                             IPPool/strictAffinity leftover if any              
+[10/23/26 05:22:40] INFO     all.sregym.conductor - [FIX] Calico route-reflector
+                             label drift leftovers if any                       
+[10/23/26 05:22:41] INFO     all.sregym.conductor - [FIX] Stale CoreDNS NXDOMAIN
+                             templates if any                                   
+No NXDOMAIN templates found in CoreDNS config; nothing to do
+                    INFO     all.sregym.conductor - [FIX] NightlyRebalanceOOM   
+                             kube-system actor leftover if any                  
+                    INFO     all.sregym.conductor - [FIX] Clock drift leftover  
+                             if any                                             
+No leftover node-probe pods found; nothing to do
+                    INFO     all.sregym.conductor - Fix Kubernetes completed.   
+                    INFO     all.sregym.conductor - Undeploying app leftovers...
+                    INFO     all.infra.helm - Helm Uninstall: astronomy-shop in 
+                             namespace astronomy-shop                           
+[05:22:41] Waiting for namespace deletion...                      kubectl.py:341
+[05:22:47] Namespace 'astronomy-shop' has been deleted.           kubectl.py:349
+[10/23/26 05:22:47] INFO     all.infra.kubectl - Namespace 'astronomy-shop'     
+                             deleted successfully.                              
+                    INFO     all.sregym.conductor - App leftovers undeployed.   
+                    INFO     all.sregym.conductor - Deploying app...            
+                    INFO     all.infra.cluster_state - Baseline state loaded    
+                             from                                               
+                             /home/w77/cache_dir/cluster_baseline_state.json    
+                    INFO     all.sregym.conductor - [DEPLOY] Loaded persisted   
+                             cluster baseline state                             
+                    INFO     all.sregym.conductor - [DEPLOY] Setting up         
+                             metrics-server…                                    
+[10/23/26 05:22:48] INFO     all.sregym.conductor - [DEPLOY] metrics-server     
+                             already present and patched; skipping re-apply     
+[05:22:48] Waiting for all pods in namespace 'kube-system' to be  kubectl.py:204
+           ready...                                                             
+           All pods in namespace 'kube-system' are ready.         kubectl.py:245
+                    INFO     all.sregym.conductor - [DEPLOY] Setting up OpenEBS…
+[10/23/26 05:22:49] INFO     all.sregym.conductor - [DEPLOY] OpenEBS already    
+                             deployed; skipping operator re-apply               
+[05:22:49] Waiting for all pods in namespace 'openebs' to be      kubectl.py:204
+           ready...                                                             
+           All pods in namespace 'openebs' are ready.             kubectl.py:245
+                    INFO     all.sregym.conductor - [DEPLOY] Ensuring OpenEBS   
+                             LocalPV-Device StorageClass…                       
+                    INFO     all.sregym.conductor - [DEPLOY]                    
+                             StorageClass/openebs-device already exists; leaving
+                             it unchanged                                       
+                    INFO     all.sregym.conductor - [DEPLOY] Deploying          
+                             Prometheus…                                        
+                    INFO     all.infra.helm - Helm Uninstall: prometheus in     
+                             namespace observe                                  
+                    INFO     all.infra.helm - Helm Install: prometheus in       
+                             namespace observe                                  
+[05:22:53] Waiting for all pods in namespace 'observe' to be      kubectl.py:204
+           ready...                                                             
+[05:23:45] All pods in namespace 'observe' are ready.             kubectl.py:245
+[10/23/26 05:23:45] INFO     all.sregym.conductor - [DEPLOY] Deploying Jaeger…  
+[10/23/26 05:23:47] INFO     all.sregym.jaeger - Jaeger deployed successfully.  
+                    INFO     all.sregym.conductor - [DEPLOY] Deploying OTel     
+                             Collector…                                         
+[10/23/26 05:23:54] INFO     all.sregym.otel_collector - OTel Collector deployed
+                             successfully.                                      
+                    INFO     all.sregym.conductor - [DEPLOY] Deploying Loki…    
+[10/23/26 05:23:55] INFO     all.infra.helm - Helm Uninstall: loki in namespace 
+                             observe                                            
+                    INFO     all.infra.loki - Adding Grafana Helm repository... 
+[10/23/26 05:23:56] INFO     all.infra.helm - Helm Install: loki in namespace   
+                             observe                                            
+[05:23:58] Waiting for all pods in namespace 'observe' to be      kubectl.py:204
+           ready...                                                             
+[05:24:53] All pods in namespace 'observe' are ready.             kubectl.py:245
+[10/23/26 05:24:54] INFO     all.infra.loki - Deploying Promtail for Loki log   
+                             collection...                                      
+                    INFO     all.infra.helm - Helm Install: promtail in         
+                             namespace observe                                  
+[10/23/26 05:24:55] WARNING  all.infra.helm - Helm install stderr output:       
+                             level=WARN msg="this chart is deprecated"          
+[05:24:55] Waiting for all pods in namespace 'observe' to be      kubectl.py:204
+           ready...                                                             
+[05:25:14] All pods in namespace 'observe' are ready.             kubectl.py:245
+[10/23/26 05:25:14] INFO     all.sregym.conductor - [DEPLOY] Deploying MCP      
+                             server…                                            
+[10/23/26 05:25:18] INFO     all.sregym.mcp_server - Port forwarding established
+                             at 9954. MCP_SERVER_PORT set.                      
+                    INFO     all.sregym.mcp_server - MCP server deployment and  
+                             access policy are ready.                           
+                    INFO     all.sregym.conductor - [ENV] Set up necessary      
+                             components: metrics-server, OpenEBS, Prometheus,   
+                             Jaeger, Loki                                       
+                    INFO     all.sregym.conductor - [DEPLOY] Deploying and      
+                             starting workload                                  
+                    INFO     all.infra.kubectl - Namespace 'astronomy-shop' not 
+                             found. Creating namespace.                         
+                    INFO     all.infra.kubectl - Namespace 'astronomy-shop'     
+                             created successfully.                              
+                    INFO     all.infra.helm - Helm Repo Add: open-telemetry with
+                             url                                                
+                             https://open-telemetry.github.io/opentelemetry-helm
+                             -charts                                            
+                    INFO     all.infra.helm - Helm repo open-telemetry added    
+                             successfully: "open-telemetry" has been added to   
+                             your repositories                                  
+                    INFO     all.infra.helm - Helm Repo Add: jaegertracing with 
+                             url https://jaegertracing.github.io/helm-charts    
+[10/23/26 05:25:19] INFO     all.infra.helm - Helm repo jaegertracing added     
+                             successfully: "jaegertracing" has been added to    
+                             your repositories                                  
+                    INFO     all.infra.helm - Helm Repo Add:                    
+                             prometheus-community with url                      
+                             https://prometheus-community.github.io/helm-charts 
+[10/23/26 05:25:20] INFO     all.infra.helm - Helm repo prometheus-community    
+                             added successfully: "prometheus-community" has been
+                             added to your repositories                         
+                    INFO     all.infra.helm - Helm Repo Add: grafana with url   
+                             https://grafana.github.io/helm-charts              
+                    INFO     all.infra.helm - Helm repo grafana added           
+                             successfully: "grafana" already exists with the    
+                             same configuration, skipping                       
+                    INFO     all.infra.helm - Helm Repo Add: opensearch with url
+                             https://opensearch-project.github.io/helm-charts/  
+[10/23/26 05:25:21] INFO     all.infra.helm - Helm repo opensearch added        
+                             successfully: "opensearch" has been added to your  
+                             repositories                                       
+                    INFO     all.infra.helm - Helm Install: astronomy-shop in   
+                             namespace astronomy-shop                           
+                    INFO     all.infra.helm - Chart dependencies not satisfied  
+                             for                                                
+                             /home/w77/SREGym/SREGym-applications/astronomy-shop
+                             /charts/opentelemetry-demo (['missing', 'missing', 
+                             'missing', 'missing', 'missing']); updating        
+[05:25:42] Waiting for all pods in namespace 'astronomy-shop' to  kubectl.py:204
+           be ready...                                                          
+[10/23/26 05:39:02] WARNING  urllib3.connectionpool - Retrying (Retry(total=2,  
+                             connect=None, read=None, redirect=None,            
+                             status=None)) after connection broken by           
+                             'SSLError(SSLEOFError(8, '[SSL:                    
+                             UNEXPECTED_EOF_WHILE_READING] EOF occurred in      
+                             violation of protocol (_ssl.c:1000)'))':           
+                             /api/v1/namespaces/astronomy-shop/pods             
+                    WARNING  urllib3.connectionpool - Retrying (Retry(total=1,  
+                             connect=None, read=None, redirect=None,            
+                             status=None)) after connection broken by           
+                             'SSLError(SSLEOFError(8, '[SSL:                    
+                             UNEXPECTED_EOF_WHILE_READING] EOF occurred in      
+                             violation of protocol (_ssl.c:1000)'))':           
+                             /api/v1/namespaces/astronomy-shop/pods             
+                    WARNING  urllib3.connectionpool - Retrying (Retry(total=0,  
+                             connect=None, read=None, redirect=None,            
+                             status=None)) after connection broken by           
+                             'SSLError(SSLEOFError(8, '[SSL:                    
+                             UNEXPECTED_EOF_WHILE_READING] EOF occurred in      
+                             violation of protocol (_ssl.c:1000)'))':           
+                             /api/v1/namespaces/astronomy-shop/pods             
+[05:39:02] Error checking pod statuses:                           kubectl.py:251
+           HTTPSConnectionPool(host='127.0.0.1', port=33237): Max               
+           retries exceeded with url:                                           
+           /api/v1/namespaces/astronomy-shop/pods (Caused by                    
+           SSLError(SSLEOFError(8, '[SSL:                                       
+           UNEXPECTED_EOF_WHILE_READING] EOF occurred in                        
+           violation of protocol (_ssl.c:1000)')))                              
+[10/23/26 05:39:04] WARNING  urllib3.connectionpool - Retrying (Retry(total=2,  
+                             connect=None, read=None, redirect=None,            
+                             status=None)) after connection broken by           
+                             'SSLError(SSLEOFError(8, '[SSL:                    
+                             UNEXPECTED_EOF_WHILE_READING] EOF occurred in      
+                             violation of protocol (_ssl.c:1000)'))':           
+                             /api/v1/namespaces/astronomy-shop/pods             
+                    WARNING  urllib3.connectionpool - Retrying (Retry(total=1,  
+                             connect=None, read=None, redirect=None,            
+                             status=None)) after connection broken by           
+                             'SSLError(SSLEOFError(8, '[SSL:                    
+                             UNEXPECTED_EOF_WHILE_READING] EOF occurred in      
+                             violation of protocol (_ssl.c:1000)'))':           
+                             /api/v1/namespaces/astronomy-shop/pods             
+                    WARNING  urllib3.connectionpool - Retrying (Retry(total=0,  
+                             connect=None, read=None, redirect=None,            
+                             status=None)) after connection broken by           
+                             'SSLError(SSLEOFError(8, '[SSL:                    
+                             UNEXPECTED_EOF_WHILE_READING] EOF occurred in      
+                             violation of protocol (_ssl.c:1000)'))':           
+                             /api/v1/namespaces/astronomy-shop/pods             
+[05:39:04] Error checking pod statuses:                           kubectl.py:251
+           HTTPSConnectionPool(host='127.0.0.1', port=33237): Max               
+           retries exceeded with url:                                           
+           /api/v1/namespaces/astronomy-shop/pods (Caused by                    
+           SSLError(SSLEOFError(8, '[SSL:                                       
+           UNEXPECTED_EOF_WHILE_READING] EOF occurred in                        
+           violation of protocol (_ssl.c:1000)')))                              
+[10/23/26 05:39:06] WARNING  urllib3.connectionpool - Retrying (Retry(total=2,  
+                             connect=None, read=None, redirect=None,            
+                             status=None)) after connection broken by           
+                             'SSLError(SSLEOFError(8, '[SSL:                    
+                             UNEXPECTED_EOF_WHILE_READING] EOF occurred in      
+                             violation of protocol (_ssl.c:1000)'))':           
+                             /api/v1/namespaces/astronomy-shop/pods             
+                    WARNING  urllib3.connectionpool - Retrying (Retry(total=1,  
+                             connect=None, read=None, redirect=None,            
+                             status=None)) after connection broken by           
+                             'SSLError(SSLEOFError(8, '[SSL:                    
+                             UNEXPECTED_EOF_WHILE_READING] EOF occurred in      
+                             violation of protocol (_ssl.c:1000)'))':           
+                             /api/v1/namespaces/astronomy-shop/pods             
+                    WARNING  urllib3.connectionpool - Retrying (Retry(total=0,  
+                             connect=None, read=None, redirect=None,            
+                             status=None)) after connection broken by           
+                             'SSLError(SSLEOFError(8, '[SSL:                    
+                             UNEXPECTED_EOF_WHILE_READING] EOF occurred in      
+                             violation of protocol (_ssl.c:1000)'))':           
+                             /api/v1/namespaces/astronomy-shop/pods             
+[05:39:06] Error checking pod statuses:                           kubectl.py:251
+           HTTPSConnectionPool(host='127.0.0.1', port=33237): Max               
+           retries exceeded with url:                                           
+           /api/v1/namespaces/astronomy-shop/pods (Caused by                    
+           SSLError(SSLEOFError(8, '[SSL:                                       
+           UNEXPECTED_EOF_WHILE_READING] EOF occurred in                        
+           violation of protocol (_ssl.c:1000)')))                              
+[10/23/26 05:39:08] WARNING  urllib3.connectionpool - Retrying (Retry(total=2,  
+                             connect=None, read=None, redirect=None,            
+                             status=None)) after connection broken by           
+                             'SSLError(SSLEOFError(8, '[SSL:                    
+                             UNEXPECTED_EOF_WHILE_READING] EOF occurred in      
+                             violation of protocol (_ssl.c:1000)'))':           
+                             /api/v1/namespaces/astronomy-shop/pods             
+                    WARNING  urllib3.connectionpool - Retrying (Retry(total=1,  
+                             connect=None, read=None, redirect=None,            
+                             status=None)) after connection broken by           
+                             'SSLError(SSLEOFError(8, '[SSL:                    
+                             UNEXPECTED_EOF_WHILE_READING] EOF occurred in      
+                             violation of protocol (_ssl.c:1000)'))':           
+                             /api/v1/namespaces/astronomy-shop/pods             
+                    WARNING  urllib3.connectionpool - Retrying (Retry(total=0,  
+                             connect=None, read=None, redirect=None,            
+                             status=None)) after connection broken by           
+                             'SSLError(SSLEOFError(8, '[SSL:                    
+                             UNEXPECTED_EOF_WHILE_READING] EOF occurred in      
+                             violation of protocol (_ssl.c:1000)'))':           
+                             /api/v1/namespaces/astronomy-shop/pods             
+[05:39:08] Error checking pod statuses:                           kubectl.py:251
+           HTTPSConnectionPool(host='127.0.0.1', port=33237): Max               
+           retries exceeded with url:                                           
+           /api/v1/namespaces/astronomy-shop/pods (Caused by                    
+           SSLError(SSLEOFError(8, '[SSL:                                       
+           UNEXPECTED_EOF_WHILE_READING] EOF occurred in                        
+           violation of protocol (_ssl.c:1000)')))                              
+[10/23/26 05:39:10] WARNING  urllib3.connectionpool - Retrying (Retry(total=2,  
+                             connect=None, read=None, redirect=None,            
+                             status=None)) after connection broken by           
+                             'SSLError(SSLEOFError(8, '[SSL:                    
+                             UNEXPECTED_EOF_WHILE_READING] EOF occurred in      
+                             violation of protocol (_ssl.c:1000)'))':           
+                             /api/v1/namespaces/astronomy-shop/pods             
+                    WARNING  urllib3.connectionpool - Retrying (Retry(total=1,  
+                             connect=None, read=None, redirect=None,            
+                             status=None)) after connection broken by           
+                             'SSLError(SSLEOFError(8, '[SSL:                    
+                             UNEXPECTED_EOF_WHILE_READING] EOF occurred in      
+                             violation of protocol (_ssl.c:1000)'))':           
+                             /api/v1/namespaces/astronomy-shop/pods             
+                    WARNING  urllib3.connectionpool - Retrying (Retry(total=0,  
+                             connect=None, read=None, redirect=None,            
+                             status=None)) after connection broken by           
+                             'SSLError(SSLEOFError(8, '[SSL:                    
+                             UNEXPECTED_EOF_WHILE_READING] EOF occurred in      
+                             violation of protocol (_ssl.c:1000)'))':           
+                             /api/v1/namespaces/astronomy-shop/pods             
+[05:39:10] Error checking pod statuses:                           kubectl.py:251
+           HTTPSConnectionPool(host='127.0.0.1', port=33237): Max               
+           retries exceeded with url:                                           
+           /api/v1/namespaces/astronomy-shop/pods (Caused by                    
+           SSLError(SSLEOFError(8, '[SSL:                                       
+           UNEXPECTED_EOF_WHILE_READING] EOF occurred in                        
+           violation of protocol (_ssl.c:1000)')))                              
+[10/23/26 05:39:12] WARNING  urllib3.connectionpool - Retrying (Retry(total=2,  
+                             connect=None, read=None, redirect=None,            
+                             status=None)) after connection broken by           
+                             'SSLError(SSLEOFError(8, '[SSL:                    
+                             UNEXPECTED_EOF_WHILE_READING] EOF occurred in      
+                             violation of protocol (_ssl.c:1000)'))':           
+                             /api/v1/namespaces/astronomy-shop/pods             
+                    WARNING  urllib3.connectionpool - Retrying (Retry(total=1,  
+                             connect=None, read=None, redirect=None,            
+                             status=None)) after connection broken by           
+                             'SSLError(SSLEOFError(8, '[SSL:                    
+                             UNEXPECTED_EOF_WHILE_READING] EOF occurred in      
+                             violation of protocol (_ssl.c:1000)'))':           
+                             /api/v1/namespaces/astronomy-shop/pods             
+                    WARNING  urllib3.connectionpool - Retrying (Retry(total=0,  
+                             connect=None, read=None, redirect=None,            
+                             status=None)) after connection broken by           
+                             'SSLError(SSLEOFError(8, '[SSL:                    
+                             UNEXPECTED_EOF_WHILE_READING] EOF occurred in      
+                             violation of protocol (_ssl.c:1000)'))':           
+                             /api/v1/namespaces/astronomy-shop/pods             
+[05:39:12] Error checking pod statuses:                           kubectl.py:251
+           HTTPSConnectionPool(host='127.0.0.1', port=33237): Max               
+           retries exceeded with url:                                           
+           /api/v1/namespaces/astronomy-shop/pods (Caused by                    
+           SSLError(SSLEOFError(8, '[SSL:                                       
+           UNEXPECTED_EOF_WHILE_READING] EOF occurred in                        
+           violation of protocol (_ssl.c:1000)')))                              
+[10/23/26 05:39:14] WARNING  urllib3.connectionpool - Retrying (Retry(total=2,  
+                             connect=None, read=None, redirect=None,            
+                             status=None)) after connection broken by           
+                             'SSLError(SSLEOFError(8, '[SSL:                    
+                             UNEXPECTED_EOF_WHILE_READING] EOF occurred in      
+                             violation of protocol (_ssl.c:1000)'))':           
+                             /api/v1/namespaces/astronomy-shop/pods             
+                    WARNING  urllib3.connectionpool - Retrying (Retry(total=1,  
+                             connect=None, read=None, redirect=None,            
+                             status=None)) after connection broken by           
+                             'SSLError(SSLEOFError(8, '[SSL:                    
+                             UNEXPECTED_EOF_WHILE_READING] EOF occurred in      
+                             violation of protocol (_ssl.c:1000)'))':           
+                             /api/v1/namespaces/astronomy-shop/pods             
+                    WARNING  urllib3.connectionpool - Retrying (Retry(total=0,  
+                             connect=None, read=None, redirect=None,            
+                             status=None)) after connection broken by           
+                             'SSLError(SSLEOFError(8, '[SSL:                    
+                             UNEXPECTED_EOF_WHILE_READING] EOF occurred in      
+                             violation of protocol (_ssl.c:1000)'))':           
+                             /api/v1/namespaces/astronomy-shop/pods             
+[05:39:14] Error checking pod statuses:                           kubectl.py:251
+           HTTPSConnectionPool(host='127.0.0.1', port=33237): Max               
+           retries exceeded with url:                                           
+           /api/v1/namespaces/astronomy-shop/pods (Caused by                    
+           SSLError(SSLEOFError(8, '[SSL:                                       
+           UNEXPECTED_EOF_WHILE_READING] EOF occurred in                        
+           violation of protocol (_ssl.c:1000)')))                              
+[10/23/26 05:39:16] WARNING  urllib3.connectionpool - Retrying (Retry(total=2,  
+                             connect=None, read=None, redirect=None,            
+                             status=None)) after connection broken by           
+                             'SSLError(SSLEOFError(8, '[SSL:                    
+                             UNEXPECTED_EOF_WHILE_READING] EOF occurred in      
+                             violation of protocol (_ssl.c:1000)'))':           
+                             /api/v1/namespaces/astronomy-shop/pods             
+                    WARNING  urllib3.connectionpool - Retrying (Retry(total=1,  
+                             connect=None, read=None, redirect=None,            
+                             status=None)) after connection broken by           
+                             'SSLError(SSLEOFError(8, '[SSL:                    
+                             UNEXPECTED_EOF_WHILE_READING] EOF occurred in      
+                             violation of protocol (_ssl.c:1000)'))':           
+                             /api/v1/namespaces/astronomy-shop/pods             
+                    WARNING  urllib3.connectionpool - Retrying (Retry(total=0,  
+                             connect=None, read=None, redirect=None,            
+                             status=None)) after connection broken by           
+                             'SSLError(SSLEOFError(8, '[SSL:                    
+                             UNEXPECTED_EOF_WHILE_READING] EOF occurred in      
+                             violation of protocol (_ssl.c:1000)'))':           
+                             /api/v1/namespaces/astronomy-shop/pods             
+[05:39:16] Error checking pod statuses:                           kubectl.py:251
+           HTTPSConnectionPool(host='127.0.0.1', port=33237): Max               
+           retries exceeded with url:                                           
+           /api/v1/namespaces/astronomy-shop/pods (Caused by                    
+           SSLError(SSLEOFError(8, '[SSL:                                       
+           UNEXPECTED_EOF_WHILE_READING] EOF occurred in                        
+           violation of protocol (_ssl.c:1000)')))                              
+[10/23/26 05:39:18] WARNING  urllib3.connectionpool - Retrying (Retry(total=2,  
+                             connect=None, read=None, redirect=None,            
+                             status=None)) after connection broken by           
+                             'SSLError(SSLEOFError(8, '[SSL:                    
+                             UNEXPECTED_EOF_WHILE_READING] EOF occurred in      
+                             violation of protocol (_ssl.c:1000)'))':           
+                             /api/v1/namespaces/astronomy-shop/pods             
+                    WARNING  urllib3.connectionpool - Retrying (Retry(total=1,  
+                             connect=None, read=None, redirect=None,            
+                             status=None)) after connection broken by           
+                             'SSLError(SSLEOFError(8, '[SSL:                    
+                             UNEXPECTED_EOF_WHILE_READING] EOF occurred in      
+                             violation of protocol (_ssl.c:1000)'))':           
+                             /api/v1/namespaces/astronomy-shop/pods             
+                    WARNING  urllib3.connectionpool - Retrying (Retry(total=0,  
+                             connect=None, read=None, redirect=None,            
+                             status=None)) after connection broken by           
+                             'SSLError(SSLEOFError(8, '[SSL:                    
+                             UNEXPECTED_EOF_WHILE_READING] EOF occurred in      
+                             violation of protocol (_ssl.c:1000)'))':           
+                             /api/v1/namespaces/astronomy-shop/pods             
+[05:39:18] Error checking pod statuses:                           kubectl.py:251
+           HTTPSConnectionPool(host='127.0.0.1', port=33237): Max               
+           retries exceeded with url:                                           
+           /api/v1/namespaces/astronomy-shop/pods (Caused by                    
+           SSLError(SSLEOFError(8, '[SSL:                                       
+           UNEXPECTED_EOF_WHILE_READING] EOF occurred in                        
+           violation of protocol (_ssl.c:1000)')))                              
+[10/23/26 05:39:20] WARNING  urllib3.connectionpool - Retrying (Retry(total=2,  
+                             connect=None, read=None, redirect=None,            
+                             status=None)) after connection broken by           
+                             'SSLError(SSLEOFError(8, '[SSL:                    
+                             UNEXPECTED_EOF_WHILE_READING] EOF occurred in      
+                             violation of protocol (_ssl.c:1000)'))':           
+                             /api/v1/namespaces/astronomy-shop/pods             
+                    WARNING  urllib3.connectionpool - Retrying (Retry(total=1,  
+                             connect=None, read=None, redirect=None,            
+                             status=None)) after connection broken by           
+                             'SSLError(SSLEOFError(8, '[SSL:                    
+                             UNEXPECTED_EOF_WHILE_READING] EOF occurred in      
+                             violation of protocol (_ssl.c:1000)'))':           
+                             /api/v1/namespaces/astronomy-shop/pods             
+                    WARNING  urllib3.connectionpool - Retrying (Retry(total=0,  
+                             connect=None, read=None, redirect=None,            
+                             status=None)) after connection broken by           
+                             'SSLError(SSLEOFError(8, '[SSL:                    
+                             UNEXPECTED_EOF_WHILE_READING] EOF occurred in      
+                             violation of protocol (_ssl.c:1000)'))':           
+                             /api/v1/namespaces/astronomy-shop/pods             
+[05:39:20] Error checking pod statuses:                           kubectl.py:251
+           HTTPSConnectionPool(host='127.0.0.1', port=33237): Max               
+           retries exceeded with url:                                           
+           /api/v1/namespaces/astronomy-shop/pods (Caused by                    
+           SSLError(SSLEOFError(8, '[SSL:                                       
+           UNEXPECTED_EOF_WHILE_READING] EOF occurred in                        
+           violation of protocol (_ssl.c:1000)')))                              
+[10/23/26 05:39:22] WARNING  urllib3.connectionpool - Retrying (Retry(total=2,  
+                             connect=None, read=None, redirect=None,            
+                             status=None)) after connection broken by           
+                             'SSLError(SSLEOFError(8, '[SSL:                    
+                             UNEXPECTED_EOF_WHILE_READING] EOF occurred in      
+                             violation of protocol (_ssl.c:1000)'))':           
+                             /api/v1/namespaces/astronomy-shop/pods             
+                    WARNING  urllib3.connectionpool - Retrying (Retry(total=1,  
+                             connect=None, read=None, redirect=None,            
+                             status=None)) after connection broken by           
+                             'SSLError(SSLEOFError(8, '[SSL:                    
+                             UNEXPECTED_EOF_WHILE_READING] EOF occurred in      
+                             violation of protocol (_ssl.c:1000)'))':           
+                             /api/v1/namespaces/astronomy-shop/pods             
+                    WARNING  urllib3.connectionpool - Retrying (Retry(total=0,  
+                             connect=None, read=None, redirect=None,            
+                             status=None)) after connection broken by           
+                             'SSLError(SSLEOFError(8, '[SSL:                    
+                             UNEXPECTED_EOF_WHILE_READING] EOF occurred in      
+                             violation of protocol (_ssl.c:1000)'))':           
+                             /api/v1/namespaces/astronomy-shop/pods             
+[05:39:22] Error checking pod statuses:                           kubectl.py:251
+           HTTPSConnectionPool(host='127.0.0.1', port=33237): Max               
+           retries exceeded with url:                                           
+           /api/v1/namespaces/astronomy-shop/pods (Caused by                    
+           SSLError(SSLEOFError(8, '[SSL:                                       
+           UNEXPECTED_EOF_WHILE_READING] EOF occurred in                        
+           violation of protocol (_ssl.c:1000)')))                              
+[10/23/26 05:39:24] WARNING  urllib3.connectionpool - Retrying (Retry(total=2,  
+                             connect=None, read=None, redirect=None,            
+                             status=None)) after connection broken by           
+                             'SSLError(SSLEOFError(8, '[SSL:                    
+                             UNEXPECTED_EOF_WHILE_READING] EOF occurred in      
+                             violation of protocol (_ssl.c:1000)'))':           
+                             /api/v1/namespaces/astronomy-shop/pods             
+                    WARNING  urllib3.connectionpool - Retrying (Retry(total=1,  
+                             connect=None, read=None, redirect=None,            
+                             status=None)) after connection broken by           
+                             'SSLError(SSLEOFError(8, '[SSL:                    
+                             UNEXPECTED_EOF_WHILE_READING] EOF occurred in      
+                             violation of protocol (_ssl.c:1000)'))':           
+                             /api/v1/namespaces/astronomy-shop/pods             
+                    WARNING  urllib3.connectionpool - Retrying (Retry(total=0,  
+                             connect=None, read=None, redirect=None,            
+                             status=None)) after connection broken by           
+                             'SSLError(SSLEOFError(8, '[SSL:                    
+                             UNEXPECTED_EOF_WHILE_READING] EOF occurred in      
+                             violation of protocol (_ssl.c:1000)'))':           
+                             /api/v1/namespaces/astronomy-shop/pods             
+[05:39:24] Error checking pod statuses:                           kubectl.py:251
+           HTTPSConnectionPool(host='127.0.0.1', port=33237): Max               
+           retries exceeded with url:                                           
+           /api/v1/namespaces/astronomy-shop/pods (Caused by                    
+           SSLError(SSLEOFError(8, '[SSL:                                       
+           UNEXPECTED_EOF_WHILE_READING] EOF occurred in                        
+           violation of protocol (_ssl.c:1000)')))                              
+[10/23/26 05:39:26] WARNING  urllib3.connectionpool - Retrying (Retry(total=2,  
+                             connect=None, read=None, redirect=None,            
+                             status=None)) after connection broken by           
+                             'SSLError(SSLEOFError(8, '[SSL:                    
+                             UNEXPECTED_EOF_WHILE_READING] EOF occurred in      
+                             violation of protocol (_ssl.c:1000)'))':           
+                             /api/v1/namespaces/astronomy-shop/pods             
+                    WARNING  urllib3.connectionpool - Retrying (Retry(total=1,  
+                             connect=None, read=None, redirect=None,            
+                             status=None)) after connection broken by           
+                             'SSLError(SSLEOFError(8, '[SSL:                    
+                             UNEXPECTED_EOF_WHILE_READING] EOF occurred in      
+                             violation of protocol (_ssl.c:1000)'))':           
+                             /api/v1/namespaces/astronomy-shop/pods             
+                    WARNING  urllib3.connectionpool - Retrying (Retry(total=0,  
+                             connect=None, read=None, redirect=None,            
+                             status=None)) after connection broken by           
+                             'SSLError(SSLEOFError(8, '[SSL:                    
+                             UNEXPECTED_EOF_WHILE_READING] EOF occurred in      
+                             violation of protocol (_ssl.c:1000)'))':           
+                             /api/v1/namespaces/astronomy-shop/pods             
+[05:39:26] Error checking pod statuses:                           kubectl.py:251
+           HTTPSConnectionPool(host='127.0.0.1', port=33237): Max               
+           retries exceeded with url:                                           
+           /api/v1/namespaces/astronomy-shop/pods (Caused by                    
+           SSLError(SSLEOFError(8, '[SSL:                                       
+           UNEXPECTED_EOF_WHILE_READING] EOF occurred in                        
+           violation of protocol (_ssl.c:1000)')))                              
+[05:39:29] Error checking pod statuses: (403)                     kubectl.py:251
+           Reason: Forbidden                                                    
+           HTTP response headers: HTTPHeaderDict({'Audit-Id':                   
+           '8d7d3be8-b256-48ed-ac20-7d5f10d2e4d6',                              
+           'Cache-Control': 'no-cache, private', 'Content-Type':                
+           'application/json', 'X-Content-Type-Options':                        
+           'nosniff', 'X-Kubernetes-Pf-Flowschema-Uid': '',                     
+           'X-Kubernetes-Pf-Prioritylevel-Uid': '', 'Date': 'Fri,               
+           23 Oct 2026 05:39:29 GMT', 'Content-Length': '268'})                 
+           HTTP response body:                                                  
+           {"kind":"Status","apiVersion":"v1","metadata":{},"stat               
+           us":"Failure","message":"pods is forbidden: User                     
+           \"kubernetes-admin\" cannot list resource \"pods\" in                
+           API group \"\" in the namespace                                      
+           \"astronomy-shop\"","reason":"Forbidden","details":{"k               
+           ind":"pods"},"code":403}                                             
+                                                                                
+                                                                                
+[05:45:24] All pods in namespace 'astronomy-shop' are ready.      kubectl.py:245
+[10/23/26 05:45:24] INFO     all.sregym.conductor - [ENV] Deploy application:   
+                             OpenTelemetry Demo Astronomy Shop                  
+[10/23/26 05:45:25] INFO     all.sregym.jaeger - Created ExternalName service   
+                             'jaeger' in namespace 'astronomy-shop' ->          
+                             otel-collector.observe.svc.cluster.local           
+[10/23/26 05:45:26] INFO     all.sregym.jaeger - Created ExternalName service   
+                             'jaeger-agent' in namespace 'astronomy-shop' ->    
+                             otel-collector.observe.svc.cluster.local           
+                    INFO     all.sregym.jaeger - Created ExternalName service   
+                             'jaeger-collector' in namespace 'astronomy-shop' ->
+                             otel-collector.observe.svc.cluster.local           
+                    INFO     all.sregym.jaeger - Created ExternalName service   
+                             'jaeger-query' in namespace 'astronomy-shop' ->    
+                             otel-collector.observe.svc.cluster.local           
+[10/23/26 05:46:16] INFO     all.sregym.jaeger - Restarted otel-collector-agent 
+                             DaemonSet in namespace 'astronomy-shop'            
+                    INFO     all.infra.workload - Start Workload with Locust    
+                    INFO     all.infra.workload - AstronomyShop has a built-in  
+                             load generator.                                    
+                    INFO     all.infra.workload - Creating locust-fetcher pod...
+Waiting for locust-fetcher pod to be created...
+Pod locust-fetcher created.
+[10/23/26 05:46:37] INFO     all.sregym.conductor - [ENV] Start workload        
+                    INFO     all.sregym.conductor - App deployed.               
+== Fault Injection ==
+[05:46:49] Waiting for all pods in namespace 'astronomy-shop' to  kubectl.py:204
+           be ready...                                                          
+[05:46:50] All pods in namespace 'astronomy-shop' are ready.      kubectl.py:245
+Fault: EdgeRequestFilterCPUSaturation | Service: frontend-proxy | Namespace: astronomy-shop | Regex: ^([a-zA-Z]+)*$
+
+[10/23/26 05:46:50] INFO     all.sregym.conductor - [ENV] Injected fault        
+                    INFO     all.sregym.conductor - [STAGE] Go to stage         
+                             diagnosis                                          
+                    INFO     all.sregym.conductor - ✅ Deployment complete.     
+                             Ready for submission. Current stage is: diagnosis  
+[10/23/26 05:46:50] INFO     uvicorn.access - 127.0.0.1:52380 - "GET /status    
+                             HTTP/1.1" 200                                      
+                    INFO     uvicorn.access - 127.0.0.1:52396 - "GET /get_app   
+                             HTTP/1.1" 200                                      
+[10/23/26 05:46:50] INFO     all.holmesgpt.driver - Problem ID (harness):       
+                             anon_737c9b3d4e8ad543bf348d876a88fd3e; app:        
+                             {'app_name': 'OpenTelemetry Demo Astronomy Shop',  
+                             'namespace': 'astronomy-shop', 'namespaces':       
+                             ['astronomy-shop'], 'descriptions': 'An online     
+                             shopping platform built with a microservices       
+                             architecture, showcasing OpenTelemetry             
+                             instrumentation for distributed tracing across     
+                             services.', 'stages': ['diagnosis']}               
+                    INFO     uvicorn.access - 127.0.0.1:52398 - "GET /status    
+                             HTTP/1.1" 200                                      
+                    INFO     all.holmesgpt.driver - Running HolmesGPT: docker   
+                             run --rm --memory 1g --network host --add-host     
+                             host.docker.internal:127.0.0.1 --add-host          
+                             gpustack.apps.one2n.io:127.0.0.1 -e OPENAI_API_KEY 
+                             -e OPENAI_API_BASE -e                              
+                             KUBECONFIG=/work/kubeconfig.yaml -v                
+                             /tmp/holmes-sregym-mhxumc4s:/work                  
+                             us-central1-docker.pkg.dev/genuine-flight-317411/de
+                             vel/holmes:latest ask --prompt-file                
+                             /work/prompt.txt --model openai/gpt-oss-120b       
+                             --config /work/holmes-config.yaml --no-interactive 
+                             --json-output-file /work/output.json --max-steps 60
+                             --log-costs                                        
+                    INFO     all.holmesgpt.driver - Holmes config:              
+                             toolsets:                                          
+                               kubernetes/core:                                 
+                                 enabled: true                                  
+                               kubernetes/logs:                                 
+                                 enabled: true                                  
+                             mcp_servers:                                       
+                               sregym-prometheus:                               
+                                 description: PromQL queries against the cluster
+                             Prometheus (metrics)                               
+                                 config:                                        
+                                   url:                                         
+                             http://host.docker.internal:9954/prometheus/sse    
+                                   mode: sse                                    
+                               sregym-loki:                                     
+                                 description: LogQL queries against the cluster 
+                             Loki (pod logs, including from                     
+                                   deleted pods)                                
+                                 config:                                        
+                                   url:                                         
+                             http://host.docker.internal:9954/loki/sse          
+                                   mode: sse                                    
+                               sregym-jaeger:                                   
+                                 description: Distributed traces from Jaeger    
+                             (service call graph, latency, errors)              
+                                 config:                                        
+                                   url:                                         
+                             http://host.docker.internal:9954/jaeger/sse        
+                                   mode: sse                                    
+                                                                                
+[10/23/26 05:51:03] INFO     all.holmesgpt.driver - HolmesGPT answer:           
+                             **ROOT CAUSE**                                     
+                                                                                
+                             - **Faulty component(s)**                          
+                               - `DaemonSet/otel-collector-agent` pods          
+                             (`otel-collector-agent-nnht6`,                     
+                             `otel-collector-agent-psv5t`,                      
+                             `otel-collector-agent-v2xsb`)                      
+                                                                                
+                             - **Why it breaks the application**                
+                               - The collector pods start correctly but the     
+                             **health‑check extension never binds to the port   
+                             expected by the probes (13133)**.                  
+                               - Liveness and readiness probes (`http-get       
+                             http://:13133/`) therefore fail (`dial tcp …:      
+                             connection refused`).                              
+                               - Because the pods are marked *Unready*, the     
+                             `otel-collector` Service reports no ready          
+                             endpoints.                                         
+                               - Down‑stream services (e.g. `product-catalog`,  
+                             `frontend`) attempt to export telemetry or call    
+                             other services via the collector and receive       
+                             **connection‑refused** errors, which cascade into  
+                             the many “UNAVAILABLE” and “FAILED” messages seen  
+                             in the frontend logs.                              
+                                                                                
+                             - **Evidence**                                     
+                               - **Events** – multiple `Warning  Unhealthy`     
+                             entries for each collector pod:                    
+                                 ```                                            
+                                 Readiness probe failed: Get                    
+                             "http://10.244.162.176:13133/": dial tcp ...       
+                             connection refused                                 
+                                 Liveness probe failed: Get                     
+                             "http://10.244.162.176:13133/": dial tcp ...       
+                             connection refused                                 
+                                 ```                                            
+                               - **Collector pod logs** – health‑check extension
+                             starts, but no log shows the HTTP server listening 
+                             on 13133; only the extension start message appears.
+                               - **Product‑catalog logs** – exporter cannot     
+                             reach the collector:                               
+                                 ```                                            
+                                 exporter export timeout: rpc error: code =     
+                             Unavailable desc = connection error: dial tcp      
+                             10.96.254.140:4317: connect: connection refused    
+                                 ```                                            
+                               - **Frontend logs** – numerous `UNAVAILABLE`     
+                             errors when calling other services (cart,          
+                             product‑catalog, email, flagd) that stem from the  
+                             collector being unavailable and the services       
+                             failing to complete their request pipelines.       
+                                                                                
+                             **Remediation**                                    
+                             1. **Update the collector config**                 
+                             (`otel-collector-agent` ConfigMap) to include a    
+                             health‑check receiver bound to port 13133, e.g.:   
+                                                                                
+                                ```yaml                                         
+                                extensions:                                     
+                                  health_check:                                 
+                                    endpoint: "0.0.0.0:13133"                   
+                                service:                                        
+                                  extensions: [health_check]                    
+                                ```                                             
+                                                                                
+                             2. **Or adjust the probes** in the DaemonSet to    
+                             match the actual health endpoint (if a different   
+                             port is used).                                     
+                             3. Apply the corrected ConfigMap and roll the      
+                             DaemonSet (`kubectl rollout restart daemonset      
+                             otel-collector-agent -n astronomy-shop`).          
+                             4. Verify that the collector pods become Ready     
+                             (`kubectl get pods -l component=agent-collector -n 
+                             astronomy-shop`) and that the `otel-collector`     
+                             Service shows ready endpoints.                     
+                             5. Confirm that downstream services no longer log  
+                             connection‑refused errors and that traces appear in
+                             Jaeger.                                            
+[10/23/26 05:51:03] INFO     uvicorn.access - 127.0.0.1:34584 - "POST /submit   
+                             HTTP/1.1" 200                                      
+[10/23/26 05:51:03] INFO     all.sregym.conductor - Evaluating stage 'diagnosis'
+                    INFO     all.holmesgpt.driver - Submit -> 200:              
+                             {"status":"200","message":"Submission              
+                             received","stage":"diagnosis"}                     
+                    INFO     uvicorn.access - 127.0.0.1:34594 - "GET /status    
+                             HTTP/1.1" 200                                      
+                    INFO     all.sregym.conductor - Start Eval for Diagnosis    
+== LLM-as-a-Judge Evaluation ==
+🔧 Initializing LLM backend — model: openai/gpt-oss-120b, api_base: unset
+[10/23/26 05:51:05] INFO     uvicorn.access - 127.0.0.1:34602 - "GET /status    
+                             HTTP/1.1" 200                                      
+[10/23/26 05:51:07] INFO     uvicorn.access - 127.0.0.1:40684 - "GET /status    
+                             HTTP/1.1" 200                                      
+[10/23/26 05:51:09] INFO     uvicorn.access - 127.0.0.1:40696 - "GET /status    
+                             HTTP/1.1" 200                                      
+[10/23/26 05:51:11] INFO     uvicorn.access - 127.0.0.1:40712 - "GET /status    
+                             HTTP/1.1" 200                                      
+[10/23/26 05:51:13] INFO     uvicorn.access - 127.0.0.1:40726 - "GET /status    
+                             HTTP/1.1" 200                                      
+[10/23/26 05:51:15] INFO     uvicorn.access - 127.0.0.1:40740 - "GET /status    
+                             HTTP/1.1" 200                                      
+[10/23/26 05:51:17] INFO     uvicorn.access - 127.0.0.1:60176 - "GET /status    
+                             HTTP/1.1" 200                                      
+[10/23/26 05:51:19] INFO     uvicorn.access - 127.0.0.1:60180 - "GET /status    
+                             HTTP/1.1" 200                                      
+[10/23/26 05:51:21] INFO     uvicorn.access - 127.0.0.1:60186 - "GET /status    
+                             HTTP/1.1" 200                                      
+[10/23/26 05:51:23] INFO     uvicorn.access - 127.0.0.1:60202 - "GET /status    
+                             HTTP/1.1" 200                                      
+[10/23/26 05:51:25] INFO     uvicorn.access - 127.0.0.1:60212 - "GET /status    
+                             HTTP/1.1" 200                                      
+[10/23/26 05:51:27] INFO     uvicorn.access - 127.0.0.1:52282 - "GET /status    
+                             HTTP/1.1" 200                                      
+[10/23/26 05:51:29] INFO     uvicorn.access - 127.0.0.1:52286 - "GET /status    
+                             HTTP/1.1" 200                                      
+[10/23/26 05:51:31] INFO     uvicorn.access - 127.0.0.1:52298 - "GET /status    
+                             HTTP/1.1" 200                                      
+[10/23/26 05:51:33] INFO     uvicorn.access - 127.0.0.1:52308 - "GET /status    
+                             HTTP/1.1" 200                                      
+[10/23/26 05:51:35] INFO     uvicorn.access - 127.0.0.1:52324 - "GET /status    
+                             HTTP/1.1" 200                                      
+[10/23/26 05:51:37] INFO     uvicorn.access - 127.0.0.1:47236 - "GET /status    
+                             HTTP/1.1" 200                                      
+[10/23/26 05:51:39] INFO     uvicorn.access - 127.0.0.1:47252 - "GET /status    
+                             HTTP/1.1" 200                                      
+❌ Incorrect diagnosis: False (score: 0.0/100)
+   Expected: [fault_spec] component=frontend-proxy; namespace=astronomy-shop || A recent edge/WAF request-filter ...
+   Got: **ROOT CAUSE**
+
+- **Faulty component(s)**
+  - `DaemonSet/otel-collector-agent` pods (`otel-collector...
+[10/23/26 05:51:40] INFO     all.sregym.conductor - [EVAL] Diagnosis Failed     
+                              TTL: 290.07000374794006                           
+                    INFO     all.sregym.conductor - [STAGE] Done, starting      
+                             teardown                                           
+                    INFO     all.sregym.conductor - [CLEANUP] Starting cleanup  
+                             (fault recovery, undeploy, reconcile)              
+                    INFO     all.sregym.conductor - [CLEANUP] Recovering        
+                             fault...                                           
+== Fault Recovery ==
+[10/23/26 05:51:41] INFO     uvicorn.access - 127.0.0.1:47254 - "GET /status    
+                             HTTP/1.1" 200                                      
+[10/23/26 05:51:43] INFO     uvicorn.access - 127.0.0.1:47264 - "GET /status    
+                             HTTP/1.1" 200                                      
+[10/23/26 05:51:45] INFO     uvicorn.access - 127.0.0.1:47278 - "GET /status    
+                             HTTP/1.1" 200                                      
+Recovered: stopped crafted requests and restored deployment/frontend-proxy in namespace astronomy-shop
+
+[10/23/26 05:51:47] INFO     all.sregym.conductor - [CLEANUP] Fault recovered   
+                    INFO     all.sregym.conductor - [CLEANUP] Undeploying app...
+                    INFO     all.infra.helm - Helm Uninstall: astronomy-shop in 
+                             namespace astronomy-shop                           
+[10/23/26 05:51:47] INFO     uvicorn.access - 127.0.0.1:41546 - "GET /status    
+                             HTTP/1.1" 200                                      
+[10/23/26 05:51:49] INFO     uvicorn.access - 127.0.0.1:41554 - "GET /status    
+                             HTTP/1.1" 200                                      
+[10/23/26 05:51:51] INFO     uvicorn.access - 127.0.0.1:41560 - "GET /status    
+                             HTTP/1.1" 200                                      
+[10/23/26 05:51:53] INFO     uvicorn.access - 127.0.0.1:41568 - "GET /status    
+                             HTTP/1.1" 200                                      
+[10/23/26 05:51:55] INFO     uvicorn.access - 127.0.0.1:41574 - "GET /status    
+                             HTTP/1.1" 200                                      
+[10/23/26 05:51:57] INFO     uvicorn.access - 127.0.0.1:45556 - "GET /status    
+                             HTTP/1.1" 200                                      
+[10/23/26 05:51:59] INFO     uvicorn.access - 127.0.0.1:45566 - "GET /status    
+                             HTTP/1.1" 200                                      
+[10/23/26 05:52:01] INFO     uvicorn.access - 127.0.0.1:45572 - "GET /status    
+                             HTTP/1.1" 200                                      
+[10/23/26 05:52:03] INFO     uvicorn.access - 127.0.0.1:45584 - "GET /status    
+                             HTTP/1.1" 200                                      
+[10/23/26 05:52:05] INFO     uvicorn.access - 127.0.0.1:60540 - "GET /status    
+                             HTTP/1.1" 200                                      
+[10/23/26 05:52:07] INFO     uvicorn.access - 127.0.0.1:60554 - "GET /status    
+                             HTTP/1.1" 200                                      
+[10/23/26 05:52:08] WARNING  all.infra.helm - Helm uninstall stderr output:     
+                             level=WARN msg="skipping delete of resource not    
+                             owned by this release" kind=Service name=jaeger    
+                             namespace=astronomy-shop release=astronomy-shop    
+[05:52:09] Waiting for namespace deletion...                      kubectl.py:341
+[10/23/26 05:52:09] INFO     uvicorn.access - 127.0.0.1:60566 - "GET /status    
+                             HTTP/1.1" 200                                      
+[10/23/26 05:52:11] INFO     uvicorn.access - 127.0.0.1:60582 - "GET /status    
+                             HTTP/1.1" 200                                      
+[10/23/26 05:52:13] INFO     uvicorn.access - 127.0.0.1:60584 - "GET /status    
+                             HTTP/1.1" 200                                      
+[10/23/26 05:52:15] INFO     uvicorn.access - 127.0.0.1:43258 - "GET /status    
+                             HTTP/1.1" 200                                      
+[10/23/26 05:52:17] INFO     uvicorn.access - 127.0.0.1:43264 - "GET /status    
+                             HTTP/1.1" 200                                      
+[10/23/26 05:52:19] INFO     uvicorn.access - 127.0.0.1:43266 - "GET /status    
+                             HTTP/1.1" 200                                      
+[10/23/26 05:52:21] INFO     uvicorn.access - 127.0.0.1:43276 - "GET /status    
+                             HTTP/1.1" 200                                      
+[10/23/26 05:52:23] INFO     uvicorn.access - 127.0.0.1:43278 - "GET /status    
+                             HTTP/1.1" 200                                      
+[10/23/26 05:52:25] INFO     uvicorn.access - 127.0.0.1:52876 - "GET /status    
+                             HTTP/1.1" 200                                      
+[10/23/26 05:52:27] INFO     uvicorn.access - 127.0.0.1:52888 - "GET /status    
+                             HTTP/1.1" 200                                      
+[10/23/26 05:52:29] INFO     uvicorn.access - 127.0.0.1:52902 - "GET /status    
+                             HTTP/1.1" 200                                      
+[10/23/26 05:52:31] INFO     uvicorn.access - 127.0.0.1:52904 - "GET /status    
+                             HTTP/1.1" 200                                      
+[10/23/26 05:52:33] INFO     uvicorn.access - 127.0.0.1:52908 - "GET /status    
+                             HTTP/1.1" 200                                      
+[10/23/26 05:52:35] INFO     uvicorn.access - 127.0.0.1:48198 - "GET /status    
+                             HTTP/1.1" 200                                      
+[10/23/26 05:52:37] INFO     uvicorn.access - 127.0.0.1:48208 - "GET /status    
+                             HTTP/1.1" 200                                      
+[10/23/26 05:52:39] INFO     uvicorn.access - 127.0.0.1:48212 - "GET /status    
+                             HTTP/1.1" 200                                      
+[10/23/26 05:52:41] INFO     uvicorn.access - 127.0.0.1:48226 - "GET /status    
+                             HTTP/1.1" 200                                      
+[10/23/26 05:52:43] INFO     uvicorn.access - 127.0.0.1:48238 - "GET /status    
+                             HTTP/1.1" 200                                      
+[10/23/26 05:52:45] INFO     uvicorn.access - 127.0.0.1:39642 - "GET /status    
+                             HTTP/1.1" 200                                      
+[10/23/26 05:52:47] INFO     uvicorn.access - 127.0.0.1:39654 - "GET /status    
+                             HTTP/1.1" 200                                      
+[10/23/26 05:52:49] INFO     uvicorn.access - 127.0.0.1:39658 - "GET /status    
+                             HTTP/1.1" 200                                      
+[10/23/26 05:52:51] INFO     uvicorn.access - 127.0.0.1:39662 - "GET /status    
+                             HTTP/1.1" 200                                      
+[10/23/26 05:52:53] INFO     uvicorn.access - 127.0.0.1:39666 - "GET /status    
+                             HTTP/1.1" 200                                      
+[10/23/26 05:52:55] INFO     uvicorn.access - 127.0.0.1:53854 - "GET /status    
+                             HTTP/1.1" 200                                      
+[10/23/26 05:52:57] INFO     uvicorn.access - 127.0.0.1:53868 - "GET /status    
+                             HTTP/1.1" 200                                      
+[10/23/26 05:52:59] INFO     uvicorn.access - 127.0.0.1:53876 - "GET /status    
+                             HTTP/1.1" 200                                      
+[10/23/26 05:53:01] INFO     uvicorn.access - 127.0.0.1:53892 - "GET /status    
+                             HTTP/1.1" 200                                      
+[05:53:04] ⚠️  Agent process exited with return code 0                main.py:591
+           ⏳ Waiting for conductor evaluation to complete...        main.py:595
+           🧹 Running conductor cleanup after agent exit...          main.py:624
+[05:53:29] Namespace 'astronomy-shop' has been deleted.           kubectl.py:349
+[10/23/26 05:53:29] INFO     all.infra.kubectl - Namespace 'astronomy-shop'     
+                             deleted successfully.                              
+                    INFO     all.sregym.conductor - [CLEANUP] App undeployed    
+                    INFO     all.sregym.conductor - [CLEANUP] Reconciling       
+                             cluster state to baseline...                       
+                    INFO     all.infra.cluster_state - Reconciling cluster to   
+                             baseline state...                                  
+                    INFO     all.infra.cluster_state - Deleting unexpected      
+                             namespace: observe                                 
+           Waiting for namespace deletion...                      kubectl.py:341
+[05:54:30] Namespace 'observe' has been deleted.                  kubectl.py:349
+[10/23/26 05:54:30] INFO     all.infra.kubectl - Namespace 'observe' deleted    
+                             successfully.                                      
+                    INFO     all.infra.cluster_state - Deleting unexpected      
+                             ClusterRole: loki-clusterrole                      
+                    INFO     all.infra.cluster_state - Deleting unexpected      
+                             ClusterRole: prometheus-server                     
+                    INFO     all.infra.cluster_state - Deleting unexpected      
+                             ClusterRole: mcp-server                            
+                    INFO     all.infra.cluster_state - Deleting unexpected      
+                             ClusterRole: promtail                              
+                    INFO     all.infra.cluster_state - Deleting unexpected      
+                             ClusterRole: prometheus-kube-state-metrics         
+                    INFO     all.infra.cluster_state - Deleting unexpected      
+                             ClusterRoleBinding: prometheus-server              
+[10/23/26 05:54:31] INFO     all.infra.cluster_state - Deleting unexpected      
+                             ClusterRoleBinding: loki-clusterrolebinding        
+                    INFO     all.infra.cluster_state - Deleting unexpected      
+                             ClusterRoleBinding: promtail                       
+                    INFO     all.infra.cluster_state - Deleting unexpected      
+                             ClusterRoleBinding: mcp-server                     
+                    INFO     all.infra.cluster_state - Deleting unexpected      
+                             ClusterRoleBinding: prometheus-kube-state-metrics  
+                    INFO     all.infra.kubectl - [gc_localpv] Sweeping          
+                             /var/openebs/local on 4 node(s) (preserving 0 live 
+                             PV dir(s))                                         
+[10/23/26 05:54:58] INFO     all.infra.cluster_state - Reconciliation complete: 
+                             {'namespaces_deleted': ['observe'],                
+                             'cluster_roles_deleted': ['loki-clusterrole',      
+                             'prometheus-server', 'mcp-server', 'promtail',     
+                             'prometheus-kube-state-metrics'],                  
+                             'cluster_role_bindings_deleted':                   
+                             ['prometheus-server', 'loki-clusterrolebinding',   
+                             'promtail', 'mcp-server',                          
+                             'prometheus-kube-state-metrics'],                  
+                             'persistent_volumes_deleted': [],                  
+                             'storage_classes_deleted': [], 'crds_deleted': [], 
+                             'validating_webhook_configs_deleted': [],          
+                             'mutating_webhook_configs_deleted': [],            
+                             'validating_admission_policies_deleted': [],       
+                             'validating_admission_policy_bindings_deleted': [],
+                             'nodes_labels_reset': [], 'nodes_taints_reset': [],
+                             'coredns_reset': False}                            
+                    INFO     all.sregym.conductor - Cluster state reconciliation
+                             changes: {'namespaces_deleted': ['observe'],       
+                             'cluster_roles_deleted': ['loki-clusterrole',      
+                             'prometheus-server', 'mcp-server', 'promtail',     
+                             'prometheus-kube-state-metrics'],                  
+                             'cluster_role_bindings_deleted':                   
+                             ['prometheus-server', 'loki-clusterrolebinding',   
+                             'promtail', 'mcp-server',                          
+                             'prometheus-kube-state-metrics'],                  
+                             'persistent_volumes_deleted': [],                  
+                             'storage_classes_deleted': [], 'crds_deleted': [], 
+                             'validating_webhook_configs_deleted': [],          
+                             'mutating_webhook_configs_deleted': [],            
+                             'validating_admission_policies_deleted': [],       
+                             'validating_admission_policy_bindings_deleted': [],
+                             'nodes_labels_reset': [], 'nodes_taints_reset': [],
+                             'coredns_reset': False}                            
+                    INFO     all.sregym.conductor - [CLEANUP] Cluster state     
+                             reconciled                                         
+                    INFO     all.sregym.conductor - [CLEANUP] Cleanup complete, 
+                             stage set to 'done'                                
+[10/23/26 05:54:59] INFO     all.sregym.conductor - [STAGE] Teardown complete   
+[05:54:59] ✅ Complete edge_request_filter_cpu_saturation:           main.py:664
+           results={'Diagnosis': {'judgment': 'False', 'reasoning':             
+           'Verdict: False (composite=0.00). D1 Fault Localization:             
+           0.00 | D2 Fault Characterization: 0.00 | D3 Scope                    
+           Precision: 0.00. Weakest dimension: Fault Localization               
+           (0.00). Checklist details: [{"id": "D1-Q1", "answer":                
+           "No", "evidence": "Diagnosis cites                                   
+           DaemonSet/otel-collector-agent pods, not                             
+           frontend-proxy.", "confidence": "High"}, {"id": "D1-Q2",             
+           "answer": "No", "evidence": "Diagnosis treats                        
+           otel-collector-agent as root cause, whereas ground truth             
+           root is frontend-proxy.", "confidence": "High"}, {"id":              
+           "D1-Q3", "answer": "No", "evidence": "Diagnosis                      
+           misidentifies otel-collector-agent as faulty component,              
+           contrary to ground truth.", "confidence": "High"}, {"id":            
+           "D2-Q1", "answer": "No", "evidence": "Diagnosis points to            
+           health\\u2011check port binding issue, not regex rule                
+           update.", "confidence": "High"}, {"id": "D2-Q2",                     
+           "answer": "No", "evidence": "Provides port 13133 and                 
+           health_check config, no mention of vulnerable regex.",               
+           "confidence": "High"}, {"id": "D2-Q3", "answer": "No",               
+           "evidence": "Attributes fault to probe misconfiguration,             
+           unrelated to request\\u2011filter regex problem.",                   
+           "confidence": "High"}, {"id": "D3-Q1", "answer": "No",               
+           "evidence": "Blames otel-collector-agent and downstream              
+           services, which are not in ground truth.", "confidence":             
+           "High"}, {"id": "D3-Q2", "answer": "No", "evidence":                 
+           "Fails to mention frontend-proxy, the only component in              
+           ground truth.", "confidence": "High"}, {"id": "D3-Q3",               
+           "answer": "No", "evidence": "Describes                               
+           connection\\u2011refused errors, not CPU saturation and              
+           timeouts from regex backtracking.", "confidence":                    
+           "High"}]', 'success': False, 'accuracy': 0.0,                        
+           'composite_score': 0.0, 'dimensions': {'D1': {'name':                
+           'Fault Localization', 'score': 0.0}, 'D2': {'name':                  
+           'Fault Characterization', 'score': 0.0}, 'D3': {'name':              
+           'Scope Precision', 'score': 0.0}}, 'checklist': [{'id':              
+           'D1-Q1', 'answer': 'No', 'evidence': 'Diagnosis cites                
+           DaemonSet/otel-collector-agent pods, not                             
+           frontend-proxy.', 'confidence': 'High'}, {'id': 'D1-Q2',             
+           'answer': 'No', 'evidence': 'Diagnosis treats                        
+           otel-collector-agent as root cause, whereas ground truth             
+           root is frontend-proxy.', 'confidence': 'High'}, {'id':              
+           'D1-Q3', 'answer': 'No', 'evidence': 'Diagnosis                      
+           misidentifies otel-collector-agent as faulty component,              
+           contrary to ground truth.', 'confidence': 'High'}, {'id':            
+           'D2-Q1', 'answer': 'No', 'evidence': 'Diagnosis points to            
+           health‑check port binding issue, not regex rule update.',            
+           'confidence': 'High'}, {'id': 'D2-Q2', 'answer': 'No',               
+           'evidence': 'Provides port 13133 and health_check config,            
+           no mention of vulnerable regex.', 'confidence': 'High'},             
+           {'id': 'D2-Q3', 'answer': 'No', 'evidence': 'Attributes              
+           fault to probe misconfiguration, unrelated to                        
+           request‑filter regex problem.', 'confidence': 'High'},               
+           {'id': 'D3-Q1', 'answer': 'No', 'evidence': 'Blames                  
+           otel-collector-agent and downstream services, which are              
+           not in ground truth.', 'confidence': 'High'}, {'id':                 
+           'D3-Q2', 'answer': 'No', 'evidence': 'Fails to mention               
+           frontend-proxy, the only component in ground truth.',                
+           'confidence': 'High'}, {'id': 'D3-Q3', 'answer': 'No',               
+           'evidence': 'Describes connection‑refused errors, not CPU            
+           saturation and timeouts from regex backtracking.',                   
+           'confidence': 'High'}], 'submission': '**ROOT                        
+           CAUSE**\n\n- **Faulty component(s)**\n  -                            
+           `DaemonSet/otel-collector-agent` pods                                
+           (`otel-collector-agent-nnht6`,                                       
+           `otel-collector-agent-psv5t`,                                        
+           `otel-collector-agent-v2xsb`)\n\n- **Why it breaks the               
+           application**\n  - The collector pods start correctly but            
+           the **health‑check extension never binds to the port                 
+           expected by the probes (13133)**.  \n  - Liveness and                
+           readiness probes (`http-get http://:13133/`) therefore               
+           fail (`dial tcp …: connection refused`).  \n  - Because              
+           the pods are marked *Unready*, the `otel-collector`                  
+           Service reports no ready endpoints.  \n  - Down‑stream               
+           services (e.g. `product-catalog`, `frontend`) attempt to             
+           export telemetry or call other services via the collector            
+           and receive **connection‑refused** errors, which cascade             
+           into the many “UNAVAILABLE” and “FAILED” messages seen in            
+           the frontend logs.\n\n- **Evidence**\n  - **Events** –               
+           multiple `Warning  Unhealthy` entries for each collector             
+           pod:  \n    ```\n    Readiness probe failed: Get                     
+           "http://10.244.162.176:13133/": dial tcp ... connection              
+           refused\n    Liveness probe failed: Get                              
+           "http://10.244.162.176:13133/": dial tcp ... connection              
+           refused\n    ```\n  - **Collector pod logs** –                       
+           health‑check extension starts, but no log shows the HTTP             
+           server listening on 13133; only the extension start                  
+           message appears.  \n  - **Product‑catalog logs** –                   
+           exporter cannot reach the collector:  \n    ```\n                    
+           exporter export timeout: rpc error: code = Unavailable               
+           desc = connection error: dial tcp 10.96.254.140:4317:                
+           connect: connection refused\n    ```\n  - **Frontend                 
+           logs** – numerous `UNAVAILABLE` errors when calling other            
+           services (cart, product‑catalog, email, flagd) that stem             
+           from the collector being unavailable and the services                
+           failing to complete their request                                    
+           pipelines.\n\n**Remediation**\n1. **Update the collector             
+           config** (`otel-collector-agent` ConfigMap) to include a             
+           health‑check receiver bound to port\u202f13133, e.g.:\n\n            
+           ```yaml\n   extensions:\n     health_check:\n                        
+           endpoint: "0.0.0.0:13133"\n   service:\n     extensions:             
+           [health_check]\n   ```\n\n2. **Or adjust the probes** in             
+           the DaemonSet to match the actual health endpoint (if a              
+           different port is used).  \n3. Apply the corrected                   
+           ConfigMap and roll the DaemonSet (`kubectl rollout                   
+           restart daemonset otel-collector-agent -n                            
+           astronomy-shop`).  \n4. Verify that the collector pods               
+           become Ready (`kubectl get pods -l                                   
+           component=agent-collector -n astronomy-shop`) and that               
+           the `otel-collector` Service shows ready endpoints.  \n5.            
+           Confirm that downstream services no longer log                       
+           connection‑refused errors and that traces appear in                  
+           Jaeger.'}, 'TTL': 290.12230587005615,                                
+           'phase.fix_kubernetes.duration_s': 3.664,                            
+           'phase.undeploy_leftovers.duration_s': 6.183,                        
+           'phase.deploy.duration_s': 1430.012,                                 
+           'phase.inject_fault.duration_s': 12.077,                             
+           'phase.stage:diagnosis.duration_s': 253.281,                         
+           'phase.stage:diagnosis.outcome': 'submitted',                        
+           'phase.evaluate:diagnosis.duration_s': 36.801,                       
+           'phase.cleanup.duration_s': 198.15, 'run_status':                    
+           'complete'}                                                          
+           ⏳ Waiting for agent process to complete...               main.py:670
+           ✅ Agent process completed with return code 0             main.py:676
+           🧹 Cleaned up agent process for holmesgpt                 main.py:686
+[10/23/26 05:54:59] INFO     __main__ - ⏳ Attempt 1 of 1 for problem           
+                             edge_request_filter_cpu_saturation complete -      
+                             Intermediate results written to                    
+                             results/1023_0522/holmesgpt/edge_request_filter_cpu
+                             _saturation/_running_edge_request_filter_cpu_satura
+                             tion_holmesgpt_results.csv; artifacts published to 
+                             results/1023_0522/holmesgpt/edge_request_filter_cpu
+                             _saturation/run_1                                  
+                    WARNING  sregym.traces.postprocess - No convertible session 
+                             in                                                 
+                             results/1023_0522/holmesgpt/edge_request_filter_cpu
+                             _saturation/run_1                                  
+                    WARNING  __main__ - ⚠️ ATIF trajectory conversion skipped for
+                             results/1023_0522/holmesgpt/edge_request_filter_cpu
+                             _saturation/run_1                                  
+                    INFO     __main__ - ✅ Problem                              
+                             edge_request_filter_cpu_saturation for agent       
+                             holmesgpt complete! Results written to             
+                             results/1023_0522/holmesgpt/edge_request_filter_cpu
+                             _saturation/edge_request_filter_cpu_saturation_holm
+                             esgpt_results.csv                                  
+ Benchmarking holmesgpt — edge_request_filter_cpu_saturation (attempt 1/1)   … …
+           🔓 Stopping Kubernetes API proxy...                       main.py:800
+                    INFO     all.sregym.conductor - Stopping Kubernetes API     
+                             filtering proxy...                                 
+                    INFO     all.infra.k8s_proxy - Kubernetes API filtering     
+                             proxy stopped                                      
+                    WARNING  all.sregym.conductor_api - Shutting down API       
+                             server...                                          
+                    INFO     uvicorn.error - Shutting down                      
+                    INFO     uvicorn.error - Finished server process [377842]   
+                    INFO     all.sregym.conductor - Stopping Kubernetes API     
+                             filtering proxy...                                 
+                    INFO     __main__ - ✅ Benchmark complete! Results for      
+                             holmesgpt written to                               
+                             results/1023_0522/holmesgpt_ALL_results.csv        

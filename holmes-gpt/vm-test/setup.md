@@ -198,3 +198,18 @@ Defaults: `--stages diagnosis` (HolmesGPT is read-only), `--profile full`, `--in
 Answers and HolmesGPT logs go to SREGym's `results/` and `logs/holmesgpt/`.
 
 `make uninstall` removes the client link and the `agents.yaml` entry from SREGym.
+
+### Recordings and logs
+
+```bash
+make record-run PROBLEM=<id>     # run-one under a terminal recording, then collect logs
+scripts/record.sh <name> <cmd>   # record any command (e.g. scripts/record.sh preflight make preflight)
+scripts/collect-results.sh <id>  # copy a finished problem's logs from SREGym
+```
+
+- `recordings/<name>.cast`: asciinema recording (`asciinema play`), plus `.gif` when under 25 MB.
+- `docs/img/<name>.png`: last frame, used in the README.
+- `results/<problem>/`: `sregym.log`, `holmes.log`, `holmes.json`, `judge.csv`, `run.log`, `answer.md`.
+
+The API key is redacted from all of these. Needs `asciinema` (`uv tool install asciinema`) and
+[`agg`](https://github.com/asciinema/agg) in `~/.local/bin`.

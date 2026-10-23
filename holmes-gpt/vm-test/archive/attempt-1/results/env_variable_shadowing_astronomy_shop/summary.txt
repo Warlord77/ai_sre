@@ -1,0 +1,37 @@
+$ problem: env_variable_shadowing_astronomy_shop
+$ holmesgpt: 26 tool calls, 27 LLM calls, 1,268,862 tokens, 9.2 min
+
+ROOT CAUSE**
+
+- **Faulty component:** `Pod frontend-proxy-7b7cd5fb4-lqwtd (Deployment frontend‑proxy)`.
+- **Failure:** The container was terminated with **OOMKilled** (`exitCode 137`) and entered a **CrashLoopBackOff**.
+- **Why it breaks the application:** The frontend‑proxy is the entry point for all user traffic. When it is repeatedly killed for …
+
+**Evidence**
+
+| Resource | Evidence |
+|----------|----------|
+| Pod status (frontend‑proxy) | `state.waiting.reason: CrashLoopBackOff` and `lastState.terminated.reason: OOMKilled` (restartCount …
+| Container logs (frontend‑proxy) | Warnings about missing OTEL env vars, but no other errors; the OOM kill is reflected in the pod …
+| Deployment spec (frontend‑proxy) | Memory limit set to **65 Mi** (`.spec.template.spec.containers[0].resources.limits.memory: …
+| Application logs (frontend) | Numerous `connection refused` messages to service IPs (e.g., `10.96.208.125:8080`, …
+| Events (frontend‑proxy) | `Warning BackOff` event confirming the container restart loop. |
+
+**Fix**
+
+Increase the memory limit for the `frontend-proxy` deployment to a value that comfortably fits its runtime needs (e.g., `256Mi` or …
+
+```yaml
+# Patch example (apply with kubectl)
+kubectl -n astronomy-shop set resources deployment/frontend-proxy \
+--limits=memory=256Mi \
+--requests=memory=128Mi
+```
+
+After applying the new limits, the pod should start without OOM kills, the CrashLoopBackOff will resolve, and the frontend will be …
+
+$ judge: success=False  score=33.0/100
+Verdict: False (composite=0.33). D1 Fault Localization: 0.67 | D2 Fault Characterization: 0.00 | D3 Scope Precision: 0.33. Weakest
+dimension: Fault Characterization (0.00). Checklist details: [{"id": "D1-Q1", "answer": "Yes", "evidence": "Faulty component: Pod
+frontend-proxy-... (Deployment frontend-proxy)", "confidence": "High"}, {"id": "D1-Q2", "answer": "No", "evidence": "Diagnosis
+attributes f

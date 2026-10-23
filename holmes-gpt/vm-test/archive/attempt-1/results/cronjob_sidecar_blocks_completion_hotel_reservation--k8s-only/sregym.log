@@ -1,0 +1,56 @@
+2026-10-23 05:15:01 - INFO - all.holmesgpt.driver - Problem ID (harness): anon_cc9b3ba7a638b1b6078d0c6d20165e4c; app: {'app_name': 'Hotel Reservation', 'namespace': 'hotel-reservation', 'namespaces': ['hotel-reservation'], 'descriptions': 'A hotel reservation application built with Go and gRPC, providing backend in-memory and persistent databases, a recommender system for hotel recommendations, and a functionality to place reservations.', 'stages': ['diagnosis']} - driver.py:main:225
+2026-10-23 05:15:01 - INFO - all.holmesgpt.driver - Running HolmesGPT: docker run --rm --memory 1g --network host --add-host host.docker.internal:127.0.0.1 --add-host gpustack.apps.one2n.io:127.0.0.1 -e OPENAI_API_KEY -e OPENAI_API_BASE -e KUBECONFIG=/work/kubeconfig.yaml -v /tmp/holmes-sregym-qy3ry9l5:/work us-central1-docker.pkg.dev/genuine-flight-317411/devel/holmes:latest ask --prompt-file /work/prompt.txt --model openai/gpt-oss-120b --config /work/holmes-config.yaml --no-interactive --json-output-file /work/output.json --max-steps 60 --log-costs - driver.py:run_holmes:182
+2026-10-23 05:15:01 - INFO - all.holmesgpt.driver - Holmes config:
+toolsets:
+  kubernetes/core:
+    enabled: true
+  kubernetes/logs:
+    enabled: true
+mcp_servers:
+  sregym-prometheus:
+    description: PromQL queries against the cluster Prometheus (metrics)
+    config:
+      url: http://host.docker.internal:9954/prometheus/sse
+      mode: sse
+  sregym-loki:
+    description: LogQL queries against the cluster Loki (pod logs, including from
+      deleted pods)
+    config:
+      url: http://host.docker.internal:9954/loki/sse
+      mode: sse
+  sregym-jaeger:
+    description: Distributed traces from Jaeger (service call graph, latency, errors)
+    config:
+      url: http://host.docker.internal:9954/jaeger/sse
+      mode: sse
+ - driver.py:run_holmes:183
+2026-10-23 05:18:24 - INFO - all.holmesgpt.driver - HolmesGPT answer:
+**Investigation summary**
+
+| Kind | Name | Evidence of failure | Current status |
+|------|------|----------------------|----------------|
+| Deployment | `geo` | Event `BackOff` (05:12:33) → pod logs `panic: no reachable servers` (DB init) | Pod `geo‑766c64f6b4‑whxvp` now **Running**, Ready true |
+| Deployment | `profile` | Event `BackOff` (05:13:34) → pod logs `panic: no reachable servers` (DB init) | Pod `profile‑85c6f67954‑msz8s` now **Running**, Ready true |
+| Deployment | `rate` | Event `BackOff` (05:12:49) → pod logs `panic: no reachable servers` (DB init) | Pod `rate‑b6dc6465f‑422jh` now **Running**, Ready true |
+| Deployment | `recommendation` | Event `BackOff` (05:13:03) → pod logs `panic: no reachable servers` (DB init) | Pod `recommendation‑6bf7689fdb‑29hz4` now **Running**, Ready true |
+| Deployment | `reservation` | Event `BackOff` (05:12:27) → pod logs `panic: no reachable servers` (DB init) | Pod `reservation‑57b8ccd5dc‑lhz68` now **Running**, Ready true |
+| Deployment | `user` | Event `BackOff` (05:12:45) → pod logs `panic: no reachable servers` (DB init) | Pod `user‑5c4d969c85‑gm8pg` now **Running**, Ready true |
+
+All other components (`frontend`, `consul`, `jaeger`, `memcached‑*`, `mongodb‑*`, `search`) are **Running** and **Ready** with no error events.
+
+**Root cause**
+
+- The six micro‑services above all attempt to open a MongoDB connection at start‑up (`Read database URL: mongodb‑<service>:27017`).  
+- Their logs show a panic: **`no reachable servers`** caused by the DB client failing to find a reachable MongoDB instance.  
+- The MongoDB pods for the corresponding databases were created **after** the dependent services (see creation timestamps: e.g., `mongodb‑geo` 05:12:39 vs. `geo` 05:11:10).  
+- Because the services have no start‑up delay or readiness check for the DB, they crash, trigger a `BackOff` restart loop, and only recover once the DB pod becomes ready (as shown by the second successful start in each log).
+
+**Fix recommendation**
+
+1. **Add a start‑up dependency check** – use an init‑container or a startup probe that waits for the corresponding MongoDB service to be reachable (e.g., `nc -z mongodb‑geo 27017` with retries).  
+2. **Expose MongoDB readiness** – ensure each MongoDB pod has a proper readiness probe so other pods can reliably wait for it.  
+3. **Adjust deployment ordering** – if using Helm, add `helm.sh/hook: pre-install` hooks or `dependsOn` annotations to start DB pods before the micro‑services.  
+4. **Increase restart back‑off limits** (optional) to avoid rapid crash loops while the DB is still provisioning.
+
+Implementing any of the above will prevent the “no reachable servers” panic and eliminate the BackOff restarts observed. - driver.py:main:245
+2026-10-23 05:18:24 - INFO - all.holmesgpt.driver - Submit -> 200: {"status":"200","message":"Submission received","stage":"diagnosis"} - driver.py:submit:89

@@ -1,0 +1,29 @@
+Diagnosis.accuracy,Diagnosis.checklist,Diagnosis.composite_score,Diagnosis.dimensions,Diagnosis.judgment,Diagnosis.reasoning,Diagnosis.submission,Diagnosis.success,TTL,attempt,blocked_requests,deployment_profile,internet_access,judge_backend,phase.cleanup.duration_s,phase.deploy.duration_s,phase.evaluate:diagnosis.duration_s,phase.fix_kubernetes.duration_s,phase.inject_fault.duration_s,phase.stage:diagnosis.duration_s,phase.stage:diagnosis.outcome,phase.undeploy_leftovers.duration_s,problem_id,run_status
+11.0,"[{'id': 'D1-Q1', 'answer': 'No', 'evidence': 'Diagnosis names Deployment `nginx-thrift` as fault source', 'confidence': 'High'}, {'id': 'D1-Q2', 'answer': 'No', 'evidence': 'Diagnosis treats deployment as origin, not distinguishing webhook as root cause', 'confidence': 'High'}, {'id': 'D1-Q3', 'answer': 'No', 'evidence': 'Diagnosis misidentifies healthy deployment as fault origin', 'confidence': 'High'}, {'id': 'D2-Q1', 'answer': 'No', 'evidence': 'Diagnosis cites memory limits 256Mi, not the webhook injection of 16Mi', 'confidence': 'High'}, {'id': 'D2-Q2', 'answer': 'No', 'evidence': 'No mention of injected 16Mi memory values or webhook parameters', 'confidence': 'High'}, {'id': 'D2-Q3', 'answer': 'No', 'evidence': 'Attributes fault to deployment spec limits, conflicting with webhook fault type', 'confidence': 'High'}, {'id': 'D3-Q1', 'answer': 'No', 'evidence': 'Blames `nginx-thrift` deployment, which is not in ground-truth fault spec', 'confidence': 'High'}, {'id': 'D3-Q2', 'answer': 'No', 'evidence': 'Fails to mention MutatingWebhookConfiguration component', 'confidence': 'High'}, {'id': 'D3-Q3', 'answer': 'Yes', 'evidence': 'Describes OOMKilled pods and CrashLoopBackOff, matching ground-truth symptoms', 'confidence': 'Medium'}]",0.11,"{'D1': {'name': 'Fault Localization', 'score': 0.0}, 'D2': {'name': 'Fault Characterization', 'score': 0.0}, 'D3': {'name': 'Scope Precision', 'score': 0.33}}",False,"Verdict: False (composite=0.11). D1 Fault Localization: 0.00 | D2 Fault Characterization: 0.00 | D3 Scope Precision: 0.33. Weakest dimension: Fault Localization (0.00). Checklist details: [{""id"": ""D1-Q1"", ""answer"": ""No"", ""evidence"": ""Diagnosis names Deployment `nginx-thrift` as fault source"", ""confidence"": ""High""}, {""id"": ""D1-Q2"", ""answer"": ""No"", ""evidence"": ""Diagnosis treats deployment as origin, not distinguishing webhook as root cause"", ""confidence"": ""High""}, {""id"": ""D1-Q3"", ""answer"": ""No"", ""evidence"": ""Diagnosis misidentifies healthy deployment as fault origin"", ""confidence"": ""High""}, {""id"": ""D2-Q1"", ""answer"": ""No"", ""evidence"": ""Diagnosis cites memory limits 256Mi, not the webhook injection of 16Mi"", ""confidence"": ""High""}, {""id"": ""D2-Q2"", ""answer"": ""No"", ""evidence"": ""No mention of injected 16Mi memory values or webhook parameters"", ""confidence"": ""High""}, {""id"": ""D2-Q3"", ""answer"": ""No"", ""evidence"": ""Attributes fault to deployment spec limits, conflicting with webhook fault type"", ""confidence"": ""High""}, {""id"": ""D3-Q1"", ""answer"": ""No"", ""evidence"": ""Blames `nginx-thrift` deployment, which is not in ground-truth fault spec"", ""confidence"": ""High""}, {""id"": ""D3-Q2"", ""answer"": ""No"", ""evidence"": ""Fails to mention MutatingWebhookConfiguration component"", ""confidence"": ""High""}, {""id"": ""D3-Q3"", ""answer"": ""Yes"", ""evidence"": ""Describes OOMKilled pods and CrashLoopBackOff, matching ground-truth symptoms"", ""confidence"": ""Medium""}]","**Affected**  
+- **Deployment** `nginx-thrift` (namespace `social‑network`) – `Available` = `<none>` (deployment status `MinimumReplicasUnavailable`).  
+- **Pod** `nginx-thrift-6c5bcfcb8f-fwpjs` – `Ready` = `False`; `status.conditions[Ready].reason` = `ContainersNotReady`; `status.containerStatuses[0].state.waiting.reason` = `CrashLoopBackOff`; `lastState.terminated.reason` = `OOMKilled` (exit code 137).  
+
+**Checked, healthy**  
+- All other deployments in `social‑network` report `AVAILABLE = 1` and have no restart or OOM events.  
+- Init container `alpine-container` completed successfully (`exitCode 0`).  
+
+**Changed during the window for another reason**  
+- None observed for `nginx-thrift`; the pod’s restarts are due to the OOM‑induced crash loop, not a rollout.  
+
+**Root Cause**  
+- The `nginx-thrift` container is configured with **memory limits** `requests: 128 Mi`, `limits: 256 Mi` (see deployment spec).  
+- During start‑up the container exceeds its limit, is **OOM‑killed** (`lastState.terminated.reason: OOMKilled`), and the kubelet restarts it, entering **CrashLoopBackOff**.  
+- The pod never becomes ready, so the `nginx-thrift` service has no endpoints, breaking any downstream microservices that depend on it (e.g., API gateway, other Thrift clients).  
+
+**Evidence**  
+- Pod description shows `Ready` = `False` with `ContainersNotReady` and `CrashLoopBackOff` (container status).  
+- `lastState.terminated.reason: OOMKilled` (exit code 137) confirms memory exhaustion.  
+- Deployment status reports `MinimumReplicasUnavailable`.  
+- Deployment spec lists `resources.limits.memory: ""256Mi""` (insufficient for the workload).  
+
+**Remediation**  
+1. Increase the memory limits for the `nginx-thrift` container (e.g., `requests: 256Mi`, `limits: 512Mi`).  
+2. Apply the updated Helm values or edit the deployment, then roll out the change.  
+3. Verify the pod becomes `Ready` and the service regains endpoints.  
+
+After the limit adjustment, the pod should start without OOM, exit the CrashLoopBackOff, and restore normal operation of the Social Network application.",False,175.06862926483154,1,0,full,open,api,187.605,470.672,37.748,4.995,113.565,137.22,submitted,0.116,mutating_webhook_resource_limits_social_network,complete

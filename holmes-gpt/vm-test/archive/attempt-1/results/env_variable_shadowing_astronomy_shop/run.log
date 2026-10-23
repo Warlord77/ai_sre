@@ -1,0 +1,456 @@
+make[1]: Entering directory '/home/w77/ai_sre/holmes-gpt/vm-test'
+  docker      ok
+  context     ok (kind-kind)
+  cluster     ok
+  uv          ok
+  api key     ok
+  model       ok (openai/gpt-oss-120b, tool calls)
+  judge host  ok
+  holmes img  ok
+Linked /home/w77/SREGym/clients/holmesgpt and registered agent 'holmesgpt'
+cd /home/w77/SREGym && uv run main.py --agent holmesgpt --model openai/gpt-oss-120b --judge-model openai/gpt-oss-120b --stages diagnosis --internet-access open --profile full --problem env_variable_shadowing_astronomy_shop
+[10/23/26 05:55:42] INFO     all.sregym.profile - Deployment profile: full                                                                  
+[10/23/26 05:55:42] INFO     __main__ - 🔧 Config — agent: holmesgpt, agent_model: openai/gpt-oss-120b, judge_backend: api, judge_model:    
+                             openai/gpt-oss-120b, reasoning_effort: agent default, jev_model: disabled, deployment_profile: full,           
+                             internet_access: open, container_hardening: on, agent_api_base: unset, judge_api_base: unset                   
+╭─────────────────────────────────────────────────────────── SREGym API Server ────────────────────────────────────────────────────────────╮
+│  ____  ____  _____ ____                                                                                                                  │
+│ / ___||  _ \| ____/ ___|_   _ _ __ ___                                                                                                   │
+│ \___ \| |_) |  _|| |  _| | | | '_ ` _ \                                                                                                  │
+│  ___) |  _ <| |__| |_| | |_| | | | | | |                                                                                                 │
+│ |____/|_| \_\_____\____|\__, |_| |_| |_|                                                                                                 │
+│                         |___/                                                                                                            │
+│                                                                                                                                          │
+╰────────────────────────────────────────────────────────── http://0.0.0.0:8000 ───────────────────────────────────────────────────────────╯
+Available Endpoints                                                                                                                         
+
+ • POST /submit: { "stage": "diagnosis", "solution": "<your-solution>" } → grades the named stage                                           
+ • GET /status: returns { "stage": "setup" | "diagnosis" | "mitigation" | "tearing_down" | "done" }                                         
+/home/w77/SREGym/.venv/lib/python3.12/site-packages/websockets/legacy/__init__.py:6: DeprecationWarning: websockets.legacy is deprecated; see https://websockets.readthedocs.io/en/stable/howto/upgrade.html for upgrade instructions
+  warnings.warn(  # deprecated in 14.0 - 2024-11-09
+/home/w77/SREGym/.venv/lib/python3.12/site-packages/uvicorn/protocols/websockets/websockets_impl.py:17: DeprecationWarning: websockets.server.WebSocketServerProtocol is deprecated
+  from websockets.server import WebSocketServerProtocol
+                    INFO     uvicorn.error - Started server process [477111]                                                                
+                    INFO     uvicorn.error - Waiting for application startup.                                                               
+                    INFO     uvicorn.error - Application startup complete.                                                                  
+                    INFO     uvicorn.error - Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)                                  
+[05:55:43] Starting agent now: holmesgpt                                                                                         main.py:266
+           🔒 Starting Kubernetes API proxy to hide chaos namespaces...                                                          main.py:270
+[10/23/26 05:55:43] INFO     all.sregym.conductor - Starting Kubernetes API filtering proxy...                                              
+                    INFO     all.infra.k8s_proxy - Kubernetes API filtering proxy started on 127.0.0.1:16443                                
+                    INFO     all.infra.k8s_proxy - Hidden namespaces: {'khaos', 'chaos-mesh'}                                               
+                    INFO     all.infra.k8s_proxy - Hidden labels: {'app': {'load-generator', 'locust-fetcher'}, 'job': {'workload'},        
+                             'network-access': {'restricted'}, 'opentelemetry.io/name': {'load-generator'}}                                 
+                    INFO     all.infra.k8s_proxy - Generated agent kubeconfig at /tmp/sregym-agent-kubeconfig-b4czfnrj.yaml                 
+                    INFO     all.sregym.conductor - Agent kubeconfig generated at: /tmp/sregym-agent-kubeconfig-b4czfnrj.yaml               
+           🎯 Running single problem: env_variable_shadowing_astronomy_shop                                                      main.py:311
+                                                                                                                                 main.py:390
+           🔍 Starting problem: env_variable_shadowing_astronomy_shop (Attempt 1 of 1)                                                      
+                    INFO     all.application - Namespace astronomy-shop not found. Creating namespace.                                      
+                    INFO     all.application - Namespace astronomy-shop created successfully: namespace/astronomy-shop created              
+                                                                                                                                            
+                    INFO     all.sregym.conductor - [Session Start] Problem ID: env_variable_shadowing_astronomy_shop                       
+                    INFO     all.sregym.conductor - [STAGE] Start testing on problem: env_variable_shadowing_astronomy_shop                 
+                    INFO     all.sregym.conductor - Stages requested for this run: ['diagnosis']                                            
+[10/23/26 05:55:43] INFO     __main__ - 🔍 Running pre-flight check for judge model...                                                      
+🔧 Initializing LLM backend — model: openai/gpt-oss-120b, api_base: unset
+[10/23/26 05:55:46] INFO     __main__ - ✅ Judge pre-flight check passed                                                                    
+[10/23/26 05:55:46] INFO     all.sregym.conductor - Fixing Kubernetes... to normal state.                                                   
+                    INFO     all.sregym.conductor - [FIX] Imbalance leftover if any                                                         
+                    INFO     all.sregym.conductor - [FIX] KubeletCrash leftover if any                                                      
+Starting kubelet in kind-worker...
+Kubelet started in kind-worker
+Starting kubelet in kind-worker2...
+Kubelet started in kind-worker2
+Starting kubelet in kind-worker3...
+Kubelet started in kind-worker3
+Waiting for worker nodes {'kind-worker', 'kind-worker3', 'kind-worker2'} to become Ready...
+All worker nodes are Ready.
+                    INFO     all.sregym.conductor - [FIX] KubeletEvictionThresholdMisconfig leftover if any                                 
+Recovering disk pressure in kind-worker...
+Waiting for node kind-worker to become Ready...
+Node kind-worker is Ready.
+Recovering disk pressure in kind-worker2...
+Waiting for node kind-worker2 to become Ready...
+Node kind-worker2 is Ready.
+Recovering disk pressure in kind-worker3...
+Waiting for node kind-worker3 to become Ready...
+Node kind-worker3 is Ready.
+[10/23/26 05:55:48] INFO     all.sregym.conductor - [FIX] Calico IPPool/strictAffinity leftover if any                                      
+[10/23/26 05:55:49] INFO     all.sregym.conductor - [FIX] Calico route-reflector label drift leftovers if any                               
+                    INFO     all.sregym.conductor - [FIX] Stale CoreDNS NXDOMAIN templates if any                                           
+No NXDOMAIN templates found in CoreDNS config; nothing to do
+[10/23/26 05:55:50] INFO     all.sregym.conductor - [FIX] NightlyRebalanceOOM kube-system actor leftover if any                             
+                    INFO     all.sregym.conductor - [FIX] Clock drift leftover if any                                                       
+No leftover node-probe pods found; nothing to do
+                    INFO     all.sregym.conductor - Fix Kubernetes completed.                                                               
+                    INFO     all.sregym.conductor - Undeploying app leftovers...                                                            
+                    INFO     all.infra.helm - Helm Uninstall: astronomy-shop in namespace astronomy-shop                                    
+[05:55:50] Waiting for namespace deletion...                                                                                  kubectl.py:341
+[05:55:58] Namespace 'astronomy-shop' has been deleted.                                                                       kubectl.py:349
+[10/23/26 05:55:58] INFO     all.infra.kubectl - Namespace 'astronomy-shop' deleted successfully.                                           
+[10/23/26 05:55:59] INFO     all.sregym.conductor - App leftovers undeployed.                                                               
+                    INFO     all.sregym.conductor - Deploying app...                                                                        
+                    INFO     all.infra.cluster_state - Baseline state loaded from /home/w77/cache_dir/cluster_baseline_state.json           
+                    INFO     all.sregym.conductor - [DEPLOY] Loaded persisted cluster baseline state                                        
+                    INFO     all.sregym.conductor - [DEPLOY] Setting up metrics-server…                                                     
+                    INFO     all.sregym.conductor - [DEPLOY] metrics-server already present and patched; skipping re-apply                  
+[05:55:59] Waiting for all pods in namespace 'kube-system' to be ready...                                                     kubectl.py:204
+           All pods in namespace 'kube-system' are ready.                                                                     kubectl.py:245
+[10/23/26 05:56:00] INFO     all.sregym.conductor - [DEPLOY] Setting up OpenEBS…                                                            
+                    INFO     all.sregym.conductor - [DEPLOY] OpenEBS already deployed; skipping operator re-apply                           
+[05:56:00] Waiting for all pods in namespace 'openebs' to be ready...                                                         kubectl.py:204
+           All pods in namespace 'openebs' are ready.                                                                         kubectl.py:245
+                    INFO     all.sregym.conductor - [DEPLOY] Ensuring OpenEBS LocalPV-Device StorageClass…                                  
+                    INFO     all.sregym.conductor - [DEPLOY] StorageClass/openebs-device already exists; leaving it unchanged               
+                    INFO     all.sregym.conductor - [DEPLOY] Deploying Prometheus…                                                          
+                    INFO     all.infra.helm - Helm Uninstall: prometheus in namespace observe                                               
+                    INFO     all.infra.helm - Helm Install: prometheus in namespace observe                                                 
+[05:56:04] Waiting for all pods in namespace 'observe' to be ready...                                                         kubectl.py:204
+[05:57:02] All pods in namespace 'observe' are ready.                                                                         kubectl.py:245
+[10/23/26 05:57:02] INFO     all.sregym.conductor - [DEPLOY] Deploying Jaeger…                                                              
+[10/23/26 05:57:03] INFO     all.sregym.jaeger - Jaeger deployed successfully.                                                              
+                    INFO     all.sregym.conductor - [DEPLOY] Deploying OTel Collector…                                                      
+[10/23/26 05:57:12] INFO     all.sregym.otel_collector - OTel Collector deployed successfully.                                              
+                    INFO     all.sregym.conductor - [DEPLOY] Deploying Loki…                                                                
+                    INFO     all.infra.helm - Helm Uninstall: loki in namespace observe                                                     
+[10/23/26 05:57:13] INFO     all.infra.loki - Adding Grafana Helm repository...                                                             
+[10/23/26 05:57:14] INFO     all.infra.helm - Helm Install: loki in namespace observe                                                       
+[05:57:17] Waiting for all pods in namespace 'observe' to be ready...                                                         kubectl.py:204
+[05:58:16] All pods in namespace 'observe' are ready.                                                                         kubectl.py:245
+[10/23/26 05:58:16] INFO     all.infra.loki - Deploying Promtail for Loki log collection...                                                 
+                    INFO     all.infra.helm - Helm Install: promtail in namespace observe                                                   
+[10/23/26 05:58:17] WARNING  all.infra.helm - Helm install stderr output:                                                                   
+                             level=WARN msg="this chart is deprecated"                                                                      
+[05:58:17] Waiting for all pods in namespace 'observe' to be ready...                                                         kubectl.py:204
+[05:58:39] All pods in namespace 'observe' are ready.                                                                         kubectl.py:245
+[10/23/26 05:58:39] INFO     all.sregym.conductor - [DEPLOY] Deploying MCP server…                                                          
+[10/23/26 05:58:43] INFO     all.sregym.mcp_server - Port forwarding established at 9954. MCP_SERVER_PORT set.                              
+                    INFO     all.sregym.mcp_server - MCP server deployment and access policy are ready.                                     
+                    INFO     all.sregym.conductor - [ENV] Set up necessary components: metrics-server, OpenEBS, Prometheus, Jaeger, Loki    
+                    INFO     all.sregym.conductor - [DEPLOY] Deploying and starting workload                                                
+                    INFO     all.infra.kubectl - Namespace 'astronomy-shop' not found. Creating namespace.                                  
+                    INFO     all.infra.kubectl - Namespace 'astronomy-shop' created successfully.                                           
+                    INFO     all.infra.helm - Helm Repo Add: open-telemetry with url                                                        
+                             https://open-telemetry.github.io/opentelemetry-helm-charts                                                     
+                    INFO     all.infra.helm - Helm repo open-telemetry added successfully: "open-telemetry" already exists with the same    
+                             configuration, skipping                                                                                        
+                    INFO     all.infra.helm - Helm Repo Add: jaegertracing with url https://jaegertracing.github.io/helm-charts             
+                    INFO     all.infra.helm - Helm repo jaegertracing added successfully: "jaegertracing" already exists with the same      
+                             configuration, skipping                                                                                        
+                    INFO     all.infra.helm - Helm Repo Add: prometheus-community with url                                                  
+                             https://prometheus-community.github.io/helm-charts                                                             
+                    INFO     all.infra.helm - Helm repo prometheus-community added successfully: "prometheus-community" already exists with 
+                             the same configuration, skipping                                                                               
+                    INFO     all.infra.helm - Helm Repo Add: grafana with url https://grafana.github.io/helm-charts                         
+                    INFO     all.infra.helm - Helm repo grafana added successfully: "grafana" already exists with the same configuration,   
+                             skipping                                                                                                       
+                    INFO     all.infra.helm - Helm Repo Add: opensearch with url https://opensearch-project.github.io/helm-charts/          
+                    INFO     all.infra.helm - Helm repo opensearch added successfully: "opensearch" already exists with the same            
+                             configuration, skipping                                                                                        
+                    INFO     all.infra.helm - Helm Install: astronomy-shop in namespace astronomy-shop                                      
+[05:58:52] Waiting for all pods in namespace 'astronomy-shop' to be ready...                                                  kubectl.py:204
+[06:09:22] All pods in namespace 'astronomy-shop' are ready.                                                                  kubectl.py:245
+[10/23/26 06:09:22] INFO     all.sregym.conductor - [ENV] Deploy application: OpenTelemetry Demo Astronomy Shop                             
+[10/23/26 06:09:23] INFO     all.sregym.jaeger - Created ExternalName service 'jaeger' in namespace 'astronomy-shop' ->                     
+                             otel-collector.observe.svc.cluster.local                                                                       
+[10/23/26 06:09:24] INFO     all.sregym.jaeger - Created ExternalName service 'jaeger-agent' in namespace 'astronomy-shop' ->               
+                             otel-collector.observe.svc.cluster.local                                                                       
+[10/23/26 06:09:25] INFO     all.sregym.jaeger - Created ExternalName service 'jaeger-collector' in namespace 'astronomy-shop' ->           
+                             otel-collector.observe.svc.cluster.local                                                                       
+                    INFO     all.sregym.jaeger - Created ExternalName service 'jaeger-query' in namespace 'astronomy-shop' ->               
+                             otel-collector.observe.svc.cluster.local                                                                       
+[10/23/26 06:10:19] INFO     all.sregym.jaeger - Restarted otel-collector-agent DaemonSet in namespace 'astronomy-shop'                     
+                    INFO     all.infra.workload - Start Workload with Locust                                                                
+                    INFO     all.infra.workload - AstronomyShop has a built-in load generator.                                              
+                    INFO     all.infra.workload - Creating locust-fetcher pod...                                                            
+Waiting for locust-fetcher pod to be created...
+Pod locust-fetcher created.
+[10/23/26 06:10:25] INFO     all.sregym.conductor - [ENV] Start workload                                                                    
+                    INFO     all.sregym.conductor - App deployed.                                                                           
+== Fault Injection ==
+Service: frontend-proxy | Namespace: astronomy-shop
+[10/23/26 06:10:39] INFO     all.sregym.conductor - [ENV] Injected fault                                                                    
+                    INFO     all.sregym.conductor - [STAGE] Go to stage diagnosis                                                           
+[10/23/26 06:10:40] INFO     all.sregym.conductor - ✅ Deployment complete. Ready for submission. Current stage is: diagnosis               
+[10/23/26 06:10:40] INFO     uvicorn.access - 127.0.0.1:43280 - "GET /status HTTP/1.1" 200                                                  
+                    INFO     uvicorn.access - 127.0.0.1:43296 - "GET /get_app HTTP/1.1" 200                                                 
+[10/23/26 06:10:40] INFO     all.holmesgpt.driver - Problem ID (harness): anon_aec5957c9b1513b829d93b8d56140c92; app: {'app_name':          
+                             'OpenTelemetry Demo Astronomy Shop', 'namespace': 'astronomy-shop', 'namespaces': ['astronomy-shop'],          
+                             'descriptions': 'An online shopping platform built with a microservices architecture, showcasing OpenTelemetry 
+                             instrumentation for distributed tracing across services.', 'stages': ['diagnosis']}                            
+                    INFO     uvicorn.access - 127.0.0.1:43306 - "GET /status HTTP/1.1" 200                                                  
+                    INFO     all.holmesgpt.driver - Running HolmesGPT: docker run --rm --memory 1g --network host --add-host                
+                             host.docker.internal:127.0.0.1 --add-host gpustack.apps.one2n.io:127.0.0.1 -e OPENAI_API_KEY -e OPENAI_API_BASE
+                             -e KUBECONFIG=/work/kubeconfig.yaml -v /tmp/holmes-sregym-dad9jf8f:/work                                       
+                             us-central1-docker.pkg.dev/genuine-flight-317411/devel/holmes:latest ask --prompt-file /work/prompt.txt --model
+                             openai/gpt-oss-120b --config /work/holmes-config.yaml --no-interactive --json-output-file /work/output.json    
+                             --max-steps 60 --log-costs                                                                                     
+                    INFO     all.holmesgpt.driver - Holmes config:                                                                          
+                             toolsets:                                                                                                      
+                               kubernetes/core:                                                                                             
+                                 enabled: true                                                                                              
+                               kubernetes/logs:                                                                                             
+                                 enabled: true                                                                                              
+                             mcp_servers:                                                                                                   
+                               sregym-prometheus:                                                                                           
+                                 description: PromQL queries against the cluster Prometheus (metrics)                                       
+                                 config:                                                                                                    
+                                   url: http://host.docker.internal:9954/prometheus/sse                                                     
+                                   mode: sse                                                                                                
+                               sregym-loki:                                                                                                 
+                                 description: LogQL queries against the cluster Loki (pod logs, including from                              
+                                   deleted pods)                                                                                            
+                                 config:                                                                                                    
+                                   url: http://host.docker.internal:9954/loki/sse                                                           
+                                   mode: sse                                                                                                
+                               sregym-jaeger:                                                                                               
+                                 description: Distributed traces from Jaeger (service call graph, latency, errors)                          
+                                 config:                                                                                                    
+                                   url: http://host.docker.internal:9954/jaeger/sse                                                         
+                                   mode: sse                                                                                                
+                                                                                                                                            
+[10/23/26 06:19:50] INFO     all.holmesgpt.driver - HolmesGPT answer:                                                                       
+                             **ROOT CAUSE**                                                                                                 
+                                                                                                                                            
+                             - **Faulty component:** `Pod frontend-proxy-7b7cd5fb4-lqwtd (Deployment frontend‑proxy)`.                      
+                             - **Failure:** The container was terminated with **OOMKilled** (`exitCode 137`) and entered a                  
+                             **CrashLoopBackOff**.                                                                                          
+                             - **Why it breaks the application:** The frontend‑proxy is the entry point for all user traffic. When it is    
+                             repeatedly killed for out‑of‑memory, the proxy cannot forward requests to the downstream services (e.g.,       
+                             checkout, recommendation). This produced the flood of “connection refused” errors seen in the frontend logs and
+                             caused downstream failures such as the “shipping quote failure” and overall unavailability of the OpenTelemetry
+                             Demo Astronomy Shop.                                                                                           
+                                                                                                                                            
+                             **Evidence**                                                                                                   
+                                                                                                                                            
+                             | Resource | Evidence |                                                                                        
+                             |----------|----------|                                                                                        
+                             | Pod status (frontend‑proxy) | `state.waiting.reason: CrashLoopBackOff` and `lastState.terminated.reason:     
+                             OOMKilled` (restartCount 4) – observed via `kubernetes_jq_query` on the pod. |                                 
+                             | Container logs (frontend‑proxy) | Warnings about missing OTEL env vars, but no other errors; the OOM kill is 
+                             reflected in the pod status rather than explicit log messages. |                                               
+                             | Deployment spec (frontend‑proxy) | Memory limit set to **65 Mi**                                             
+                             (`.spec.template.spec.containers[0].resources.limits.memory: "65Mi"`). |                                       
+                             | Application logs (frontend) | Numerous `connection refused` messages to service IPs (e.g.,                   
+                             `10.96.208.125:8080`, `10.96.178.214:8080`), indicating the proxy could not reach downstream services. |       
+                             | Events (frontend‑proxy) | `Warning BackOff` event confirming the container restart loop. |                   
+                                                                                                                                            
+                             **Fix**                                                                                                        
+                                                                                                                                            
+                             Increase the memory limit for the `frontend-proxy` deployment to a value that comfortably fits its runtime     
+                             needs (e.g., `256Mi` or higher) and redeploy:                                                                  
+                                                                                                                                            
+                             ```yaml                                                                                                        
+                             # Patch example (apply with kubectl)                                                                           
+                             kubectl -n astronomy-shop set resources deployment/frontend-proxy \                                            
+                               --limits=memory=256Mi \                                                                                      
+                               --requests=memory=128Mi                                                                                      
+                             ```                                                                                                            
+                                                                                                                                            
+                             After applying the new limits, the pod should start without OOM kills, the CrashLoopBackOff will resolve, and  
+                             the frontend will be able to route traffic to the microservices, restoring normal operation of the             
+                             OpenTelemetry Demo Astronomy Shop.                                                                             
+[10/23/26 06:19:50] INFO     uvicorn.access - 127.0.0.1:57776 - "POST /submit HTTP/1.1" 200                                                 
+[10/23/26 06:19:50] INFO     all.sregym.conductor - Evaluating stage 'diagnosis'                                                            
+                    INFO     all.holmesgpt.driver - Submit -> 200: {"status":"200","message":"Submission received","stage":"diagnosis"}     
+                    INFO     uvicorn.access - 127.0.0.1:57788 - "GET /status HTTP/1.1" 200                                                  
+[10/23/26 06:19:51] INFO     all.sregym.conductor - Start Eval for Diagnosis                                                                
+== LLM-as-a-Judge Evaluation ==
+🔧 Initializing LLM backend — model: openai/gpt-oss-120b, api_base: unset
+[10/23/26 06:19:52] INFO     uvicorn.access - 127.0.0.1:57802 - "GET /status HTTP/1.1" 200                                                  
+[10/23/26 06:19:54] INFO     uvicorn.access - 127.0.0.1:57812 - "GET /status HTTP/1.1" 200                                                  
+[10/23/26 06:19:56] INFO     uvicorn.access - 127.0.0.1:40550 - "GET /status HTTP/1.1" 200                                                  
+[10/23/26 06:19:58] INFO     uvicorn.access - 127.0.0.1:40566 - "GET /status HTTP/1.1" 200                                                  
+[10/23/26 06:20:00] INFO     uvicorn.access - 127.0.0.1:40572 - "GET /status HTTP/1.1" 200                                                  
+[10/23/26 06:20:02] INFO     uvicorn.access - 127.0.0.1:40586 - "GET /status HTTP/1.1" 200                                                  
+[10/23/26 06:20:04] INFO     uvicorn.access - 127.0.0.1:40590 - "GET /status HTTP/1.1" 200                                                  
+[10/23/26 06:20:06] INFO     uvicorn.access - 127.0.0.1:50998 - "GET /status HTTP/1.1" 200                                                  
+[10/23/26 06:20:08] INFO     uvicorn.access - 127.0.0.1:51008 - "GET /status HTTP/1.1" 200                                                  
+[10/23/26 06:20:10] INFO     uvicorn.access - 127.0.0.1:51010 - "GET /status HTTP/1.1" 200                                                  
+[10/23/26 06:20:12] INFO     uvicorn.access - 127.0.0.1:51018 - "GET /status HTTP/1.1" 200                                                  
+[10/23/26 06:20:14] INFO     uvicorn.access - 127.0.0.1:51024 - "GET /status HTTP/1.1" 200                                                  
+[10/23/26 06:20:16] INFO     uvicorn.access - 127.0.0.1:49434 - "GET /status HTTP/1.1" 200                                                  
+[10/23/26 06:20:18] INFO     uvicorn.access - 127.0.0.1:49438 - "GET /status HTTP/1.1" 200                                                  
+[10/23/26 06:20:20] INFO     uvicorn.access - 127.0.0.1:49448 - "GET /status HTTP/1.1" 200                                                  
+[10/23/26 06:20:22] INFO     uvicorn.access - 127.0.0.1:49454 - "GET /status HTTP/1.1" 200                                                  
+[10/23/26 06:20:25] INFO     uvicorn.access - 127.0.0.1:49458 - "GET /status HTTP/1.1" 200                                                  
+[10/23/26 06:20:27] INFO     uvicorn.access - 127.0.0.1:58578 - "GET /status HTTP/1.1" 200                                                  
+[10/23/26 06:20:29] INFO     uvicorn.access - 127.0.0.1:58582 - "GET /status HTTP/1.1" 200                                                  
+[10/23/26 06:20:31] INFO     uvicorn.access - 127.0.0.1:58588 - "GET /status HTTP/1.1" 200                                                  
+[10/23/26 06:20:33] INFO     uvicorn.access - 127.0.0.1:58602 - "GET /status HTTP/1.1" 200                                                  
+[10/23/26 06:20:35] INFO     uvicorn.access - 127.0.0.1:58610 - "GET /status HTTP/1.1" 200                                                  
+[10/23/26 06:20:37] INFO     uvicorn.access - 127.0.0.1:41822 - "GET /status HTTP/1.1" 200                                                  
+[10/23/26 06:20:39] INFO     uvicorn.access - 127.0.0.1:41834 - "GET /status HTTP/1.1" 200                                                  
+[10/23/26 06:20:41] INFO     uvicorn.access - 127.0.0.1:41848 - "GET /status HTTP/1.1" 200                                                  
+[10/23/26 06:20:43] INFO     uvicorn.access - 127.0.0.1:41858 - "GET /status HTTP/1.1" 200                                                  
+❌ Incorrect diagnosis: False (score: 33.0/100)
+   Expected: [fault_spec] component=deployment/frontend-proxy; namespace=astronomy-shop || Container `frontend-pr...
+   Got: **ROOT CAUSE**
+
+- **Faulty component:** `Pod frontend-proxy-7b7cd5fb4-lqwtd (Deployment frontend‑pro...
+[10/23/26 06:20:43] INFO     all.sregym.conductor - [EVAL] Diagnosis Failed                                                                 
+                              TTL: 603.6004016399384                                                                                        
+                    INFO     all.sregym.conductor - [STAGE] Done, starting teardown                                                         
+                    INFO     all.sregym.conductor - [CLEANUP] Starting cleanup (fault recovery, undeploy, reconcile)                        
+                    INFO     all.sregym.conductor - [CLEANUP] Recovering fault...                                                           
+== Fault Recovery ==
+[10/23/26 06:20:45] INFO     uvicorn.access - 127.0.0.1:41870 - "GET /status HTTP/1.1" 200                                                  
+[10/23/26 06:20:47] INFO     uvicorn.access - 127.0.0.1:52418 - "GET /status HTTP/1.1" 200                                                  
+[10/23/26 06:20:49] INFO     uvicorn.access - 127.0.0.1:52428 - "GET /status HTTP/1.1" 200                                                  
+[10/23/26 06:20:51] INFO     uvicorn.access - 127.0.0.1:52434 - "GET /status HTTP/1.1" 200                                                  
+Service: frontend-proxy | Namespace: astronomy-shop
+[10/23/26 06:20:51] INFO     all.sregym.conductor - [CLEANUP] Fault recovered                                                               
+                    INFO     all.sregym.conductor - [CLEANUP] Undeploying app...                                                            
+                    INFO     all.infra.helm - Helm Uninstall: astronomy-shop in namespace astronomy-shop                                    
+[10/23/26 06:20:53] INFO     uvicorn.access - 127.0.0.1:52448 - "GET /status HTTP/1.1" 200                                                  
+[10/23/26 06:20:55] INFO     uvicorn.access - 127.0.0.1:52456 - "GET /status HTTP/1.1" 200                                                  
+[10/23/26 06:20:57] INFO     uvicorn.access - 127.0.0.1:33330 - "GET /status HTTP/1.1" 200                                                  
+[10/23/26 06:20:59] INFO     uvicorn.access - 127.0.0.1:33340 - "GET /status HTTP/1.1" 200                                                  
+[10/23/26 06:21:01] INFO     uvicorn.access - 127.0.0.1:33356 - "GET /status HTTP/1.1" 200                                                  
+[10/23/26 06:21:03] INFO     uvicorn.access - 127.0.0.1:33368 - "GET /status HTTP/1.1" 200                                                  
+[10/23/26 06:21:05] INFO     uvicorn.access - 127.0.0.1:33372 - "GET /status HTTP/1.1" 200                                                  
+[10/23/26 06:21:07] INFO     uvicorn.access - 127.0.0.1:42772 - "GET /status HTTP/1.1" 200                                                  
+[10/23/26 06:21:09] INFO     uvicorn.access - 127.0.0.1:42778 - "GET /status HTTP/1.1" 200                                                  
+[10/23/26 06:21:11] INFO     uvicorn.access - 127.0.0.1:42792 - "GET /status HTTP/1.1" 200                                                  
+[10/23/26 06:21:11] WARNING  all.infra.helm - Helm uninstall stderr output:                                                                 
+                             level=WARN msg="skipping delete of resource not owned by this release" kind=Service name=jaeger                
+                             namespace=astronomy-shop release=astronomy-shop                                                                
+[06:21:11] Waiting for namespace deletion...                                                                                  kubectl.py:341
+[10/23/26 06:21:13] INFO     uvicorn.access - 127.0.0.1:42806 - "GET /status HTTP/1.1" 200                                                  
+[10/23/26 06:21:15] INFO     uvicorn.access - 127.0.0.1:42810 - "GET /status HTTP/1.1" 200                                                  
+[10/23/26 06:21:17] INFO     uvicorn.access - 127.0.0.1:42992 - "GET /status HTTP/1.1" 200                                                  
+[10/23/26 06:21:19] INFO     uvicorn.access - 127.0.0.1:42996 - "GET /status HTTP/1.1" 200                                                  
+[10/23/26 06:21:21] INFO     uvicorn.access - 127.0.0.1:43004 - "GET /status HTTP/1.1" 200                                                  
+[10/23/26 06:21:23] INFO     uvicorn.access - 127.0.0.1:43014 - "GET /status HTTP/1.1" 200                                                  
+[10/23/26 06:21:25] INFO     uvicorn.access - 127.0.0.1:43024 - "GET /status HTTP/1.1" 200                                                  
+[10/23/26 06:21:27] INFO     uvicorn.access - 127.0.0.1:60052 - "GET /status HTTP/1.1" 200                                                  
+[10/23/26 06:21:29] INFO     uvicorn.access - 127.0.0.1:60058 - "GET /status HTTP/1.1" 200                                                  
+[10/23/26 06:21:31] INFO     uvicorn.access - 127.0.0.1:60060 - "GET /status HTTP/1.1" 200                                                  
+[10/23/26 06:21:33] INFO     uvicorn.access - 127.0.0.1:60072 - "GET /status HTTP/1.1" 200                                                  
+[10/23/26 06:21:35] INFO     uvicorn.access - 127.0.0.1:60082 - "GET /status HTTP/1.1" 200                                                  
+[10/23/26 06:21:37] INFO     uvicorn.access - 127.0.0.1:37622 - "GET /status HTTP/1.1" 200                                                  
+[10/23/26 06:21:39] INFO     uvicorn.access - 127.0.0.1:37634 - "GET /status HTTP/1.1" 200                                                  
+[10/23/26 06:21:41] INFO     uvicorn.access - 127.0.0.1:37640 - "GET /status HTTP/1.1" 200                                                  
+[10/23/26 06:21:43] INFO     uvicorn.access - 127.0.0.1:37650 - "GET /status HTTP/1.1" 200                                                  
+[10/23/26 06:21:45] INFO     uvicorn.access - 127.0.0.1:37652 - "GET /status HTTP/1.1" 200                                                  
+[10/23/26 06:21:47] INFO     uvicorn.access - 127.0.0.1:51754 - "GET /status HTTP/1.1" 200                                                  
+[10/23/26 06:21:49] INFO     uvicorn.access - 127.0.0.1:51758 - "GET /status HTTP/1.1" 200                                                  
+[06:21:51] ⚠️  Agent process exited with return code 0                                                                            main.py:591
+           ⏳ Waiting for conductor evaluation to complete...                                                                    main.py:595
+           🧹 Running conductor cleanup after agent exit...                                                                      main.py:624
+[06:22:30] Namespace 'astronomy-shop' has been deleted.                                                                       kubectl.py:349
+[10/23/26 06:22:30] INFO     all.infra.kubectl - Namespace 'astronomy-shop' deleted successfully.                                           
+                    INFO     all.sregym.conductor - [CLEANUP] App undeployed                                                                
+                    INFO     all.sregym.conductor - [CLEANUP] Reconciling cluster state to baseline...                                      
+                    INFO     all.infra.cluster_state - Reconciling cluster to baseline state...                                             
+                    INFO     all.infra.cluster_state - Deleting unexpected namespace: observe                                               
+           Waiting for namespace deletion...                                                                                  kubectl.py:341
+[06:23:22] Namespace 'observe' has been deleted.                                                                              kubectl.py:349
+[10/23/26 06:23:22] INFO     all.infra.kubectl - Namespace 'observe' deleted successfully.                                                  
+                    INFO     all.infra.cluster_state - Deleting unexpected ClusterRole: promtail                                            
+                    INFO     all.infra.cluster_state - Deleting unexpected ClusterRole: prometheus-server                                   
+                    INFO     all.infra.cluster_state - Deleting unexpected ClusterRole: loki-clusterrole                                    
+                    INFO     all.infra.cluster_state - Deleting unexpected ClusterRole: prometheus-kube-state-metrics                       
+                    INFO     all.infra.cluster_state - Deleting unexpected ClusterRole: mcp-server                                          
+                    INFO     all.infra.cluster_state - Deleting unexpected ClusterRoleBinding: promtail                                     
+                    INFO     all.infra.cluster_state - Deleting unexpected ClusterRoleBinding: loki-clusterrolebinding                      
+                    INFO     all.infra.cluster_state - Deleting unexpected ClusterRoleBinding: prometheus-server                            
+                    INFO     all.infra.cluster_state - Deleting unexpected ClusterRoleBinding: prometheus-kube-state-metrics                
+                    INFO     all.infra.cluster_state - Deleting unexpected ClusterRoleBinding: mcp-server                                   
+[10/23/26 06:23:23] INFO     all.infra.kubectl - [gc_localpv] Sweeping /var/openebs/local on 4 node(s) (preserving 0 live PV dir(s))        
+[10/23/26 06:23:51] INFO     all.infra.cluster_state - Reconciliation complete: {'namespaces_deleted': ['observe'], 'cluster_roles_deleted':
+                             ['promtail', 'prometheus-server', 'loki-clusterrole', 'prometheus-kube-state-metrics', 'mcp-server'],          
+                             'cluster_role_bindings_deleted': ['promtail', 'loki-clusterrolebinding', 'prometheus-server',                  
+                             'prometheus-kube-state-metrics', 'mcp-server'], 'persistent_volumes_deleted': [], 'storage_classes_deleted':   
+                             [], 'crds_deleted': [], 'validating_webhook_configs_deleted': [], 'mutating_webhook_configs_deleted': [],      
+                             'validating_admission_policies_deleted': [], 'validating_admission_policy_bindings_deleted': [],               
+                             'nodes_labels_reset': [], 'nodes_taints_reset': [], 'coredns_reset': False}                                    
+                    INFO     all.sregym.conductor - Cluster state reconciliation changes: {'namespaces_deleted': ['observe'],               
+                             'cluster_roles_deleted': ['promtail', 'prometheus-server', 'loki-clusterrole', 'prometheus-kube-state-metrics',
+                             'mcp-server'], 'cluster_role_bindings_deleted': ['promtail', 'loki-clusterrolebinding', 'prometheus-server',   
+                             'prometheus-kube-state-metrics', 'mcp-server'], 'persistent_volumes_deleted': [], 'storage_classes_deleted':   
+                             [], 'crds_deleted': [], 'validating_webhook_configs_deleted': [], 'mutating_webhook_configs_deleted': [],      
+                             'validating_admission_policies_deleted': [], 'validating_admission_policy_bindings_deleted': [],               
+                             'nodes_labels_reset': [], 'nodes_taints_reset': [], 'coredns_reset': False}                                    
+                    INFO     all.sregym.conductor - [CLEANUP] Cluster state reconciled                                                      
+                    INFO     all.sregym.conductor - [CLEANUP] Cleanup complete, stage set to 'done'                                         
+                    INFO     all.sregym.conductor - [STAGE] Teardown complete                                                               
+[06:23:51] ✅ Complete env_variable_shadowing_astronomy_shop: results={'Diagnosis': {'judgment': 'False', 'reasoning': 'Verdict: main.py:664
+           False (composite=0.33). D1 Fault Localization: 0.67 | D2 Fault Characterization: 0.00 | D3 Scope Precision: 0.33.                
+           Weakest dimension: Fault Characterization (0.00). Checklist details: [{"id": "D1-Q1", "answer": "Yes", "evidence":               
+           "Faulty component: Pod frontend-proxy-... (Deployment frontend-proxy)", "confidence": "High"}, {"id": "D1-Q2",                   
+           "answer": "No", "evidence": "Diagnosis attributes failure to OOMKilled CrashLoopBackOff, not to duplicate                        
+           FRONTEND_HOST env var", "confidence": "High"}, {"id": "D1-Q3", "answer": "Yes", "evidence": "Only frontend-proxy                 
+           component is named as faulty, no other component blamed", "confidence": "High"}, {"id": "D2-Q1", "answer": "No",                 
+           "evidence": "Diagnosis cites memory limit OOM as cause, whereas ground truth cites duplicate FRONTEND_HOST env var",             
+           "confidence": "High"}, {"id": "D2-Q2", "answer": "No", "evidence": "Provides memory limit 65Mi, but does not mention             
+           the duplicated FRONTEND_HOST env var", "confidence": "High"}, {"id": "D2-Q3", "answer": "No", "evidence": "Fault type            
+           described as OOM/memory limit, which is unrelated to the env var duplication", "confidence": "High"}, {"id": "D3-Q1",            
+           "answer": "No", "evidence": "Blames downstream services (checkout, recommendation) as failing due to proxy OOM, not              
+           in ground truth", "confidence": "High"}, {"id": "D3-Q2", "answer": "Yes", "evidence": "Includes frontend-proxy, the              
+           only component in ground truth", "confidence": "High"}, {"id": "D3-Q3", "answer": "No", "evidence": "Describes impact            
+           as OOM-induced CrashLoopBackOff, not wrong upstream routing caused by env var", "confidence": "High"}]', 'success':              
+           False, 'accuracy': 33.0, 'composite_score': 0.33, 'dimensions': {'D1': {'name': 'Fault Localization', 'score': 0.67},            
+           'D2': {'name': 'Fault Characterization', 'score': 0.0}, 'D3': {'name': 'Scope Precision', 'score': 0.33}},                       
+           'checklist': [{'id': 'D1-Q1', 'answer': 'Yes', 'evidence': 'Faulty component: Pod frontend-proxy-... (Deployment                 
+           frontend-proxy)', 'confidence': 'High'}, {'id': 'D1-Q2', 'answer': 'No', 'evidence': 'Diagnosis attributes failure to            
+           OOMKilled CrashLoopBackOff, not to duplicate FRONTEND_HOST env var', 'confidence': 'High'}, {'id': 'D1-Q3', 'answer':            
+           'Yes', 'evidence': 'Only frontend-proxy component is named as faulty, no other component blamed', 'confidence':                  
+           'High'}, {'id': 'D2-Q1', 'answer': 'No', 'evidence': 'Diagnosis cites memory limit OOM as cause, whereas ground truth            
+           cites duplicate FRONTEND_HOST env var', 'confidence': 'High'}, {'id': 'D2-Q2', 'answer': 'No', 'evidence': 'Provides             
+           memory limit 65Mi, but does not mention the duplicated FRONTEND_HOST env var', 'confidence': 'High'}, {'id': 'D2-Q3',            
+           'answer': 'No', 'evidence': 'Fault type described as OOM/memory limit, which is unrelated to the env var                         
+           duplication', 'confidence': 'High'}, {'id': 'D3-Q1', 'answer': 'No', 'evidence': 'Blames downstream services                     
+           (checkout, recommendation) as failing due to proxy OOM, not in ground truth', 'confidence': 'High'}, {'id': 'D3-Q2',             
+           'answer': 'Yes', 'evidence': 'Includes frontend-proxy, the only component in ground truth', 'confidence': 'High'},               
+           {'id': 'D3-Q3', 'answer': 'No', 'evidence': 'Describes impact as OOM-induced CrashLoopBackOff, not wrong upstream                
+           routing caused by env var', 'confidence': 'High'}], 'submission': '**ROOT CAUSE**\n\n- **Faulty component:** `Pod                
+           frontend-proxy-7b7cd5fb4-lqwtd (Deployment\u202ffrontend‑proxy)`.  \n- **Failure:** The container was terminated with            
+           **OOMKilled** (`exitCode\u202f137`) and entered a **CrashLoopBackOff**.  \n- **Why it breaks the application:** The              
+           frontend‑proxy is the entry point for all user traffic. When it is repeatedly killed for out‑of‑memory, the proxy                
+           cannot forward requests to the downstream services (e.g., checkout, recommendation). This produced the flood of                  
+           “connection refused” errors seen in the frontend logs and caused downstream failures such as the “shipping quote                 
+           failure” and overall unavailability of the OpenTelemetry Demo Astronomy Shop.\n\n**Evidence**\n\n| Resource |                    
+           Evidence |\n|----------|----------|\n| Pod status (frontend‑proxy) | `state.waiting.reason: CrashLoopBackOff` and                
+           `lastState.terminated.reason: OOMKilled` (restartCount\u202f4) –\u202fobserved via `kubernetes_jq_query` on the pod.             
+           |\n| Container logs (frontend‑proxy) | Warnings about missing OTEL env vars, but no other errors; the OOM kill is                
+           reflected in the pod status rather than explicit log messages. |\n| Deployment spec (frontend‑proxy) | Memory limit              
+           set to **65\u202fMi** (`.spec.template.spec.containers[0].resources.limits.memory: "65Mi"`). |\n| Application logs               
+           (frontend) | Numerous `connection refused` messages to service IPs (e.g., `10.96.208.125:8080`,                                  
+           `10.96.178.214:8080`), indicating the proxy could not reach downstream services. |\n| Events (frontend‑proxy) |                  
+           `Warning BackOff` event confirming the container restart loop. |\n\n**Fix**\n\nIncrease the memory limit for the                 
+           `frontend-proxy` deployment to a value that comfortably fits its runtime needs (e.g.,\u202f`256Mi` or higher) and                
+           redeploy:\n\n```yaml\n# Patch example (apply with kubectl)\nkubectl -n astronomy-shop set resources                              
+           deployment/frontend-proxy \\\n  --limits=memory=256Mi \\\n  --requests=memory=128Mi\n```\n\nAfter applying the new               
+           limits, the pod should start without OOM kills, the CrashLoopBackOff will resolve, and the frontend will be able to              
+           route traffic to the microservices, restoring normal operation of the OpenTelemetry Demo Astronomy Shop.'}, 'TTL':               
+           603.6570057868958, 'phase.fix_kubernetes.duration_s': 4.486, 'phase.undeploy_leftovers.duration_s': 8.303,                       
+           'phase.deploy.duration_s': 866.213, 'phase.inject_fault.duration_s': 13.043, 'phase.stage:diagnosis.duration_s':                 
+           551.111, 'phase.stage:diagnosis.outcome': 'submitted', 'phase.evaluate:diagnosis.duration_s': 52.198,                            
+           'phase.cleanup.duration_s': 187.73, 'run_status': 'complete'}                                                                    
+           ⏳ Waiting for agent process to complete...                                                                           main.py:670
+           ✅ Agent process completed with return code 0                                                                         main.py:676
+           🧹 Cleaned up agent process for holmesgpt                                                                             main.py:686
+[10/23/26 06:23:51] INFO     __main__ - ⏳ Attempt 1 of 1 for problem env_variable_shadowing_astronomy_shop complete - Intermediate results 
+                             written to                                                                                                     
+                             results/1023_0555/holmesgpt/env_variable_shadowing_astronomy_shop/_running_env_variable_shadowing_astronomy_sho
+                             p_holmesgpt_results.csv; artifacts published to                                                                
+                             results/1023_0555/holmesgpt/env_variable_shadowing_astronomy_shop/run_1                                        
+                    WARNING  sregym.traces.postprocess - No convertible session in                                                          
+                             results/1023_0555/holmesgpt/env_variable_shadowing_astronomy_shop/run_1                                        
+                    WARNING  __main__ - ⚠️ ATIF trajectory conversion skipped for                                                            
+                             results/1023_0555/holmesgpt/env_variable_shadowing_astronomy_shop/run_1                                        
+                    INFO     __main__ - ✅ Problem env_variable_shadowing_astronomy_shop for agent holmesgpt complete! Results written to   
+                             results/1023_0555/holmesgpt/env_variable_shadowing_astronomy_shop/env_variable_shadowing_astronomy_shop_holmesg
+                             pt_results.csv                                                                                                 
+  Benchmarking holmesgpt — env_variable_shadowing_astronomy_shop (attempt 1/1) ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1/1 0:28:08 0:00:00
+           🔓 Stopping Kubernetes API proxy...                                                                                   main.py:800
+                    INFO     all.sregym.conductor - Stopping Kubernetes API filtering proxy...                                              
+[10/23/26 06:23:52] INFO     all.infra.k8s_proxy - Kubernetes API filtering proxy stopped                                                   
+                    WARNING  all.sregym.conductor_api - Shutting down API server...                                                         
+[10/23/26 06:23:52] INFO     uvicorn.error - Shutting down                                                                                  
+                    INFO     uvicorn.error - Finished server process [477111]                                                               
+                    INFO     all.sregym.conductor - Stopping Kubernetes API filtering proxy...                                              
+                    INFO     __main__ - ✅ Benchmark complete! Results for holmesgpt written to results/1023_0555/holmesgpt_ALL_results.csv 
+make[1]: Leaving directory '/home/w77/ai_sre/holmes-gpt/vm-test'

@@ -1,0 +1,40 @@
+Diagnosis.accuracy,Diagnosis.checklist,Diagnosis.composite_score,Diagnosis.dimensions,Diagnosis.judgment,Diagnosis.reasoning,Diagnosis.submission,Diagnosis.success,TTL,attempt,blocked_requests,deployment_profile,internet_access,judge_backend,phase.cleanup.duration_s,phase.deploy.duration_s,phase.evaluate:diagnosis.duration_s,phase.fix_kubernetes.duration_s,phase.inject_fault.duration_s,phase.stage:diagnosis.duration_s,phase.stage:diagnosis.outcome,phase.undeploy_leftovers.duration_s,problem_id,run_status
+0.0,"[{'id': 'D1-Q1', 'answer': 'No', 'evidence': 'Diagnosis cites DaemonSet/otel-collector-agent pods, not frontend-proxy.', 'confidence': 'High'}, {'id': 'D1-Q2', 'answer': 'No', 'evidence': 'Diagnosis treats otel-collector-agent as root cause, whereas ground truth root is frontend-proxy.', 'confidence': 'High'}, {'id': 'D1-Q3', 'answer': 'No', 'evidence': 'Diagnosis misidentifies otel-collector-agent as faulty component, contrary to ground truth.', 'confidence': 'High'}, {'id': 'D2-Q1', 'answer': 'No', 'evidence': 'Diagnosis points to health‑check port binding issue, not regex rule update.', 'confidence': 'High'}, {'id': 'D2-Q2', 'answer': 'No', 'evidence': 'Provides port 13133 and health_check config, no mention of vulnerable regex.', 'confidence': 'High'}, {'id': 'D2-Q3', 'answer': 'No', 'evidence': 'Attributes fault to probe misconfiguration, unrelated to request‑filter regex problem.', 'confidence': 'High'}, {'id': 'D3-Q1', 'answer': 'No', 'evidence': 'Blames otel-collector-agent and downstream services, which are not in ground truth.', 'confidence': 'High'}, {'id': 'D3-Q2', 'answer': 'No', 'evidence': 'Fails to mention frontend-proxy, the only component in ground truth.', 'confidence': 'High'}, {'id': 'D3-Q3', 'answer': 'No', 'evidence': 'Describes connection‑refused errors, not CPU saturation and timeouts from regex backtracking.', 'confidence': 'High'}]",0.0,"{'D1': {'name': 'Fault Localization', 'score': 0.0}, 'D2': {'name': 'Fault Characterization', 'score': 0.0}, 'D3': {'name': 'Scope Precision', 'score': 0.0}}",False,"Verdict: False (composite=0.00). D1 Fault Localization: 0.00 | D2 Fault Characterization: 0.00 | D3 Scope Precision: 0.00. Weakest dimension: Fault Localization (0.00). Checklist details: [{""id"": ""D1-Q1"", ""answer"": ""No"", ""evidence"": ""Diagnosis cites DaemonSet/otel-collector-agent pods, not frontend-proxy."", ""confidence"": ""High""}, {""id"": ""D1-Q2"", ""answer"": ""No"", ""evidence"": ""Diagnosis treats otel-collector-agent as root cause, whereas ground truth root is frontend-proxy."", ""confidence"": ""High""}, {""id"": ""D1-Q3"", ""answer"": ""No"", ""evidence"": ""Diagnosis misidentifies otel-collector-agent as faulty component, contrary to ground truth."", ""confidence"": ""High""}, {""id"": ""D2-Q1"", ""answer"": ""No"", ""evidence"": ""Diagnosis points to health\u2011check port binding issue, not regex rule update."", ""confidence"": ""High""}, {""id"": ""D2-Q2"", ""answer"": ""No"", ""evidence"": ""Provides port 13133 and health_check config, no mention of vulnerable regex."", ""confidence"": ""High""}, {""id"": ""D2-Q3"", ""answer"": ""No"", ""evidence"": ""Attributes fault to probe misconfiguration, unrelated to request\u2011filter regex problem."", ""confidence"": ""High""}, {""id"": ""D3-Q1"", ""answer"": ""No"", ""evidence"": ""Blames otel-collector-agent and downstream services, which are not in ground truth."", ""confidence"": ""High""}, {""id"": ""D3-Q2"", ""answer"": ""No"", ""evidence"": ""Fails to mention frontend-proxy, the only component in ground truth."", ""confidence"": ""High""}, {""id"": ""D3-Q3"", ""answer"": ""No"", ""evidence"": ""Describes connection\u2011refused errors, not CPU saturation and timeouts from regex backtracking."", ""confidence"": ""High""}]","**ROOT CAUSE**
+
+- **Faulty component(s)**
+  - `DaemonSet/otel-collector-agent` pods (`otel-collector-agent-nnht6`, `otel-collector-agent-psv5t`, `otel-collector-agent-v2xsb`)
+
+- **Why it breaks the application**
+  - The collector pods start correctly but the **health‑check extension never binds to the port expected by the probes (13133)**.  
+  - Liveness and readiness probes (`http-get http://:13133/`) therefore fail (`dial tcp …: connection refused`).  
+  - Because the pods are marked *Unready*, the `otel-collector` Service reports no ready endpoints.  
+  - Down‑stream services (e.g. `product-catalog`, `frontend`) attempt to export telemetry or call other services via the collector and receive **connection‑refused** errors, which cascade into the many “UNAVAILABLE” and “FAILED” messages seen in the frontend logs.
+
+- **Evidence**
+  - **Events** – multiple `Warning  Unhealthy` entries for each collector pod:  
+    ```
+    Readiness probe failed: Get ""http://10.244.162.176:13133/"": dial tcp ... connection refused
+    Liveness probe failed: Get ""http://10.244.162.176:13133/"": dial tcp ... connection refused
+    ```
+  - **Collector pod logs** – health‑check extension starts, but no log shows the HTTP server listening on 13133; only the extension start message appears.  
+  - **Product‑catalog logs** – exporter cannot reach the collector:  
+    ```
+    exporter export timeout: rpc error: code = Unavailable desc = connection error: dial tcp 10.96.254.140:4317: connect: connection refused
+    ```
+  - **Frontend logs** – numerous `UNAVAILABLE` errors when calling other services (cart, product‑catalog, email, flagd) that stem from the collector being unavailable and the services failing to complete their request pipelines.
+
+**Remediation**
+1. **Update the collector config** (`otel-collector-agent` ConfigMap) to include a health‑check receiver bound to port 13133, e.g.:
+
+   ```yaml
+   extensions:
+     health_check:
+       endpoint: ""0.0.0.0:13133""
+   service:
+     extensions: [health_check]
+   ```
+
+2. **Or adjust the probes** in the DaemonSet to match the actual health endpoint (if a different port is used).  
+3. Apply the corrected ConfigMap and roll the DaemonSet (`kubectl rollout restart daemonset otel-collector-agent -n astronomy-shop`).  
+4. Verify that the collector pods become Ready (`kubectl get pods -l component=agent-collector -n astronomy-shop`) and that the `otel-collector` Service shows ready endpoints.  
+5. Confirm that downstream services no longer log connection‑refused errors and that traces appear in Jaeger.",False,290.12230587005615,1,0,full,open,api,198.15,1430.012,36.801,3.664,12.077,253.281,submitted,6.183,edge_request_filter_cpu_saturation,complete

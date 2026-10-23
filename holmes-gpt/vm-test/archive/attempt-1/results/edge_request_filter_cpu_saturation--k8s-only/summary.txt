@@ -1,0 +1,36 @@
+$ problem: edge_request_filter_cpu_saturation
+$ holmesgpt: 21 tool calls, 22 LLM calls, 851,154 tokens, 4.2 min
+
+ROOT CAUSE**
+
+- **Faulty component(s)**
+- `DaemonSet/otel-collector-agent` pods (`otel-collector-agent-nnht6`, `otel-collector-agent-psv5t`, `otel-collector-agent-v2xsb`)
+
+- **Why it breaks the application**
+- The collector pods start correctly but the **health‑check extension never binds to the port expected by the probes (13133)**.
+- Liveness and readiness probes (`http-get http://:13133/`) therefore fail (`dial tcp …: connection refused`).
+- Because the pods are marked *Unready*, the `otel-collector` Service reports no ready endpoints.
+- Down‑stream services (e.g. `product-catalog`, `frontend`) attempt to export telemetry or call other services via the collector and …
+
+- **Evidence**
+- **Events** – multiple `Warning Unhealthy` entries for each collector pod:
+```
+Readiness probe failed: Get "http://10.244.162.176:13133/": dial tcp ... connection refused
+Liveness probe failed: Get "http://10.244.162.176:13133/": dial tcp ... connection refused
+```
+- **Collector pod logs** – health‑check extension starts, but no log shows the HTTP server listening on 13133; only the extension …
+- **Product‑catalog logs** – exporter cannot reach the collector:
+```
+exporter export timeout: rpc error: code = Unavailable desc = connection error: dial tcp 10.96.254.140:4317: connect: connection …
+```
+- **Frontend logs** – numerous `UNAVAILABLE` errors when calling other services (cart, product‑catalog, email, flagd) that stem from …
+
+**Remediation**
+1. **Update the collector config** (`otel-collector-agent` ConfigMap) to include a health‑check receiver bound to port 13133, e.g.:
+
+```yaml
+
+$ judge: success=False  score=0.0/100
+Verdict: False (composite=0.00). D1 Fault Localization: 0.00 | D2 Fault Characterization: 0.00 | D3 Scope Precision: 0.00. Weakest
+dimension: Fault Localization (0.00). Checklist details: [{"id": "D1-Q1", "answer": "No", "evidence": "Diagnosis cites DaemonSet/otel-
+collector-agent pods, not frontend-proxy.", "confidence": "High"}, {"id": "D1-Q2", "answer": "No", "evidence": "Diagnosis treats otel-c

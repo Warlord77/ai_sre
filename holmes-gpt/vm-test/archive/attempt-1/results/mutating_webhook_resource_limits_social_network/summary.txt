@@ -1,0 +1,26 @@
+$ problem: mutating_webhook_resource_limits_social_network
+$ holmesgpt: 10 tool calls, 11 LLM calls, 221,332 tokens, 2.3 min
+
+Root Cause**
+- The `nginx-thrift` container is configured with **memory limits** `requests: 128 Mi`, `limits: 256 Mi` (see deployment spec).
+- During start‑up the container exceeds its limit, is **OOM‑killed** (`lastState.terminated.reason: OOMKilled`), and the kubelet …
+- The pod never becomes ready, so the `nginx-thrift` service has no endpoints, breaking any downstream microservices that depend on …
+
+**Evidence**
+- Pod description shows `Ready` = `False` with `ContainersNotReady` and `CrashLoopBackOff` (container status).
+- `lastState.terminated.reason: OOMKilled` (exit code 137) confirms memory exhaustion.
+- Deployment status reports `MinimumReplicasUnavailable`.
+- Deployment spec lists `resources.limits.memory: "256Mi"` (insufficient for the workload).
+
+**Remediation**
+1. Increase the memory limits for the `nginx-thrift` container (e.g., `requests: 256Mi`, `limits: 512Mi`).
+2. Apply the updated Helm values or edit the deployment, then roll out the change.
+3. Verify the pod becomes `Ready` and the service regains endpoints.
+
+After the limit adjustment, the pod should start without OOM, exit the CrashLoopBackOff, and restore normal operation of the Social …
+
+$ judge: success=False  score=11.0/100
+Verdict: False (composite=0.11). D1 Fault Localization: 0.00 | D2 Fault Characterization: 0.00 | D3 Scope Precision: 0.33. Weakest
+dimension: Fault Localization (0.00). Checklist details: [{"id": "D1-Q1", "answer": "No", "evidence": "Diagnosis names Deployment
+`nginx-thrift` as fault source", "confidence": "High"}, {"id": "D1-Q2", "answer": "No", "evidence": "Diagnosis treats deployment as
+origin,

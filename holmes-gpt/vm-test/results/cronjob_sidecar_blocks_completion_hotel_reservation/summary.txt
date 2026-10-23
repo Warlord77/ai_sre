@@ -1,0 +1,37 @@
+$ problem: cronjob_sidecar_blocks_completion_hotel_reservation
+$ holmesgpt: 24 tool calls, 25 LLM calls, 754,187 tokens, 4.1 min
+
+Root cause**
+
+- The **reservation** and **profile** services panic because they cannot resolve the DNS names of their MongoDB back‑ends …
+- DNS resolution fails cluster‑wide despite CoreDNS pods being `Ready`. The failure is confirmed by `tcp_check` returning “could not …
+- The underlying issue is a **CoreDNS service disruption** (likely the CoreDNS pods are not actually serving DNS queries even though …
+
+**Evidence**
+
+- `reservation` pod log: `panic: no reachable servers` when trying to connect to `mongodb‑reservation:27017`.
+- `profile` pod log: identical panic for `mongodb‑profile:27017`.
+- `tcp_check` for `mongodb‑reservation:27017` → *could not resolve host*.
+- CoreDNS pods `Ready=True` but no DNS query metrics (`coredns_dns_requests_total` empty).
+- Endpoints for the MongoDB services exist and are reachable by IP, confirming the problem is name resolution, not pod failure.
+
+**Impact**
+
+- **Affected**: `deployment/reservation`, `deployment/profile` (and any other workloads that depend on MongoDB services via DNS).
+- **Checked, healthy**: All MongoDB pods, other micro‑services (frontend, geo, rate, recommendation, etc.) – they can start because …
+- **Changed during the window for another reason**: None observed.
+
+**Remediation steps**
+
+1. **Restart CoreDNS** – `kubectl rollout restart deployment/coredns -n kube-system`. This forces a fresh DNS server start and often …
+2. **Verify CoreDNS health** – after restart, run `kubectl exec -n kube-system <coredns-pod> -- dig mongodb-reservation.hotel- …
+3. **Check network policies / iptables** – ensure no policy blocks traffic from the `hotel-reservation` namespace to the `kube-dns` …
+4. **Confirm Prometheus scraping** – add a scrape target for `coredns` if missing, to monitor DNS request rates and errors.
+5. **Monitor** – watch the `reservation` and `profile` pods for further restarts; they should stay healthy once DNS works.
+
+
+$ judge: success=False  score=0.0/100
+Verdict: False (composite=0.00). D1 Fault Localization: 0.00 | D2 Fault Characterization: 0.00 | D3 Scope Precision: 0.00. Weakest
+dimension: Fault Localization (0.00). Checklist details: [{"id": "D1-Q1", "answer": "No", "evidence": "Diagnosis blames CoreDNS and
+reservation/profile services, never mentions CronJob/audit-log-archiver.", "confidence": "High"}, {"id": "D1-Q2", "answer": "No",
+"eviden

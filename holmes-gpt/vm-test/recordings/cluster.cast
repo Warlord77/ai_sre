@@ -1,0 +1,11 @@
+{"version": 2, "width": 140, "height": 24, "timestamp": 1792734791, "env": {"SHELL": "/bin/bash", "TERM": "xterm-256color"}}
+[0.01047, "o", "+ kubectl get nodes -o wide\r\n"]
+[0.011352, "o", "+ cut -c1-120\r\n"]
+[0.102343, "o", "NAME                 STATUS   ROLES           AGE   VERSION   INTERNAL-IP   EXTERNAL-IP   OS-IMAGE                      \r\nkind-control-plane   Ready    control-plane   3h    v1.32.1   172.18.0.3    <none>        Debian GNU/Linux 12 (bookworm)\r\nkind-worker          Ready    <none>          3h    v1.32.1   172.18.0.5    <none>        Debian GNU/Linux 12 (bookworm)\r\n"]
+[0.102402, "o", "kind-worker2         Ready    <none>          3h    v1.32.1   172.18.0.4    <none>        Debian GNU/Linux 12 (bookworm)\r\nkind-worker3         Ready    <none>          3h    v1.32.1   172.18.0.2    <none>        Debian GNU/Linux 12 (bookworm)\r\n"]
+[0.106262, "o", "++ kind get nodes\r\n"]
+[0.197982, "o", "+ docker stats --no-stream --format 'table {{.Name}}\\t{{.CPUPerc}}\\t{{.MemUsage}}' kind-control-plane kind-worker kind-worker2 kind-worker3\r\n"]
+[2.253016, "o", "NAME                 CPU %     MEM USAGE / LIMIT\r\nkind-control-plane   39.36%    2.909GiB / 4GiB\r\nkind-worker          9.73%     2.084GiB / 4GiB\r\nkind-worker2         6.48%     1.531GiB / 4GiB\r\nkind-worker3         12.64%    1.509GiB / 4GiB\r\n"]
+[2.255621, "o", "+ kubectl -n kube-system get ds calico-node\r\n"]
+[3.060681, "o", "NAME          DESIRED   CURRENT   READY   UP-TO-DATE   AVAILABLE   NODE SELECTOR            AGE\r\ncalico-node   4         4         4       4            "]
+[3.060786, "o", "4           kubernetes.io/os=linux   179m\r\n"]
